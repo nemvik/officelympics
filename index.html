@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Officelympics 2026 — pravidla a odměny</title>
+<meta name="description" content="Pravidla, bodování a odměny pro Officelympics 2026. 18. 8. 2026 od 14:13 v kanceláři 4.413.">
+<meta property="og:title" content="Officelympics 2026">
+<meta property="og:description" content="5 disciplín • 0 pojištění • věčná sláva">
+<meta name="theme-color" content="#ff0f7b">
+<style>
+  :root {
+    --ink:#111;
+    --paper:#f7f0df;
+    --paper-2:#fffaf0;
+    --pink:#ff0f7b;
+    --yellow:#ffd51f;
+    --blue:#0d57c8;
+    --navy:#071a3d;
+    --red:#e7382d;
+    --green:#148b55;
+    --muted:#5f5a50;
+    --shadow:0 10px 28px rgba(0,0,0,.16);
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0;
+    color:var(--ink);
+    font-family:Arial, Helvetica, sans-serif;
+    background:
+      radial-gradient(circle at 20% 5%, rgba(255,213,31,.28), transparent 22rem),
+      radial-gradient(circle at 90% 20%, rgba(255,15,123,.13), transparent 26rem),
+      linear-gradient(135deg, #efe5cf, #fffaf0 42%, #eee2ca);
+  }
+  body::before {
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    opacity:.22;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 5px, rgba(0,0,0,.025) 6px),
+      repeating-linear-gradient(90deg, transparent 0 7px, rgba(255,255,255,.08) 8px);
+    mix-blend-mode:multiply;
+  }
+  .wrap { width:min(1180px, calc(100% - 32px)); margin:24px auto 56px; }
+  .topbar {
+    display:flex; gap:12px; justify-content:flex-end; margin-bottom:12px;
+  }
+  button {
+    border:0; border-radius:999px; padding:11px 16px; font-weight:900;
+    cursor:pointer; color:#fff; background:var(--navy); box-shadow:var(--shadow);
+  }
+  button.secondary { background:var(--pink); }
+  .hero {
+    display:grid; grid-template-columns:minmax(300px, 430px) 1fr;
+    gap:28px; align-items:center; background:rgba(255,250,240,.9);
+    border:4px solid var(--ink); border-radius:22px; padding:22px;
+    box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .hero::after {
+    content:"HR TO NEČTE. ASI.";
+    position:absolute; right:-42px; top:32px; transform:rotate(8deg);
+    background:var(--blue); color:#fff; font-weight:1000; padding:13px 54px;
+    letter-spacing:.04em; box-shadow:0 5px 0 #06112a;
+  }
+  .poster {
+    width:100%; border:3px solid var(--ink); border-radius:15px;
+    box-shadow:8px 10px 0 var(--yellow); display:block;
+  }
+  .kicker {
+    display:inline-block; background:var(--yellow); padding:7px 13px;
+    transform:rotate(-1.5deg); font-weight:1000; text-transform:uppercase;
+    border:2px solid var(--ink);
+  }
+  h1 {
+    margin:18px 0 8px; line-height:.88; font-size:clamp(48px, 8vw, 94px);
+    font-weight:1000; letter-spacing:-.06em; text-transform:uppercase;
+  }
+  h1 span { color:var(--pink); text-shadow:4px 4px 0 var(--ink); }
+  .subtitle {
+    font-size:clamp(21px, 3vw, 34px); font-weight:1000; line-height:1.08;
+    max-width:720px;
+  }
+  .meta {
+    display:flex; flex-wrap:wrap; gap:10px; margin-top:22px;
+  }
+  .meta b {
+    background:#fff; border:2px solid var(--ink); padding:10px 13px;
+    box-shadow:4px 4px 0 var(--blue); font-size:18px;
+  }
+  .notice {
+    margin-top:18px; padding:14px 16px; background:var(--pink); color:#fff;
+    font-weight:900; border:3px solid var(--ink); transform:rotate(.4deg);
+  }
+  section { margin-top:28px; }
+  .section-title {
+    display:flex; align-items:center; gap:12px; margin:0 0 16px;
+    font-size:clamp(30px, 5vw, 54px); text-transform:uppercase;
+    font-weight:1000; letter-spacing:-.045em;
+  }
+  .section-title::after {
+    content:""; height:10px; flex:1; background:var(--pink);
+    border:2px solid var(--ink); transform:skewX(-18deg);
+  }
+  .scoring {
+    background:var(--navy); color:#fff; border:4px solid var(--ink);
+    border-radius:18px; padding:22px; box-shadow:var(--shadow);
+  }
+  .scoring-grid {
+    display:grid; grid-template-columns:repeat(8, 1fr); gap:8px; margin-top:14px;
+  }
+  .place {
+    background:#fff; color:var(--ink); border:2px solid var(--ink);
+    text-align:center; padding:12px 6px; font-weight:1000;
+    transform:rotate(var(--r, 0deg));
+  }
+  .place strong { display:block; font-size:25px; color:var(--pink); }
+  .rules {
+    display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:18px;
+  }
+  .rule {
+    position:relative; padding:22px; border:3px solid var(--ink);
+    background:var(--paper-2); box-shadow:8px 9px 0 var(--c);
+    border-radius:12px; overflow:hidden;
+  }
+  .rule::before {
+    content:attr(data-num); position:absolute; right:-8px; top:-18px;
+    font-size:92px; line-height:1; font-weight:1000; color:var(--c);
+    opacity:.16;
+  }
+  .rule h3 {
+    margin:0 0 4px; font-size:28px; text-transform:uppercase;
+    line-height:1; max-width:85%;
+  }
+  .rule .joke {
+    display:inline-block; margin:7px 0 15px; background:var(--c);
+    padding:6px 9px; font-weight:900; border:2px solid var(--ink);
+    transform:rotate(-.7deg);
+  }
+  .rule ul { margin:0; padding-left:21px; line-height:1.48; }
+  .rule li + li { margin-top:6px; }
+  .rule.full { grid-column:1/-1; }
+  .badge {
+    display:inline-flex; align-items:center; gap:7px; margin-top:12px;
+    padding:6px 9px; border:2px dashed var(--ink); font-weight:900;
+    background:#fff;
+  }
+  .rewards {
+    display:grid; grid-template-columns:1.2fr .8fr; gap:18px;
+  }
+  .podium, .specials {
+    border:4px solid var(--ink); border-radius:16px; padding:22px;
+    box-shadow:var(--shadow);
+  }
+  .podium { background:var(--yellow); }
+  .specials { background:#fff; }
+  .reward {
+    display:grid; grid-template-columns:66px 1fr; gap:12px; align-items:center;
+    border-bottom:2px dashed rgba(0,0,0,.35); padding:11px 0;
+  }
+  .reward:last-child { border-bottom:0; }
+  .medal { font-size:46px; text-align:center; }
+  .reward b { font-size:21px; }
+  .quote {
+    margin-top:22px; background:var(--pink); color:#fff; border:4px solid var(--ink);
+    padding:22px; font-size:clamp(24px,4vw,42px); line-height:1.03;
+    font-weight:1000; text-transform:uppercase; box-shadow:8px 8px 0 var(--yellow);
+    transform:rotate(-.4deg);
+  }
+  .score-wrap {
+    overflow-x:auto; border:4px solid var(--ink); border-radius:16px;
+    background:#fff; box-shadow:var(--shadow);
+  }
+  table { border-collapse:collapse; width:100%; min-width:920px; }
+  th, td { border:1px solid #bbb; padding:9px; text-align:center; }
+  th { background:var(--navy); color:#fff; font-size:13px; }
+  td:first-child, th:first-child { text-align:left; min-width:180px; }
+  input, select {
+    width:100%; border:1px solid #aaa; border-radius:6px; padding:7px;
+    font:inherit; background:#fff;
+  }
+  .total { font-weight:1000; color:var(--pink); font-size:18px; }
+  .rank { font-weight:1000; color:var(--blue); font-size:18px; }
+  .foot {
+    margin-top:24px; background:#090909; color:#fff; padding:18px 20px;
+    border-radius:14px; border:3px solid var(--ink); text-align:center;
+    font-size:clamp(18px,3vw,30px); font-weight:1000; text-transform:uppercase;
+  }
+  .foot span { color:var(--yellow); }
+  .small { color:var(--muted); font-size:14px; }
+  @media (max-width:850px) {
+    .hero { grid-template-columns:1fr; }
+    .hero::after { display:none; }
+    .poster { max-width:520px; margin:auto; }
+    .rules, .rewards { grid-template-columns:1fr; }
+    .rule.full { grid-column:auto; }
+    .scoring-grid { grid-template-columns:repeat(4,1fr); }
+  }
+  @media print {
+    body { background:#fff; }
+    body::before, .topbar { display:none; }
+    .wrap { width:100%; margin:0; }
+    .hero, .scoring, .rule, .podium, .specials, .score-wrap, .quote {
+      box-shadow:none !important;
+    }
+    .hero { grid-template-columns:260px 1fr; page-break-after:always; }
+    section { break-inside:avoid; }
+    .rules { gap:10px; }
+    .rule { padding:14px; }
+    .score-wrap { page-break-before:always; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <button onclick="window.print()">🖨️ Vytisknout pravidla</button>
+    <button class="secondary" onclick="resetScoreboard()">♻️ Vynulovat tabulku</button>
+  </div>
+
+  <header class="hero">
+    <img class="poster" alt="Pozvánka Officelympics 2026"
+      src="2026.png">
+    <div>
+      <span class="kicker">Oficiální neoficiální pravidla</span>
+      <h1>Office<span>lympics</span><br>2026</h1>
+      <div class="subtitle">Olympiáda pro lidi, kteří se bojí skutečného sportu.</div>
+      <div class="meta">
+        <b>📅 18. 8. 2026</b>
+        <b>🕑 od 14:13</b>
+        <b>📍 kancelář 4.413</b>
+      </div>
+      <div class="notice">Pot, slzy, rozlitá káva a jedna nenávratně ztracená důvěra HR.</div>
+    </div>
+  </header>
+
+  <section>
+    <h2 class="section-title">Bodování</h2>
+    <div class="scoring">
+      <b>V každé disciplíně se rozdávají body podle pořadí. Maximum je 50 bodů.</b>
+      <div class="scoring-grid">
+        <div class="place" style="--r:-1deg"><strong>10</strong>1. místo</div>
+        <div class="place" style="--r:1deg"><strong>8</strong>2. místo</div>
+        <div class="place" style="--r:-.5deg"><strong>6</strong>3. místo</div>
+        <div class="place" style="--r:.7deg"><strong>5</strong>4. místo</div>
+        <div class="place" style="--r:-.8deg"><strong>4</strong>5. místo</div>
+        <div class="place" style="--r:.5deg"><strong>3</strong>6. místo</div>
+        <div class="place" style="--r:-.4deg"><strong>2</strong>7. místo</div>
+        <div class="place" style="--r:.9deg"><strong>1</strong>8. místo</div>
+      </div>
+      <p><b>Shoda bodů:</b> více vítězství → více druhých míst → rozstřel hodem papírem do koše ze 4 metrů. Při další shodě se pokaždé ustoupí o 1 metr.</p>
+      <p class="small" style="color:#dce7ff">Nedokončení nebo jasné porušení pravidel = 0 bodů v dané disciplíně. Rozhodčí má vždy pravdu, i když ji evidentně nemá.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Disciplíny a pravidla</h2>
+    <div class="rules">
+      <article class="rule" data-num="1" style="--c:#ffd51f">
+        <h3>Otočky na židli</h3>
+        <div class="joke">Kdo se nepozvracel, pravděpodobně nebyl dost rychlý.</div>
+        <ul>
+          <li>Každý má <b>2 pokusy</b>; počítá se lepší výsledek.</li>
+          <li>Povolen je <b>jeden odraz</b> nohou. Poté musí být obě nohy nad zemí.</li>
+          <li>Počítají se pouze <b>celé dokončené otočky</b>.</li>
+          <li>Dotyk země, stolu, zdi nebo kolegy pokus okamžitě ukončuje.</li>
+          <li>Židle musí zůstat přibližně na místě; migrace do jiné kanceláře se nepočítá.</li>
+        </ul>
+      </article>
+
+      <article class="rule" data-num="2" style="--c:#48a7ff">
+        <h3>Jízda na židli</h3>
+        <div class="joke">Formule 1, jen bez airbagů, helmy a rozumného vedení.</div>
+        <ul>
+          <li>Každý má <b>2 pokusy</b>; počítá se delší jízda.</li>
+          <li><b>Rozeběh je povolen.</b> Po překročení startovní čáry se soutěžící nesmí dotknout země.</li>
+          <li>Dráha není vyznačená; kancelářské překážky zůstávají součástí reality.</li>
+          <li>Kontakt s překážkou pokus ukončí. Měří se místo, kde se zastavil <b>střed pístu židle</b>.</li>
+          <li>Není dovoleno odstrkovat se od nábytku ani využít pomoc kolegy.</li>
+        </ul>
+        <div class="badge">⚠️ Doporučeno: odstranit ostré a křehké předměty z trajektorie.</div>
+      </article>
+
+      <article class="rule" data-num="3" style="--c:#ff5b4d">
+        <h3>Skok nad dveře</h3>
+        <div class="joke">Trénink na útěk před šéfem v reálném čase.</div>
+        <ul>
+          <li>Každý má <b>3 pokusy</b>.</li>
+          <li>Soutěžící skáče z místa a snaží se dotknout co nejvyššího místa nad dveřmi.</li>
+          <li>Výška se označí lepíkem nebo omyvatelnou značkou.</li>
+          <li>Pro férovost se počítá <b>výška dotyku minus dosah ve stoje</b>.</li>
+          <li>Výskok do stropního světla je technicky působivý, ale neplatný.</li>
+        </ul>
+      </article>
+
+      <article class="rule" data-num="4" style="--c:#ffd51f">
+        <h3>Vlaštovka do dálky</h3>
+        <div class="joke">Aerodynamika vyvinutá během schůzky, která mohla být e-mail.</div>
+        <ul>
+          <li>Každý dostane stejný papír <b>A4, 80 g/m²</b>.</li>
+          <li>Vlaštovku si každý skládá sám; čas na výrobu je <b>5 minut</b>.</li>
+          <li>Každý má <b>3 hody</b>; počítá se nejdelší.</li>
+          <li>Měří se vzdálenost od startovní čáry až k místu, kde se vlaštovka <b>definitivně zastaví</b>.</li>
+          <li><b>Následné klouzání se započítává.</b> Odraz od kolegy nikoliv.</li>
+        </ul>
+      </article>
+
+      <article class="rule full" data-num="5" style="--c:#ff5aa5">
+        <h3>Hod papírem do koše</h3>
+        <div class="joke">Jediná disciplína, kde smolný pokus znamená novou hromadu práce na zemi.</div>
+        <ul>
+          <li>Každý hází <b>2× ze 2 metrů, 2× ze 4 metrů a 2× ze 6 metrů</b>.</li>
+          <li>Zásah ze 2 m = <b>1 bod</b>, ze 4 m = <b>2 body</b>, ze 6 m = <b>3 body</b>.</li>
+          <li>Maximum je <b>12 bodů</b>; pořadí disciplíny se určí podle jejich součtu.</li>
+          <li>Papírové koule mají být přibližně stejně velké a vyrobené ze stejného papíru.</li>
+          <li>Při shodě následuje náhlá smrt ze 6 metrů.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Odměny</h2>
+    <div class="rewards">
+      <div class="podium">
+        <div class="reward">
+          <div class="medal">🥇</div>
+          <div><b>1. místo — Office Olympic Champion 2026</b><br>Putovní pohár, zlatá medaile a právo celý den zpochybňovat sportovní autoritu ostatních.</div>
+        </div>
+        <div class="reward">
+          <div class="medal">🥈</div>
+          <div><b>2. místo — Skoro legenda</b><br>Stříbrná medaile a káva nebo energetický nápoj na obnovu důstojnosti.</div>
+        </div>
+        <div class="reward">
+          <div class="medal">🥉</div>
+          <div><b>3. místo — Morální vítěz</b><br>Bronzová medaile a sladká odměna za to, že nezavolal právníka.</div>
+        </div>
+      </div>
+      <div class="specials">
+        <h3 style="margin-top:0;font-size:28px">Speciální ceny</h3>
+        <p>🦺 <b>Cena BOZP</b> — nejděsivější platný výkon.</p>
+        <p>🕺 <b>Cena elegance</b> — nejlepší styl, grimasa nebo oslava.</p>
+        <p>🧻 <b>Tragický hrdina</b> — nejvíce těsných neúspěchů.</p>
+        <p>🪑 <b>Dřevěné kolečko</b> — poslední místo, které se počítá hlavně charakterem.</p>
+        <p>📋 <b>Cena HR</b> — výkon, který se nesmí dostat do interního newsletteru.</p>
+      </div>
+    </div>
+    <div class="quote">Nejde o výhru. Jde o to, že to přežijeme — a bude to mít svědky.</div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Bodovací tabulka pro 8 lidí</h2>
+    <div class="score-wrap">
+      <table id="scoreboard">
+        <thead>
+          <tr>
+            <th>Soutěžící</th>
+            <th>Otočky</th>
+            <th>Jízda</th>
+            <th>Skok</th>
+            <th>Vlaštovka</th>
+            <th>Koš</th>
+            <th>Celkem</th>
+            <th>Pořadí</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input aria-label="Jméno soutěžícího 1" placeholder="Jméno 1"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr><tr>
+            <td><input aria-label="Jméno soutěžícího 2" placeholder="Jméno 2"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr><tr>
+            <td><input aria-label="Jméno soutěžícího 3" placeholder="Jméno 3"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr><tr>
+            <td><input aria-label="Jméno soutěžícího 4" placeholder="Jméno 4"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr><tr>
+            <td><input aria-label="Jméno soutěžícího 5" placeholder="Jméno 5"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr><tr>
+            <td><input aria-label="Jméno soutěžícího 6" placeholder="Jméno 6"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr><tr>
+            <td><input aria-label="Jméno soutěžícího 7" placeholder="Jméno 7"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr><tr>
+            <td><input aria-label="Jméno soutěžícího 8" placeholder="Jméno 8"></td>
+            <td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td><td><select aria-label="Umístění"><option value="">—</option><option value="1">1. místo</option><option value="2">2. místo</option><option value="3">3. místo</option><option value="4">4. místo</option><option value="5">5. místo</option><option value="6">6. místo</option><option value="7">7. místo</option><option value="8">8. místo</option></select></td>
+            <td class="total">0</td>
+            <td class="rank">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">Do tabulky zadávejte umístění v každé disciplíně. Body, součet a průběžné pořadí se dopočítají automaticky.</p>
+  </section>
+
+  <div class="foot"><span>5 disciplín</span> · 0 pojištění · věčná sláva <span>(a jedna stížnost na BOZP)</span></div>
+</div>
+
+<script>
+  const points = {1:10, 2:8, 3:6, 4:5, 5:4, 6:3, 7:2, 8:1};
+
+  function recalc() {
+    const rows = [...document.querySelectorAll('#scoreboard tbody tr')];
+    const totals = rows.map(row => {
+      const selects = [...row.querySelectorAll('select')];
+      const total = selects.reduce((sum, select) => sum + (points[select.value] || 0), 0);
+      row.querySelector('.total').textContent = total;
+      return {row, total};
+    });
+
+    const sorted = [...totals].sort((a,b) => b.total - a.total);
+    totals.forEach(item => {
+      if (item.total === 0) {
+        item.row.querySelector('.rank').textContent = '—';
+        return;
+      }
+      const rank = sorted.findIndex(x => x.total === item.total) + 1;
+      item.row.querySelector('.rank').textContent = rank + '.';
+    });
+    localStorage.setItem('officelympicsScoreboard', JSON.stringify(
+      rows.map(row => ({
+        name: row.querySelector('input').value,
+        places: [...row.querySelectorAll('select')].map(s => s.value)
+      }))
+    ));
+  }
+
+  function restore() {
+    try {
+      const data = JSON.parse(localStorage.getItem('officelympicsScoreboard') || '[]');
+      const rows = [...document.querySelectorAll('#scoreboard tbody tr')];
+      data.forEach((item, i) => {
+        if (!rows[i]) return;
+        rows[i].querySelector('input').value = item.name || '';
+        [...rows[i].querySelectorAll('select')].forEach((s, j) => s.value = item.places?.[j] || '');
+      });
+    } catch (e) {}
+    recalc();
+  }
+
+  function resetScoreboard() {
+    if (!confirm('Opravdu vynulovat celou bodovací tabulku?')) return;
+    document.querySelectorAll('#scoreboard input').forEach(i => i.value = '');
+    document.querySelectorAll('#scoreboard select').forEach(s => s.value = '');
+    localStorage.removeItem('officelympicsScoreboard');
+    recalc();
+  }
+
+  document.querySelectorAll('#scoreboard input, #scoreboard select')
+    .forEach(el => el.addEventListener('input', recalc));
+
+  restore();
+</script>
+</body>
+</html>

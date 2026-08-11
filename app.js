@@ -1148,17 +1148,17 @@ function startPrint(mode) {
 }
 
 function resetScoreboard() {
-  if (!window.confirm("Opravdu vynulovat jména, výsledky i všechny rozstřely?")) return;
+  if (!window.confirm("Opravdu vynulovat všechny výsledky, DNF a rozstřely? Jména soutěžících zůstanou.")) return;
 
-  state = createEmptyState();
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-  } catch (error) {
-    // UI se vynuluje i bez dostupného localStorage.
-  }
+  const count = participantCount();
+  DISCIPLINES.forEach(function (discipline) {
+    state.results[discipline.id] = emptyStringArray(count);
+    state.dnf[discipline.id] = emptyBooleanArray(count);
+    state.tieBreaks[discipline.id] = emptyStringArray(count);
+  });
+  state.finalTieBreaks = emptyStringArray(count);
 
-  rebuildParticipantControls();
+  hydrateControls();
   recalculate();
-  document.getElementById("participant-name-0").focus();
+  refs.scoreStatus.textContent = "✓ Skóre bylo vynulováno a změna je uložená.";
 }

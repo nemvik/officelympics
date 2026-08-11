@@ -1,6 +1,7 @@
 "use strict";
 
-const PARTICIPANT_COUNT = 8;
+const DEFAULT_PARTICIPANT_COUNT = 8;
+const STATE_VERSION = 3;
 const STORAGE_KEY = "officelympicsScoreboardV2";
 const LEGACY_STORAGE_KEY = "officelympicsScoreboard";
 const POINTS = Object.freeze({ 1: 10, 2: 8, 3: 6, 4: 5, 5: 4, 6: 3, 7: 2, 8: 1 });
@@ -69,6 +70,8 @@ document.addEventListener("DOMContentLoaded", init);
 
 function init() {
   refs.participantGrid = document.getElementById("participant-grid");
+  refs.participantCount = document.getElementById("participant-count");
+  refs.storageStatus = document.getElementById("storage-status");
   refs.disciplineTabs = document.getElementById("discipline-tabs");
   refs.disciplinePanels = document.getElementById("discipline-panels");
   refs.scoreStatus = document.getElementById("score-status");
@@ -90,95 +93,130 @@ function init() {
   recalculate();
 }
 
-function createEmptyState() {
+function createEmptyState(count) {
+  const participantTotal = count === undefined ? DEFAULT_PARTICIPANT_COUNT : count;
   const results = {};
   const dnf = {};
   const tieBreaks = {};
 
   DISCIPLINES.forEach(function (discipline) {
-    results[discipline.id] = emptyStringArray();
-    dnf[discipline.id] = emptyBooleanArray();
-    tieBreaks[discipline.id] = emptyStringArray();
+    results[discipline.id] = emptyStringArray(participantTotal);
+    dnf[discipline.id] = emptyBooleanArray(participantTotal);
+    tieBreaks[discipline.id] = emptyStringArray(participantTotal);
   });
 
   return {
-    version: 2,
-    names: emptyStringArray(),
+    version: STATE_VERSION,
+    participantCount: participantTotal,
+    names: emptyStringArray(participantTotal),
     results: results,
     dnf: dnf,
     tieBreaks: tieBreaks,
-    finalTieBreaks: emptyStringArray(),
+    finalTieBreaks: emptyStringArray(participantTotal),
     activeDiscipline: DISCIPLINES[0].id
   };
 }
 
-function emptyStringArray() {
-  return Array.from({ length: PARTICIPANT_COUNT }, function () { return ""; });
+function emptyStringArray(count) {
+  return Array.from({ length: count }, function () { return ""; });
 }
 
-function emptyBooleanArray() {
-  return Array.from({ length: PARTICIPANT_COUNT }, function () { return false; });
+function emptyBooleanArray(count) {
+  return Array.from({ length: count }, function () { return false; });
 }
 
-function normalizeStringArray(value) {
-  return Array.from({ length: PARTICIPANT_COUNT }, function (_, index) {
-    return value && value[index] !== undefined && value[index] !== null
+function normalizeStringArray(value, count) {
+  return Array.from({ length: count }, function (_, index) {
+    return Array.isArray(value) && value[index] !== undefined && value[index] !== null
       ? String(value[index])
       : "";
   });
 }
 
-function normalizeBooleanArray(value) {
-  return Array.from({ length: PARTICIPANT_COUNT }, function (_, index) {
-    return Boolean(value && value[index]);
+function normalizeBooleanArray(value, count) {
+  return Array.from({ length: count }, function (_, index) {
+    return Boolean(Array.isArray(value) && value[index]);
   });
 }
 
-function loadState() {
-  const fallback = createEmptyState();
+function inferParticipantCount(saved) {
+  if (saved && Number.isSafeInteger(saved.participantCount) && saved.participantCount >= 0) {
+    return saved.participantCount;
+  }
 
+  const arrays = [saved && saved.names, saved && saved.finalTieBreaks];
+  DISCIPLINES.forEach(function (discipline) {
+    arrays.push(saved && saved.results && saved.results[discipline.id]);
+    arrays.push(saved && saved.dnf && saved.dnf[discipline.id]);
+    arrays.push(saved && saved.tieBreaks && saved.tieBreaks[discipline.id]);
+  });
+
+  return arrays.reduce(function (count, value) {
+    return Array.isArray(value) ? Math.max(count, value.length) : count;
+  }, DEFAULT_PARTICIPANT_COUNT);
+}
+
+function participantCount() {
+  return state.names.length;
+}
+
+function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const saved = JSON.parse(raw);
-      fallback.names = normalizeStringArray(saved.names);
-      fallback.finalTieBreaks = normalizeStringArray(saved.finalTieBreaks);
+      const count = inferParticipantCount(saved);
+      const loaded = createEmptyState(count);
+      loaded.names = normalizeStringArray(saved.names, count);
+      loaded.finalTieBreaks = normalizeStringArray(saved.finalTieBreaks, count);
 
       DISCIPLINES.forEach(function (discipline) {
-        fallback.results[discipline.id] = normalizeStringArray(saved.results && saved.results[discipline.id]);
-        fallback.dnf[discipline.id] = normalizeBooleanArray(saved.dnf && saved.dnf[discipline.id]);
-        fallback.tieBreaks[discipline.id] = normalizeStringArray(saved.tieBreaks && saved.tieBreaks[discipline.id]);
+        loaded.results[discipline.id] = normalizeStringArray(saved.results && saved.results[discipline.id], count);
+        loaded.dnf[discipline.id] = normalizeBooleanArray(saved.dnf && saved.dnf[discipline.id], count);
+        loaded.tieBreaks[discipline.id] = normalizeStringArray(saved.tieBreaks && saved.tieBreaks[discipline.id], count);
       });
 
       if (DISCIPLINES.some(function (discipline) { return discipline.id === saved.activeDiscipline; })) {
-        fallback.activeDiscipline = saved.activeDiscipline;
+        loaded.activeDiscipline = saved.activeDiscipline;
       }
 
-      return fallback;
+      return loaded;
     }
 
     const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacyRaw) {
       const legacyRows = JSON.parse(legacyRaw);
       if (Array.isArray(legacyRows)) {
-        fallback.names = normalizeStringArray(legacyRows.map(function (row) {
+        const count = Math.max(DEFAULT_PARTICIPANT_COUNT, legacyRows.length);
+        const migrated = createEmptyState(count);
+        migrated.names = normalizeStringArray(legacyRows.map(function (row) {
           return row && row.name ? row.name : "";
-        }));
+        }), count);
+        return migrated;
       }
     }
   } catch (error) {
     // Poškozené úložiště nesmí zablokovat bodování.
   }
 
-  return fallback;
+  return createEmptyState();
 }
 
 function saveState() {
   try {
+    state.version = STATE_VERSION;
+    state.participantCount = participantCount();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    renderStorageStatus("saved", "● Uloženo automaticky v tomto prohlížeči");
   } catch (error) {
-    // Soukromý režim může localStorage zakázat; UI dál funguje v paměti.
+    renderStorageStatus("error", "⚠ Automatické uložení se nepodařilo — výsledky zůstanou jen do obnovení stránky");
   }
+}
+
+function renderStorageStatus(status, message) {
+  if (!refs.storageStatus || refs.storageStatus.dataset.state === status) return;
+  refs.storageStatus.dataset.state = status;
+  refs.storageStatus.textContent = message;
 }
 
 function makeElement(tagName, className, text) {
@@ -190,9 +228,11 @@ function makeElement(tagName, className, text) {
 
 function buildParticipantFields() {
   const fragment = document.createDocumentFragment();
+  const count = participantCount();
 
-  for (let index = 0; index < PARTICIPANT_COUNT; index += 1) {
-    const label = makeElement("label", "participant-field");
+  for (let index = 0; index < count; index += 1) {
+    const field = makeElement("div", "participant-field");
+    const label = makeElement("label", "participant-name-field");
     label.htmlFor = "participant-name-" + index;
 
     const number = makeElement("span", "participant-number", String(index + 1));
@@ -207,8 +247,19 @@ function buildParticipantFields() {
     input.dataset.participantName = String(index);
     input.setAttribute("aria-label", "Jméno soutěžícího " + (index + 1));
 
-    label.append(number, hiddenLabel, input);
-    fragment.append(label);
+    const removeButton = makeElement("button", "participant-remove", "×");
+    removeButton.type = "button";
+    removeButton.dataset.removeParticipant = String(index);
+    removeButton.setAttribute("aria-label", "Odebrat " + participantName(index));
+    removeButton.title = "Odebrat soutěžícího";
+
+    label.append(hiddenLabel, input);
+    field.append(number, label, removeButton);
+    fragment.append(field);
+  }
+
+  if (!count) {
+    fragment.append(makeElement("p", "participant-empty", "Zatím tu nikdo není. Přidej prvního soutěžícího."));
   }
 
   refs.participantGrid.append(fragment);
@@ -251,7 +302,7 @@ function buildDisciplineControls() {
 
     panel.append(intro, head);
 
-    for (let participantIndex = 0; participantIndex < PARTICIPANT_COUNT; participantIndex += 1) {
+    for (let participantIndex = 0; participantIndex < participantCount(); participantIndex += 1) {
       panel.append(buildResultRow(discipline, participantIndex));
     }
 
@@ -340,8 +391,18 @@ function bindEvents() {
     if (!input) return;
     const participantIndex = Number(input.dataset.participantName);
     state.names[participantIndex] = input.value;
+    const removeButton = input.closest(".participant-field").querySelector("[data-remove-participant]");
+    removeButton.setAttribute("aria-label", "Odebrat " + participantName(participantIndex));
     recalculate();
   });
+
+  refs.participantGrid.addEventListener("click", function (event) {
+    const button = event.target.closest("[data-remove-participant]");
+    if (!button) return;
+    removeParticipant(Number(button.dataset.removeParticipant));
+  });
+
+  document.getElementById("add-participant").addEventListener("click", addParticipant);
 
   refs.disciplineTabs.addEventListener("click", function (event) {
     const tab = event.target.closest("[data-discipline-tab]");
@@ -373,8 +434,8 @@ function bindEvents() {
     const disciplineId = input.dataset.resultInput;
     const participantIndex = Number(input.dataset.participant);
     state.results[disciplineId][participantIndex] = input.value;
-    state.tieBreaks[disciplineId] = emptyStringArray();
-    state.finalTieBreaks = emptyStringArray();
+    state.tieBreaks[disciplineId] = emptyStringArray(participantCount());
+    state.finalTieBreaks = emptyStringArray(participantCount());
     recalculate();
   });
 
@@ -384,8 +445,8 @@ function bindEvents() {
       const disciplineId = dnfInput.dataset.dnfInput;
       const participantIndex = Number(dnfInput.dataset.participant);
       state.dnf[disciplineId][participantIndex] = dnfInput.checked;
-      state.tieBreaks[disciplineId] = emptyStringArray();
-      state.finalTieBreaks = emptyStringArray();
+      state.tieBreaks[disciplineId] = emptyStringArray(participantCount());
+      state.finalTieBreaks = emptyStringArray(participantCount());
       recalculate();
       return;
     }
@@ -395,7 +456,7 @@ function bindEvents() {
       const disciplineId = tieInput.dataset.tiebreakInput;
       const participantIndex = Number(tieInput.dataset.participant);
       state.tieBreaks[disciplineId][participantIndex] = tieInput.value;
-      state.finalTieBreaks = emptyStringArray();
+      state.finalTieBreaks = emptyStringArray(participantCount());
       recalculate();
     }
   });
@@ -449,6 +510,56 @@ function hydrateControls() {
   setActiveDiscipline(state.activeDiscipline, false);
 }
 
+function rebuildParticipantControls() {
+  refs.participantGrid.replaceChildren();
+  refs.disciplineTabs.replaceChildren();
+  refs.disciplinePanels.replaceChildren();
+  buildParticipantFields();
+  buildDisciplineControls();
+  hydrateControls();
+}
+
+function addParticipant() {
+  const newIndex = participantCount();
+  state.names.push("");
+  state.finalTieBreaks.push("");
+
+  DISCIPLINES.forEach(function (discipline) {
+    state.results[discipline.id].push("");
+    state.dnf[discipline.id].push(false);
+    state.tieBreaks[discipline.id].push("");
+  });
+
+  rebuildParticipantControls();
+  recalculate();
+  document.getElementById("participant-name-" + newIndex).focus();
+}
+
+function removeParticipant(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= participantCount()) return;
+
+  const name = participantName(index);
+  const hasData = Boolean(state.names[index].trim()) || DISCIPLINES.some(function (discipline) {
+    return String(state.results[discipline.id][index]).trim() || state.dnf[discipline.id][index];
+  });
+
+  if (hasData && !window.confirm("Odebrat „" + name + "“? Smažou se i všechny jeho výsledky.")) return;
+
+  state.names.splice(index, 1);
+  DISCIPLINES.forEach(function (discipline) {
+    state.results[discipline.id].splice(index, 1);
+    state.dnf[discipline.id].splice(index, 1);
+    state.tieBreaks[discipline.id].splice(index, 1);
+  });
+  state.finalTieBreaks = emptyStringArray(participantCount());
+
+  rebuildParticipantControls();
+  recalculate();
+
+  const nextInput = document.getElementById("participant-name-" + Math.min(index, participantCount() - 1));
+  (nextInput || document.getElementById("add-participant")).focus();
+}
+
 function setActiveDiscipline(disciplineId, shouldSave) {
   if (!DISCIPLINES.some(function (discipline) { return discipline.id === disciplineId; })) return;
   state.activeDiscipline = disciplineId;
@@ -479,12 +590,13 @@ function recalculate() {
   latestRanking = rankParticipants(latestStats);
   renderLeaderboard(latestStats, latestRanking);
   renderScoreStatus(latestCalculations);
+  renderParticipantCount();
   updatePrintSheet();
   saveState();
 }
 
 function calculateDiscipline(discipline) {
-  const rows = Array.from({ length: PARTICIPANT_COUNT }, function (_, index) {
+  const rows = Array.from({ length: participantCount() }, function (_, index) {
     const raw = state.results[discipline.id][index];
     const isDnf = state.dnf[discipline.id][index];
     const parsed = parseResult(raw, discipline);
@@ -718,7 +830,7 @@ function populatePlaceOptions(select, count, selectedValue) {
 }
 
 function calculateParticipantStats(calculations) {
-  return Array.from({ length: PARTICIPANT_COUNT }, function (_, participantIndex) {
+  return Array.from({ length: participantCount() }, function (_, participantIndex) {
     const stat = {
       index: participantIndex,
       name: participantName(participantIndex),
@@ -961,10 +1073,16 @@ function renderScoreStatus(calculations) {
     invalid += calculation.invalidIndices.length;
   });
 
-  const parts = [completed + "/" + (PARTICIPANT_COUNT * DISCIPLINES.length) + " výsledků uzavřeno"];
+  const parts = [completed + "/" + (participantCount() * DISCIPLINES.length) + " výsledků uzavřeno"];
   if (unresolved) parts.push(unresolved + " rozstřel" + czechCountSuffix(unresolved, "", "y", "ů") + " čeká");
   if (invalid) parts.push(invalid + " chybn" + czechCountSuffix(invalid, "á hodnota", "é hodnoty", "ých hodnot"));
   refs.scoreStatus.textContent = parts.join(" · ");
+}
+
+function renderParticipantCount() {
+  const count = participantCount();
+  refs.participantCount.textContent = "Živé výsledky · " + count + " " +
+    czechCountSuffix(count, "soutěžící", "soutěžící", "soutěžících");
 }
 
 function czechCountSuffix(count, one, few, many) {
@@ -977,7 +1095,7 @@ function updatePrintSheet() {
   if (!refs.printScoreBody) return;
   refs.printScoreBody.replaceChildren();
 
-  for (let participantIndex = 0; participantIndex < PARTICIPANT_COUNT; participantIndex += 1) {
+  for (let participantIndex = 0; participantIndex < participantCount(); participantIndex += 1) {
     const row = makeElement("tr");
     const nameCell = makeElement(
       "td",
@@ -1040,7 +1158,7 @@ function resetScoreboard() {
     // UI se vynuluje i bez dostupného localStorage.
   }
 
-  hydrateControls();
+  rebuildParticipantControls();
   recalculate();
   document.getElementById("participant-name-0").focus();
 }

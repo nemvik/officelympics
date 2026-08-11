@@ -95,6 +95,7 @@
             <div class="place" style="--r:-.4deg"><strong>2</strong>7. místo</div>
             <div class="place" style="--r:.9deg"><strong>1</strong>8. místo</div>
           </div>
+          <p><b>Je vás víc než osm?</b> Soutěžit může každý; za 9. a další místo je 0 bodů, ale výkon i pořadí se normálně započítají.</p>
           <p><b>Shoda bodů:</b> více vítězství → více druhých míst → rozstřel hodem papírem do koše ze 4 metrů. Při další shodě se pokaždé ustoupí o 1 metr.</p>
           <p class="small scoring-note">Nedokončení nebo jasné porušení pravidel = 0 bodů v dané disciplíně. Rozhodčí má vždy pravdu, i když ji evidentně nemá.</p>
         </div>
@@ -200,9 +201,10 @@
         <div class="scoreboard-shell">
           <div class="score-toolbar">
             <div>
-              <span class="eyebrow">Živé výsledky pro 8 lidí</span>
+              <span class="eyebrow" id="participant-count">Živé výsledky · 8 soutěžících</span>
               <h3>Zapiš výkon. Pořadí spočítáme.</h3>
-              <p>Výsledky se ukládají v tomto prohlížeči. Shodu web označí a vyžádá si pořadí rozstřelu.</p>
+              <p>Shodu web označí a vyžádá si pořadí rozstřelu.</p>
+              <p class="storage-status" id="storage-status" data-state="waiting" role="status" aria-live="polite">● Připravuji automatické ukládání…</p>
             </div>
             <div class="score-actions">
               <button id="print-scores" type="button">🖨️ Bodovací arch</button>
@@ -216,7 +218,10 @@
                 <span class="eyebrow">Krok 1</span>
                 <h3>Soutěžící</h3>
               </div>
-              <p>Jméno stačí zadat jednou.</p>
+              <div class="participant-heading-actions">
+                <p>Počet lidí můžeš kdykoli změnit.</p>
+                <button class="add-participant" id="add-participant" type="button">＋ Přidat soutěžícího</button>
+              </div>
             </div>
             <div class="participant-grid" id="participant-grid"></div>
           </div>
@@ -280,7 +285,7 @@
       <tbody id="print-score-body"></tbody>
     </table>
     <div class="print-legend">
-      <b>Body:</b> 1. = 10 · 2. = 8 · 3. = 6 · 4. = 5 · 5. = 4 · 6. = 3 · 7. = 2 · 8. = 1
+      <b>Body:</b> 1. = 10 · 2. = 8 · 3. = 6 · 4. = 5 · 5. = 4 · 6. = 3 · 7. = 2 · 8. = 1 · další = 0
       <span>Shoda celkem: více vítězství → více druhých míst → rozstřel.</span>
     </div>
   </section>

@@ -548,6 +548,27 @@ h1 {
   color: var(--muted);
 }
 
+.score-toolbar .storage-status {
+  width: fit-content;
+  margin-top: 10px;
+  padding: 5px 9px;
+  color: var(--muted);
+  background: #eeeae2;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.score-toolbar .storage-status[data-state="saved"] {
+  color: var(--green);
+  background: #e2f5e9;
+}
+
+.score-toolbar .storage-status[data-state="error"] {
+  color: var(--red);
+  background: #fff1ef;
+}
+
 .score-actions {
   display: flex;
   flex-wrap: wrap;
@@ -579,6 +600,26 @@ button.danger {
   gap: 16px;
 }
 
+.participant-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.participant-heading-actions p {
+  margin: 0;
+  text-align: right;
+}
+
+.add-participant {
+  padding: 8px 12px;
+  color: var(--ink);
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--pink);
+}
+
 .participant-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -588,12 +629,16 @@ button.danger {
 
 .participant-field {
   display: grid;
-  grid-template-columns: 31px minmax(0, 1fr);
+  grid-template-columns: 31px minmax(0, 1fr) 34px;
   align-items: center;
   overflow: hidden;
   background: var(--paper-2);
   border: 2px solid var(--line);
   border-radius: 9px;
+}
+
+.participant-name-field {
+  min-width: 0;
 }
 
 .participant-field:focus-within {
@@ -619,6 +664,38 @@ button.danger {
   border: 0;
   outline: 0;
   font-weight: 700;
+}
+
+.participant-remove {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  color: #8d003f;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  box-shadow: none;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.participant-remove:hover {
+  background: #ffe6f1;
+  border-color: #8d003f;
+}
+
+.participant-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 18px;
+  color: var(--muted);
+  background: var(--paper-2);
+  border: 2px dashed var(--line);
+  border-radius: 9px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .score-status {
@@ -1181,6 +1258,15 @@ button.danger {
     justify-content: flex-start;
   }
 
+  .participant-heading-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .participant-heading-actions p {
+    text-align: left;
+  }
+
   .result-head {
     display: none;
   }
@@ -1336,6 +1422,15 @@ button.danger {
 
   .score-actions button {
     flex: 1 1 auto;
+  }
+
+  .participant-heading-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .add-participant {
+    width: 100%;
   }
 }
 
@@ -1561,6 +1656,14 @@ button.danger {
     margin-top: 5mm;
     border-collapse: collapse;
     table-layout: fixed;
+  }
+
+  .paper-score-table thead {
+    display: table-header-group;
+  }
+
+  .paper-score-table tr {
+    break-inside: avoid;
   }
 
   .paper-score-table th,

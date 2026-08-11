@@ -271,6 +271,34 @@ h1 {
   font-size: 18px;
 }
 
+.signup-link {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 20px;
+  padding: 14px 20px;
+  color: #fff;
+  background: var(--navy);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 5px 5px 0 var(--yellow);
+  font-size: 18px;
+  font-weight: 1000;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.signup-link:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 7px 7px 0 var(--yellow);
+}
+
+.signup-link:active {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 var(--yellow);
+}
+
 .notice {
   margin-top: 18px;
   padding: 14px 16px;
@@ -1431,6 +1459,10 @@ button.danger {
   .notice {
     padding: 3mm;
     font-size: 10pt;
+  }
+
+  .signup-link {
+    display: none;
   }
 
   section {

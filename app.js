@@ -5,6 +5,7 @@ const STATE_VERSION = 3;
 const STORAGE_KEY = "officelympicsScoreboardV2";
 const LEGACY_STORAGE_KEY = "officelympicsScoreboard";
 const POINTS = Object.freeze({ 1: 10, 2: 8, 3: 6, 4: 5, 5: 4, 6: 3, 7: 2, 8: 1 });
+const CONFETTI_COLORS = Object.freeze(["#ff0f7b", "#ffd51f", "#48a7ff", "#55e895", "#ff5b4d", "#ffffff"]);
 
 const DISCIPLINES = Object.freeze([
   {
@@ -63,6 +64,8 @@ let state = loadState();
 let latestCalculations = {};
 let latestStats = [];
 let latestRanking = { ranked: [], finalGroups: [], byIndex: new Map() };
+let confettiCleanupTimer = null;
+let winnerRevealReturnFocus = null;
 
 const refs = {};
 
@@ -77,8 +80,14 @@ function init() {
   refs.scoreStatus = document.getElementById("score-status");
   refs.leaderboardList = document.getElementById("leaderboard-list");
   refs.leaderboardNote = document.getElementById("leaderboard-note");
+  refs.leaderboardToggle = document.getElementById("leaderboard-toggle");
+  refs.leaderboardContent = document.getElementById("leaderboard-content");
+  refs.leaderboardTeaser = document.getElementById("leaderboard-teaser");
   refs.finalTiebreaks = document.getElementById("final-tiebreaks");
   refs.printScoreBody = document.getElementById("print-score-body");
+  refs.winnerReveal = document.getElementById("winner-reveal");
+  refs.winnerClose = refs.winnerReveal.querySelector(".winner-close");
+  refs.confettiLayer = document.getElementById("confetti-layer");
 
   buildParticipantFields();
   buildDisciplineControls();
@@ -467,6 +476,19 @@ function bindEvents() {
     state.finalTieBreaks[Number(select.dataset.finalTiebreak)] = select.value;
     recalculate();
   });
+
+  refs.leaderboardToggle.addEventListener("click", function () {
+    setLeaderboardVisibility(refs.leaderboardToggle.getAttribute("aria-expanded") !== "true");
+  });
+
+  document.getElementById("announce-winners").addEventListener("click", announceWinners);
+  document.getElementById("replay-confetti").addEventListener("click", launchConfetti);
+
+  refs.winnerReveal.addEventListener("click", function (event) {
+    if (event.target.closest("[data-close-winners]")) closeWinnerReveal();
+  });
+
+  document.addEventListener("keydown", handleWinnerRevealKeydown);
 
   document.getElementById("print-rules").addEventListener("click", function () {
     startPrint("rules");
@@ -957,6 +979,14 @@ function sameTieKeys(left, right) {
     left.seconds === right.seconds;
 }
 
+function setLeaderboardVisibility(visible) {
+  refs.leaderboardContent.hidden = !visible;
+  refs.leaderboardTeaser.hidden = visible;
+  refs.leaderboardToggle.setAttribute("aria-expanded", String(visible));
+  refs.leaderboardToggle.setAttribute("aria-label", visible ? "Skrýt živý žebříček" : "Zobrazit živý žebříček");
+  refs.leaderboardToggle.textContent = visible ? "🙈 Skrýt" : "👀 Ukázat";
+}
+
 function renderLeaderboard(stats, ranking) {
   refs.leaderboardList.replaceChildren();
 
@@ -1076,6 +1106,7 @@ function renderScoreStatus(calculations) {
   const parts = [completed + "/" + (participantCount() * DISCIPLINES.length) + " výsledků uzavřeno"];
   if (unresolved) parts.push(unresolved + " rozstřel" + czechCountSuffix(unresolved, "", "y", "ů") + " čeká");
   if (invalid) parts.push(invalid + " chybn" + czechCountSuffix(invalid, "á hodnota", "é hodnoty", "ých hodnot"));
+  refs.scoreStatus.removeAttribute("data-state");
   refs.scoreStatus.textContent = parts.join(" · ");
 }
 
@@ -1089,6 +1120,134 @@ function czechCountSuffix(count, one, few, many) {
   if (count === 1) return one;
   if (count >= 2 && count <= 4) return few;
   return many;
+}
+
+function announceWinners() {
+  const issue = winnerAnnouncementIssue();
+
+  if (issue) {
+    refs.scoreStatus.dataset.state = "warning";
+    refs.scoreStatus.textContent = "🏁 " + issue;
+    refs.scoreStatus.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    return;
+  }
+
+  [1, 2, 3].forEach(function (place) {
+    const winner = latestRanking.ranked.find(function (item) { return item.rank === place; });
+    refs.winnerReveal.querySelector("[data-winner-name='" + place + "']").textContent = winner.stat.name;
+    refs.winnerReveal.querySelector("[data-winner-points='" + place + "']").textContent =
+      winner.stat.total + " " + czechCountSuffix(winner.stat.total, "bod", "body", "bodů");
+  });
+
+  winnerRevealReturnFocus = document.activeElement;
+  refs.winnerReveal.hidden = false;
+  document.body.classList.add("winner-reveal-open");
+  window.requestAnimationFrame(function () {
+    refs.winnerReveal.classList.add("is-visible");
+    refs.winnerClose.focus();
+  });
+  launchConfetti();
+}
+
+function winnerAnnouncementIssue() {
+  const competitors = latestStats.filter(function (stat) {
+    return stat.hasAny || state.names[stat.index].trim();
+  });
+
+  if (competitors.length < 3) {
+    return "Pro stupně vítězů jsou potřeba alespoň tři soutěžící s výsledky.";
+  }
+
+  const incomplete = competitors.filter(function (stat) {
+    return stat.completedCount < DISCIPLINES.length || stat.pending;
+  });
+
+  if (incomplete.length) {
+    return "Nejdřív uzavři všech pět disciplín a jejich rozstřely.";
+  }
+
+  if (latestRanking.finalGroups.some(function (group) { return !group.resolved; })) {
+    return "Otevři živý žebříček a rozhodni celkový rozstřel.";
+  }
+
+  const hasFullPodium = [1, 2, 3].every(function (place) {
+    return latestRanking.ranked.some(function (item) { return item.rank === place && !item.shared; });
+  });
+
+  if (!hasFullPodium) {
+    return "Konečné pořadí ještě není rozhodnuté.";
+  }
+
+  return "";
+}
+
+function closeWinnerReveal() {
+  if (refs.winnerReveal.hidden) return;
+  refs.winnerReveal.classList.remove("is-visible");
+  refs.winnerReveal.hidden = true;
+  document.body.classList.remove("winner-reveal-open");
+  clearConfetti();
+
+  if (winnerRevealReturnFocus && typeof winnerRevealReturnFocus.focus === "function") {
+    winnerRevealReturnFocus.focus();
+  }
+  winnerRevealReturnFocus = null;
+}
+
+function handleWinnerRevealKeydown(event) {
+  if (refs.winnerReveal.hidden) return;
+
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeWinnerReveal();
+    return;
+  }
+
+  if (event.key !== "Tab") return;
+  const focusable = Array.from(refs.winnerReveal.querySelectorAll("button:not([disabled])"));
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function launchConfetti() {
+  clearConfetti();
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const fragment = document.createDocumentFragment();
+  for (let index = 0; index < 150; index += 1) {
+    const piece = makeElement("i", "confetti-piece");
+    const size = 6 + Math.random() * 8;
+    piece.style.left = Math.random() * 100 + "%";
+    piece.style.width = size + "px";
+    piece.style.height = size * (0.45 + Math.random() * 0.8) + "px";
+    piece.style.background = CONFETTI_COLORS[index % CONFETTI_COLORS.length];
+    piece.style.borderRadius = index % 4 === 0 ? "50%" : "2px";
+    piece.style.setProperty("--confetti-drift", -150 + Math.random() * 300 + "px");
+    piece.style.setProperty("--confetti-spin", 360 + Math.random() * 1080 + "deg");
+    piece.style.animationDelay = Math.random() * 1.2 + "s";
+    piece.style.animationDuration = 3 + Math.random() * 2.4 + "s";
+    fragment.append(piece);
+  }
+
+  refs.confettiLayer.append(fragment);
+  confettiCleanupTimer = window.setTimeout(clearConfetti, 7000);
+}
+
+function clearConfetti() {
+  if (confettiCleanupTimer !== null) {
+    window.clearTimeout(confettiCleanupTimer);
+    confettiCleanupTimer = null;
+  }
+  if (refs.confettiLayer) refs.confettiLayer.replaceChildren();
 }
 
 function updatePrintSheet() {

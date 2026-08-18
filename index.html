@@ -207,6 +207,7 @@
               <p class="storage-status" id="storage-status" data-state="waiting" role="status" aria-live="polite">● Připravuji automatické ukládání…</p>
             </div>
             <div class="score-actions">
+              <button class="announce-winners" id="announce-winners" type="button">🎉 Vyhlásit vítěze</button>
               <button id="print-scores" type="button">🖨️ Bodovací arch</button>
               <button class="danger" id="reset-scoreboard" type="button">♻️ Vynulovat skóre</button>
             </div>
@@ -247,11 +248,23 @@
                   <span class="eyebrow">Průběžně</span>
                   <h3 id="leaderboard-title">Živý žebříček</h3>
                 </div>
-                <span class="live-dot"><span aria-hidden="true"></span> live</span>
+                <button
+                  class="leaderboard-toggle"
+                  id="leaderboard-toggle"
+                  type="button"
+                  aria-label="Zobrazit živý žebříček"
+                  aria-expanded="false"
+                  aria-controls="leaderboard-content">
+                  👀 Ukázat
+                </button>
               </div>
-              <div class="leaderboard-list" id="leaderboard-list"></div>
-              <div id="final-tiebreaks"></div>
-              <p class="leaderboard-note" id="leaderboard-note">Pořadí se objeví po zadání prvního výsledku.</p>
+              <p class="leaderboard-teaser" id="leaderboard-teaser">Pořadí je schované. Ať je to trochu napínavé.</p>
+              <div class="leaderboard-content" id="leaderboard-content" hidden>
+                <div class="leaderboard-live-label"><span class="live-dot"><span aria-hidden="true"></span> live</span></div>
+                <div class="leaderboard-list" id="leaderboard-list"></div>
+                <div id="final-tiebreaks"></div>
+                <p class="leaderboard-note" id="leaderboard-note">Pořadí se objeví po zadání prvního výsledku.</p>
+              </div>
             </aside>
           </div>
         </div>
@@ -259,6 +272,60 @@
 
       <div class="foot"><span>5 disciplín</span> · 0 pojištění · věčná sláva <span>(a jedna stížnost na BOZP)</span></div>
     </main>
+  </div>
+
+  <div class="winner-reveal" id="winner-reveal" hidden>
+    <div class="winner-backdrop" data-close-winners></div>
+    <section
+      class="winner-stage"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="winner-reveal-title"
+      aria-describedby="winner-reveal-copy">
+      <button class="winner-close" type="button" data-close-winners aria-label="Zavřít vyhlášení vítězů">×</button>
+      <span class="winner-kicker">Officelympics 2026 · konečné pořadí</span>
+      <h2 id="winner-reveal-title">Máme vítěze!</h2>
+      <p id="winner-reveal-copy">Potlesk je povinný. Sportovní protesty přijímáme zítra.</p>
+
+      <div class="ceremony-podium" aria-label="Stupně vítězů">
+        <article class="ceremony-place" data-place="1">
+          <div class="ceremony-person">
+            <span class="ceremony-medal" aria-hidden="true">🥇</span>
+            <strong class="ceremony-name" data-winner-name="1">—</strong>
+            <span class="ceremony-points" data-winner-points="1">— bodů</span>
+          </div>
+          <div class="ceremony-step">
+            <strong>1</strong>
+            <span>místo</span>
+          </div>
+        </article>
+        <article class="ceremony-place" data-place="2">
+          <div class="ceremony-person">
+            <span class="ceremony-medal" aria-hidden="true">🥈</span>
+            <strong class="ceremony-name" data-winner-name="2">—</strong>
+            <span class="ceremony-points" data-winner-points="2">— bodů</span>
+          </div>
+          <div class="ceremony-step">
+            <strong>2</strong>
+            <span>místo</span>
+          </div>
+        </article>
+        <article class="ceremony-place" data-place="3">
+          <div class="ceremony-person">
+            <span class="ceremony-medal" aria-hidden="true">🥉</span>
+            <strong class="ceremony-name" data-winner-name="3">—</strong>
+            <span class="ceremony-points" data-winner-points="3">— bodů</span>
+          </div>
+          <div class="ceremony-step">
+            <strong>3</strong>
+            <span>místo</span>
+          </div>
+        </article>
+      </div>
+
+      <button class="replay-confetti" id="replay-confetti" type="button">🎊 Ještě jednou!</button>
+    </section>
+    <div class="confetti-layer" id="confetti-layer" aria-hidden="true"></div>
   </div>
 
   <section class="print-score-sheet" id="print-score-sheet" aria-hidden="true">

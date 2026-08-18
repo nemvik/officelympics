@@ -124,6 +124,7 @@
               <li><b>Rozeběh je povolen.</b> Po překročení startovní čáry se soutěžící nesmí dotknout země.</li>
               <li>Dráha není vyznačená; kancelářské překážky zůstávají součástí reality.</li>
               <li>Kontakt s překážkou pokus neukončuje. Měří se místo, kde se zastavil <b>střed pístu židle</b>.</li>
+              <li>Do bodovacího centra se zapisuje <b>konečné pořadí</b>, ne vzdálenost v metrech.</li>
               <li>Není dovoleno odstrkovat se od nábytku ani využít pomoc kolegy.</li>
             </ul>
             <div class="badge">⚠️ Doporučeno: odstranit ostré a křehké předměty z trajektorie.</div>
@@ -149,6 +150,7 @@
               <li>Vlaštovku si každý skládá sám; čas na výrobu je <b>5 minut</b>.</li>
               <li>Každý má <b>3 hody</b>; počítá se nejdelší.</li>
               <li>Měří se vzdálenost od startovní čáry až k místu, kde se vlaštovka <b>definitivně zastaví</b>.</li>
+              <li>Do bodovacího centra se zapisuje <b>konečné pořadí</b>, ne vzdálenost v metrech.</li>
               <li><b>Následné klouzání se započítává.</b> Odraz od kolegy nikoliv.</li>
             </ul>
           </article>
@@ -220,7 +222,15 @@
                 <h3>Soutěžící</h3>
               </div>
               <div class="participant-heading-actions">
-                <p>Počet lidí můžeš kdykoli změnit.</p>
+                <p>Vyplň všechna jména a zamíchej startovní pořadí.</p>
+                <button
+                  class="shuffle-participants"
+                  id="shuffle-participants"
+                  type="button"
+                  disabled
+                  title="Nejdřív vyplň všechna jména">
+                  🔀 Zamíchat pořadí
+                </button>
                 <button class="add-participant" id="add-participant" type="button">＋ Přidat soutěžícího</button>
               </div>
             </div>
@@ -236,7 +246,7 @@
                   <span class="eyebrow">Krok 2</span>
                   <h3>Výsledky disciplín</h3>
                 </div>
-                <p>Vyšší výkon je vždy lepší.</p>
+                <p>U jízdy a vlaštovky zadávej konečné místo.</p>
               </div>
               <div class="discipline-tabs" id="discipline-tabs" role="tablist" aria-label="Disciplíny"></div>
               <div id="discipline-panels"></div>
@@ -341,9 +351,9 @@
         <tr>
           <th>Soutěžící</th>
           <th>Otočky<br><small>výsledek / místo</small></th>
-          <th>Jízda<br><small>m / místo</small></th>
+          <th>Jízda<br><small>pořadí</small></th>
           <th>Skok<br><small>cm / místo</small></th>
-          <th>Vlaštovka<br><small>m / místo</small></th>
+          <th>Vlaštovka<br><small>pořadí</small></th>
           <th>Koš<br><small>body / místo</small></th>
           <th>Celkem</th>
           <th>Pořadí</th>

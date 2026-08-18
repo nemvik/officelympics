@@ -76,6 +76,12 @@ button:active {
   transform: translateY(0);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+  transform: none;
+}
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -609,6 +615,7 @@ button.danger {
 
 .participant-heading-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
@@ -627,11 +634,50 @@ button.danger {
   box-shadow: 3px 3px 0 var(--pink);
 }
 
+.shuffle-participants {
+  padding: 8px 12px;
+  color: #fff;
+  background: var(--blue);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--yellow);
+}
+
+.shuffle-participants:disabled {
+  color: var(--muted);
+  background: #eeeae2;
+  border-color: var(--line);
+  box-shadow: none;
+}
+
 .participant-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-top: 14px;
+}
+
+.participant-grid.is-shuffled .participant-field {
+  animation: participant-shuffle-in .48s cubic-bezier(.2, .8, .25, 1.15) both;
+}
+
+.participant-grid.is-shuffled .participant-field:nth-child(2n) {
+  animation-delay: .045s;
+}
+
+.participant-grid.is-shuffled .participant-field:nth-child(3n) {
+  animation-delay: .09s;
+}
+
+@keyframes participant-shuffle-in {
+  0% {
+    opacity: .1;
+    transform: translateY(-12px) rotate(-2deg) scale(.96);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
 }
 
 .participant-field {
@@ -719,6 +765,15 @@ button.danger {
   color: #5b3e00;
   background: #fff3b1;
   border: 2px solid #9d6c00;
+  border-radius: 8px;
+}
+
+.score-status[data-state="success"] {
+  width: fit-content;
+  padding: 8px 11px;
+  color: var(--green);
+  background: #e2f5e9;
+  border: 2px solid var(--green);
   border-radius: 8px;
 }
 
@@ -1895,7 +1950,7 @@ body.winner-reveal-open {
     flex-direction: column;
   }
 
-  .add-participant {
+  .participant-heading-actions button {
     width: 100%;
   }
 }
@@ -1913,6 +1968,10 @@ body.winner-reveal-open {
   }
 
   .confetti-piece {
+    animation: none !important;
+  }
+
+  .participant-grid.is-shuffled .participant-field {
     animation: none !important;
   }
 }

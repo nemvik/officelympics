@@ -22,11 +22,12 @@ const DISCIPLINES = Object.freeze([
     id: "ride",
     short: "Jízda",
     name: "Jízda na židli",
-    unit: "m",
-    step: 0.01,
-    min: 0,
+    unit: "místo",
+    step: 1,
+    min: 1,
     max: null,
-    hint: "Zadej délku lepší platné jízdy v metrech."
+    entry: "placement",
+    hint: "Zadej konečné pořadí (1 = první místo, 2 = druhé místo…)."
   },
   {
     id: "jump",
@@ -42,11 +43,12 @@ const DISCIPLINES = Object.freeze([
     id: "plane",
     short: "Vlaštovka",
     name: "Vlaštovka do dálky",
-    unit: "m",
-    step: 0.01,
-    min: 0,
+    unit: "místo",
+    step: 1,
+    min: 1,
     max: null,
-    hint: "Zadej délku nejdelšího hodu v metrech."
+    entry: "placement",
+    hint: "Zadej konečné pořadí (1 = první místo, 2 = druhé místo…)."
   },
   {
     id: "basket",
@@ -65,6 +67,7 @@ let latestCalculations = {};
 let latestStats = [];
 let latestRanking = { ranked: [], finalGroups: [], byIndex: new Map() };
 let confettiCleanupTimer = null;
+let shuffleAnimationTimer = null;
 let winnerRevealReturnFocus = null;
 
 const refs = {};
@@ -74,6 +77,7 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   refs.participantGrid = document.getElementById("participant-grid");
   refs.participantCount = document.getElementById("participant-count");
+  refs.shuffleParticipants = document.getElementById("shuffle-participants");
   refs.storageStatus = document.getElementById("storage-status");
   refs.disciplineTabs = document.getElementById("discipline-tabs");
   refs.disciplinePanels = document.getElementById("discipline-panels");
@@ -305,7 +309,8 @@ function buildDisciplineControls() {
     intro.append(introCopy, makeElement("span", "unit-badge", "Jednotka: " + discipline.unit));
 
     const head = makeElement("div", "result-head");
-    ["Soutěžící", "Výsledek", "DNF", "Místo", "Body"].forEach(function (heading) {
+    const resultHeading = discipline.entry === "placement" ? "Pořadí" : "Výsledek";
+    ["Soutěžící", resultHeading, "DNF", "Místo", "Body"].forEach(function (heading) {
       head.append(makeElement("span", "", heading));
     });
 
@@ -341,9 +346,10 @@ function buildResultRow(discipline, participantIndex) {
   participant.append(number, participantName);
 
   const resultField = makeElement("div", "result-field");
-  resultField.append(makeElement("span", "mobile-field-label", "Výsledek"));
+  const resultHeading = discipline.entry === "placement" ? "Pořadí" : "Výsledek";
+  resultField.append(makeElement("span", "mobile-field-label", resultHeading));
 
-  const inputLabel = makeElement("label", "sr-only", discipline.name + " – výsledek – " + fallbackName(participantIndex));
+  const inputLabel = makeElement("label", "sr-only", discipline.name + " – " + resultHeading.toLowerCase() + " – " + fallbackName(participantIndex));
   inputLabel.htmlFor = "result-" + discipline.id + "-" + participantIndex;
   inputLabel.dataset.resultInputLabel = String(participantIndex);
 
@@ -351,13 +357,14 @@ function buildResultRow(discipline, participantIndex) {
   const input = makeElement("input");
   input.id = "result-" + discipline.id + "-" + participantIndex;
   input.type = "number";
-  input.inputMode = "decimal";
+  input.inputMode = discipline.entry === "placement" ? "numeric" : "decimal";
   input.min = String(discipline.min);
   input.step = String(discipline.step);
-  if (discipline.max !== null) input.max = String(discipline.max);
+  if (discipline.entry === "placement") input.max = String(participantCount());
+  else if (discipline.max !== null) input.max = String(discipline.max);
   input.dataset.resultInput = discipline.id;
   input.dataset.participant = String(participantIndex);
-  input.setAttribute("aria-label", discipline.name + " – výsledek – " + fallbackName(participantIndex));
+  input.setAttribute("aria-label", discipline.name + " – " + resultHeading.toLowerCase() + " – " + fallbackName(participantIndex));
 
   const unit = makeElement("span", "input-unit", discipline.unit);
   unit.setAttribute("aria-hidden", "true");
@@ -412,6 +419,7 @@ function bindEvents() {
   });
 
   document.getElementById("add-participant").addEventListener("click", addParticipant);
+  refs.shuffleParticipants.addEventListener("click", shuffleParticipants);
 
   refs.disciplineTabs.addEventListener("click", function (event) {
     const tab = event.target.closest("[data-discipline-tab]");
@@ -557,6 +565,48 @@ function addParticipant() {
   document.getElementById("participant-name-" + newIndex).focus();
 }
 
+function shuffleParticipants() {
+  const count = participantCount();
+  if (count < 2 || state.names.some(function (name) { return !name.trim(); })) return;
+
+  const order = Array.from({ length: count }, function (_, index) { return index; });
+  for (let current = order.length - 1; current > 0; current -= 1) {
+    const randomIndex = Math.floor(Math.random() * (current + 1));
+    const original = order[current];
+    order[current] = order[randomIndex];
+    order[randomIndex] = original;
+  }
+
+  if (order.every(function (originalIndex, newIndex) { return originalIndex === newIndex; })) {
+    order.push(order.shift());
+  }
+
+  state.names = reorderParticipants(state.names, order);
+  state.finalTieBreaks = reorderParticipants(state.finalTieBreaks, order);
+  DISCIPLINES.forEach(function (discipline) {
+    state.results[discipline.id] = reorderParticipants(state.results[discipline.id], order);
+    state.dnf[discipline.id] = reorderParticipants(state.dnf[discipline.id], order);
+    state.tieBreaks[discipline.id] = reorderParticipants(state.tieBreaks[discipline.id], order);
+  });
+
+  rebuildParticipantControls();
+  recalculate();
+  refs.participantGrid.classList.remove("is-shuffled");
+  refs.participantGrid.getBoundingClientRect();
+  refs.participantGrid.classList.add("is-shuffled");
+  if (shuffleAnimationTimer !== null) window.clearTimeout(shuffleAnimationTimer);
+  shuffleAnimationTimer = window.setTimeout(function () {
+    refs.participantGrid.classList.remove("is-shuffled");
+    shuffleAnimationTimer = null;
+  }, 650);
+  refs.scoreStatus.dataset.state = "success";
+  refs.scoreStatus.textContent = "✓ Startovní pořadí je zamíchané a uložené.";
+}
+
+function reorderParticipants(values, order) {
+  return order.map(function (originalIndex) { return values[originalIndex]; });
+}
+
 function removeParticipant(index) {
   if (!Number.isInteger(index) || index < 0 || index >= participantCount()) return;
 
@@ -674,6 +724,10 @@ function calculateDiscipline(discipline) {
     };
   });
 
+  if (discipline.entry === "placement") {
+    return calculatePlacementDiscipline(rows);
+  }
+
   const entries = rows
     .filter(function (row) { return row.status === "ready"; })
     .sort(function (left, right) {
@@ -736,7 +790,36 @@ function calculateDiscipline(discipline) {
   return {
     rows: rows,
     unresolvedGroups: unresolvedGroups,
-    invalidIndices: rows.filter(function (row) { return row.status === "invalid"; }).map(function (row) { return row.index; })
+    invalidIndices: rows.filter(function (row) { return row.status === "invalid"; }).map(function (row) { return row.index; }),
+    duplicateGroups: []
+  };
+}
+
+function calculatePlacementDiscipline(rows) {
+  const byPlace = new Map();
+  rows
+    .filter(function (row) { return row.status === "ready"; })
+    .forEach(function (row) {
+      if (!byPlace.has(row.value)) byPlace.set(row.value, []);
+      byPlace.get(row.value).push(row);
+    });
+
+  const duplicateGroups = [];
+  byPlace.forEach(function (group) {
+    if (group.length === 1) {
+      assignPlace(group[0], group[0].value);
+      return;
+    }
+
+    group.forEach(function (row) { row.status = "duplicate"; });
+    duplicateGroups.push(group.map(function (row) { return row.index; }));
+  });
+
+  return {
+    rows: rows,
+    unresolvedGroups: [],
+    invalidIndices: rows.filter(function (row) { return row.status === "invalid"; }).map(function (row) { return row.index; }),
+    duplicateGroups: duplicateGroups
   };
 }
 
@@ -746,7 +829,9 @@ function parseResult(raw, discipline) {
   }
 
   const value = Number(String(raw).trim().replace(",", "."));
-  if (!Number.isFinite(value) || value < discipline.min || (discipline.max !== null && value > discipline.max)) {
+  const maximum = discipline.entry === "placement" ? participantCount() : discipline.max;
+  const requiresInteger = discipline.entry === "placement" && !Number.isInteger(value);
+  if (!Number.isFinite(value) || requiresInteger || value < discipline.min || (maximum !== null && value > maximum)) {
     return { status: "invalid", value: value };
   }
 
@@ -773,10 +858,11 @@ function renderDiscipline(discipline, calculation) {
     const pointsOutput = row.querySelector("[data-points-output]");
     const tieField = row.querySelector("[data-tiebreak-field]");
     const tieSelect = row.querySelector("[data-tiebreak-input]");
+    const resultHeading = discipline.entry === "placement" ? "pořadí" : "výsledek";
 
     nameOutput.textContent = name;
-    resultLabel.textContent = discipline.name + " – výsledek – " + name;
-    resultInput.setAttribute("aria-label", discipline.name + " – výsledek – " + name);
+    resultLabel.textContent = discipline.name + " – " + resultHeading + " – " + name;
+    resultInput.setAttribute("aria-label", discipline.name + " – " + resultHeading + " – " + name);
     dnfInput.setAttribute("aria-label", discipline.name + " – DNF – " + name);
     placeOutput.setAttribute("aria-label", discipline.name + " – umístění – " + name);
     pointsOutput.setAttribute("aria-label", discipline.name + " – body – " + name);
@@ -787,9 +873,10 @@ function renderDiscipline(discipline, calculation) {
       resultInput.value = state.results[discipline.id][rowState.index];
     }
 
-    resultInput.setAttribute("aria-invalid", String(rowState.status === "invalid"));
+    const hasEntryError = rowState.status === "invalid" || rowState.status === "duplicate";
+    resultInput.setAttribute("aria-invalid", String(hasEntryError));
     row.classList.toggle("is-tie", rowState.status === "tie");
-    row.classList.toggle("is-invalid", rowState.status === "invalid");
+    row.classList.toggle("is-invalid", hasEntryError);
     row.classList.toggle("is-dnf", rowState.status === "dnf");
 
     if (rowState.status === "scored") {
@@ -803,6 +890,9 @@ function renderDiscipline(discipline, calculation) {
       pointsOutput.textContent = "0 b";
     } else if (rowState.status === "invalid") {
       placeOutput.textContent = "chyba";
+      pointsOutput.textContent = "—";
+    } else if (rowState.status === "duplicate") {
+      placeOutput.textContent = "duplicitní";
       pointsOutput.textContent = "—";
     } else {
       placeOutput.textContent = "—";
@@ -830,6 +920,9 @@ function renderDiscipline(discipline, calculation) {
   if (calculation.invalidIndices.length) {
     messages.push("Mimo povolený rozsah: " + calculation.invalidIndices.map(participantName).join(", ") + ".");
   }
+  calculation.duplicateGroups.forEach(function (indices) {
+    messages.push("Stejné pořadí: " + indices.map(participantName).join(", ") + ". Každé místo může být jen jednou.");
+  });
 
   const alert = panel.querySelector("[data-panel-alert]");
   alert.textContent = messages.join(" ");
@@ -868,7 +961,7 @@ function calculateParticipantStats(calculations) {
       const row = calculations[discipline.id].rows[participantIndex];
 
       if (row.status !== "empty") stat.hasAny = true;
-      if (row.status === "tie" || row.status === "invalid") stat.pending = true;
+      if (row.status === "tie" || row.status === "invalid" || row.status === "duplicate") stat.pending = true;
 
       if (row.status === "scored") {
         stat.completedCount += 1;
@@ -1093,6 +1186,7 @@ function renderScoreStatus(calculations) {
   let completed = 0;
   let unresolved = 0;
   let invalid = 0;
+  let placementConflicts = 0;
 
   DISCIPLINES.forEach(function (discipline) {
     const calculation = calculations[discipline.id];
@@ -1101,11 +1195,13 @@ function renderScoreStatus(calculations) {
     }).length;
     unresolved += calculation.unresolvedGroups.length;
     invalid += calculation.invalidIndices.length;
+    placementConflicts += calculation.duplicateGroups.length;
   });
 
   const parts = [completed + "/" + (participantCount() * DISCIPLINES.length) + " výsledků uzavřeno"];
   if (unresolved) parts.push(unresolved + " rozstřel" + czechCountSuffix(unresolved, "", "y", "ů") + " čeká");
   if (invalid) parts.push(invalid + " chybn" + czechCountSuffix(invalid, "á hodnota", "é hodnoty", "ých hodnot"));
+  if (placementConflicts) parts.push(placementConflicts + " konflikt" + czechCountSuffix(placementConflicts, " pořadí", "y pořadí", "ů pořadí"));
   refs.scoreStatus.removeAttribute("data-state");
   refs.scoreStatus.textContent = parts.join(" · ");
 }
@@ -1114,6 +1210,14 @@ function renderParticipantCount() {
   const count = participantCount();
   refs.participantCount.textContent = "Živé výsledky · " + count + " " +
     czechCountSuffix(count, "soutěžící", "soutěžící", "soutěžících");
+
+  const allNamesReady = count > 1 && state.names.every(function (name) { return name.trim(); });
+  refs.shuffleParticipants.disabled = !allNamesReady;
+  refs.shuffleParticipants.title = allNamesReady
+    ? "Náhodně určit startovní pořadí"
+    : count < 2
+      ? "Přidej alespoň dva soutěžící"
+      : "Nejdřív vyplň všechna jména";
 }
 
 function czechCountSuffix(count, one, few, many) {
@@ -1265,7 +1369,7 @@ function updatePrintSheet() {
 
     DISCIPLINES.forEach(function (discipline) {
       const result = latestCalculations[discipline.id].rows[participantIndex];
-      row.append(makeElement("td", "", printableResult(result)));
+      row.append(makeElement("td", "", printableResult(result, discipline)));
     });
 
     const stat = latestStats[participantIndex];
@@ -1276,11 +1380,13 @@ function updatePrintSheet() {
   }
 }
 
-function printableResult(result) {
+function printableResult(result, discipline) {
   if (!result) return "";
   if (result.status === "dnf") return "DNF";
   if (result.status === "invalid") return String(result.raw) + " / chyba";
+  if (result.status === "duplicate") return String(result.raw) + " / duplicitní";
   if (result.status === "tie") return formatNumber(result.value) + " / rozstřel";
+  if (result.status === "scored" && discipline.entry === "placement") return result.place + ". místo";
   if (result.status === "scored") return formatNumber(result.value) + " / " + result.place + ".";
   return "";
 }

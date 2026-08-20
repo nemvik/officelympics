@@ -988,12 +988,20 @@ function resultDetail(game, result) {
     return result.solved + "/6 vět · průměr " + (result.average || "—") + (result.average ? " ms" : "");
   }
   if (game === "coffee") {
-    return result.served + "/5 káv · " + result.mistakes + " reklamací";
+    return result.served + "/5 káv · " + result.mistakes + " "
+      + czechCount(result.mistakes, "reklamace", "reklamace", "reklamací");
   }
   if (game === "calendar") {
-    return result.booked + "/6 meetingů · " + result.mistakes + " kolizí";
+    return result.booked + "/6 meetingů · " + result.mistakes + " "
+      + czechCount(result.mistakes, "kolize", "kolize", "kolizí");
   }
   return result.repaired + "/10 oprav · průměr " + (result.average || "—") + (result.average ? " ms" : "");
+}
+
+function czechCount(value, one, few, many) {
+  if (value === 1) return one;
+  if (value >= 2 && value <= 4) return few;
+  return many;
 }
 
 function launchConfetti() {

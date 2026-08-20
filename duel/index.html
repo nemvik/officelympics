@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Office Duel — Officelympics 2026</title>
+  <meta name="description" content="Vyzvi kolegu na Office Panic, Deadline Chicken nebo Papírový curling. Stačí odkaz a kód místnosti.">
+  <meta name="theme-color" content="#ff0f7b">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="cs_CZ">
+  <meta property="og:title" content="Office Duel — Officelympics 2026">
+  <meta property="og:description" content="Tři hry. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.">
+  <meta property="og:image" content="../2026.png">
+
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="duel.css">
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js" defer></script>
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Přeskočit na hru</a>
+
+  <nav class="duel-nav" aria-label="Navigace">
+    <a class="back-link" href="../">← Officelympics</a>
+    <span class="nav-brand" aria-label="Office Duel"><b>Office</b><em>Duel</em></span>
+    <span class="connection-pill" id="connection-pill" data-state="offline">● Bez spojení</span>
+  </nav>
+
+  <main class="duel-wrap" id="main">
+    <header class="duel-hero">
+      <div>
+        <span class="kicker">Neoficiální digitální disciplíny</span>
+        <h1><span>Office</span> Duel</h1>
+        <p>Tři hry. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.</p>
+      </div>
+      <div class="hero-stamp" aria-hidden="true">HR TO<br>NEHRAJE</div>
+    </header>
+
+    <div class="notice-banner" id="notice-banner" role="status" aria-live="polite" hidden></div>
+
+    <section class="screen" id="setup-screen" aria-labelledby="setup-title">
+      <div class="section-heading">
+        <span class="eyebrow">Krok 1</span>
+        <h2 id="setup-title">Vyber disciplínu</h2>
+        <p>Hostitel ji může změnit ještě v čekárně.</p>
+      </div>
+
+      <div class="game-picker" id="setup-game-picker" aria-label="Výběr hry">
+        <button class="game-card is-selected" type="button" data-game-choice="panic" aria-pressed="true">
+          <span class="game-icon" aria-hidden="true">🔥</span>
+          <span><strong>Office Panic</strong><small>20 sekund inboxového chaosu</small></span>
+          <span class="difficulty">rychlost</span>
+        </button>
+        <button class="game-card" type="button" data-game-choice="deadline" aria-pressed="false">
+          <span class="game-icon" aria-hidden="true">⏱️</span>
+          <span><strong>Deadline Chicken</strong><small>Pusť práci těsně před vyhořením</small></span>
+          <span class="difficulty">odhad</span>
+        </button>
+        <button class="game-card" type="button" data-game-choice="curling" aria-pressed="false">
+          <span class="game-icon" aria-hidden="true">🗑️</span>
+          <span><strong>Papírový curling</strong><small>Tři koule, jeden kancelářský koš</small></span>
+          <span class="difficulty">taktika</span>
+        </button>
+      </div>
+
+      <div class="setup-grid">
+        <section class="panel online-panel" aria-labelledby="online-title">
+          <span class="eyebrow">Online duel</span>
+          <h2 id="online-title">Pošli kolegovi kód</h2>
+
+          <label class="field-label" for="player-name">Tvoje jméno</label>
+          <input class="text-input" id="player-name" type="text" maxlength="24" autocomplete="nickname" placeholder="Např. Viktor">
+
+          <div class="primary-actions">
+            <button class="primary-button" id="create-room" type="button">＋ Založit místnost</button>
+          </div>
+
+          <div class="or-divider"><span>nebo se připoj</span></div>
+
+          <form class="join-form" id="join-form">
+            <label class="field-label" for="room-code">Kód místnosti</label>
+            <div class="code-row">
+              <input class="text-input room-input" id="room-code" type="text" maxlength="6" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="KAFE7X">
+              <button type="submit">Připojit</button>
+            </div>
+          </form>
+
+          <p class="microcopy">Bez registrace. Kód platí jen po dobu, kdy má hostitel stránku otevřenou.</p>
+        </section>
+
+        <aside class="panel practice-panel" aria-labelledby="practice-title">
+          <span class="eyebrow">Sólo trénink</span>
+          <h2 id="practice-title">Nejdřív bez svědků?</h2>
+          <p>Vybranou hru spustíme proti přiměřeně neschopnému kolegovi-botovi.</p>
+          <button class="secondary-button" id="practice-button" type="button">🕶️ Spustit trénink</button>
+          <div class="practice-note">Výsledky se nikam neposílají. HR se nic nedozví.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" id="lobby-screen" aria-labelledby="lobby-title" hidden>
+      <div class="lobby-top">
+        <div class="section-heading">
+          <span class="eyebrow">Čekárna</span>
+          <h2 id="lobby-title">Připravte si výmluvy</h2>
+          <p id="lobby-copy">Čekáme na druhého soutěžícího.</p>
+        </div>
+
+        <div class="room-ticket" id="room-ticket">
+          <span>Kód místnosti</span>
+          <strong id="lobby-room-code">—</strong>
+          <div class="ticket-actions">
+            <button id="copy-link" type="button">🔗 Kopírovat odkaz</button>
+            <button id="copy-code" type="button">Kopírovat kód</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="players" aria-label="Hráči v místnosti">
+        <article class="player-card player-one">
+          <span class="player-avatar" aria-hidden="true">🩷</span>
+          <span><small>Růžový tým</small><strong id="player-one-name">Čekám…</strong></span>
+          <b class="ready-state" id="player-one-ready">Nepřipraven</b>
+        </article>
+        <div class="versus" aria-hidden="true">VS</div>
+        <article class="player-card player-two">
+          <span class="player-avatar" aria-hidden="true">💙</span>
+          <span><small>Modrý tým</small><strong id="player-two-name">Čekám na kolegu…</strong></span>
+          <b class="ready-state" id="player-two-ready">Nepřipojen</b>
+        </article>
+      </div>
+
+      <div class="panel lobby-game-panel">
+        <div class="section-heading compact">
+          <span class="eyebrow">Disciplína</span>
+          <h2>Co se bude hrát?</h2>
+          <p id="selection-help">Hostitel vybírá, demokracie začne až po pracovní době.</p>
+        </div>
+
+        <div class="game-picker compact-picker" id="lobby-game-picker" aria-label="Výběr hry v čekárně">
+          <button class="game-card is-selected" type="button" data-game-choice="panic" aria-pressed="true">
+            <span class="game-icon" aria-hidden="true">🔥</span><span><strong>Office Panic</strong><small>rychlost</small></span>
+          </button>
+          <button class="game-card" type="button" data-game-choice="deadline" aria-pressed="false">
+            <span class="game-icon" aria-hidden="true">⏱️</span><span><strong>Deadline Chicken</strong><small>odhad</small></span>
+          </button>
+          <button class="game-card" type="button" data-game-choice="curling" aria-pressed="false">
+            <span class="game-icon" aria-hidden="true">🗑️</span><span><strong>Papírový curling</strong><small>taktika</small></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="lobby-actions">
+        <button class="quiet-button" id="leave-room" type="button">← Opustit místnost</button>
+        <button class="ready-button" id="ready-button" type="button" disabled>Jsem připraven</button>
+        <button class="start-button" id="start-button" type="button" hidden disabled>🚀 Spustit duel</button>
+      </div>
+      <p class="lobby-status" id="lobby-status" role="status" aria-live="polite">Zakládám spojení…</p>
+    </section>
+
+    <section class="screen game-screen" id="game-screen" aria-labelledby="game-title" hidden>
+      <div class="match-bar">
+        <div class="match-player local-player">
+          <span class="color-dot pink"></span>
+          <span><small>Ty</small><strong id="match-local-name">Hráč 1</strong></span>
+          <b id="match-local-score">0</b>
+        </div>
+        <div class="match-center">
+          <span id="game-round-label">Duel</span>
+          <h2 id="game-title">Office Panic</h2>
+        </div>
+        <div class="match-player remote-player">
+          <b id="match-remote-score">0</b>
+          <span><small>Soupeř</small><strong id="match-remote-name">Kolega</strong></span>
+          <span class="color-dot blue"></span>
+        </div>
+      </div>
+
+      <div class="game-stage" id="game-stage"></div>
+      <button class="exit-game" id="exit-game" type="button">Ukončit hru</button>
+    </section>
+
+    <section class="screen result-screen" id="result-screen" aria-labelledby="result-title" hidden>
+      <div class="result-card">
+        <span class="result-emoji" id="result-emoji" aria-hidden="true">🏆</span>
+        <span class="eyebrow" id="result-kicker">Konečný verdikt</span>
+        <h2 id="result-title">Máme vítěze!</h2>
+        <p class="result-copy" id="result-copy"></p>
+
+        <div class="result-scores">
+          <article>
+            <small id="result-local-name">Ty</small>
+            <strong id="result-local-score">0</strong>
+            <span id="result-local-detail">bodů</span>
+          </article>
+          <div>:</div>
+          <article>
+            <small id="result-remote-name">Kolega</small>
+            <strong id="result-remote-score">0</strong>
+            <span id="result-remote-detail">bodů</span>
+          </article>
+        </div>
+
+        <div class="result-actions">
+          <button class="primary-button" id="rematch-button" type="button">🔁 Odveta</button>
+          <button class="secondary-button" id="lobby-button" type="button">Vybrat jinou hru</button>
+          <button class="quiet-button" id="home-button" type="button">Zpět na začátek</button>
+        </div>
+      </div>
+      <div class="confetti" id="confetti" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <footer>
+    Spojení mezi hráči je přímé a dočasné. Po zavření stránky místnost zmizí rychleji než motivace po obědě.
+  </footer>
+
+  <noscript>Pro digitální kancelářské disciplíny je bohužel potřeba JavaScript.</noscript>
+</body>
+</html>

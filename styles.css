@@ -150,6 +150,11 @@ summary:focus-visible {
   background: var(--pink);
 }
 
+.quick-nav a.quick-game {
+  color: var(--ink);
+  background: var(--yellow);
+}
+
 .nav-print {
   padding-block: 9px;
   box-shadow: none;

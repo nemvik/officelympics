@@ -1,0 +1,336 @@
+export const GAME_IDS = Object.freeze(["panic", "deadline", "curling"]);
+
+export const PANIC_DURATION_MS = 20_000;
+
+export const PANIC_EVENTS = Object.freeze([
+  Object.freeze({ emoji: "🔥", label: "Produkce hoří", kind: "good", points: 3 }),
+  Object.freeze({ emoji: "☕", label: "Doplnit kávu", kind: "good", points: 1 }),
+  Object.freeze({ emoji: "💾", label: "Uložit dokument", kind: "good", points: 2 }),
+  Object.freeze({ emoji: "📞", label: "Zvednout klienta", kind: "good", points: 2 }),
+  Object.freeze({ emoji: "✅", label: "Schválit dovolenou", kind: "good", points: 1 }),
+  Object.freeze({ emoji: "📣", label: "Odpovědět všem", kind: "bad", points: -2 }),
+  Object.freeze({ emoji: "🎣", label: "Faktura_FINAL.zip", kind: "bad", points: -3 }),
+  Object.freeze({ emoji: "🗓️", label: "Meeting bez agendy", kind: "bad", points: -2 }),
+  Object.freeze({ emoji: "🔔", label: "Náhodný Slack", kind: "bad", points: -1 })
+]);
+
+export const CURLING = Object.freeze({
+  width: 720,
+  height: 880,
+  ballRadius: 19,
+  houseRadius: 108,
+  targetX: 360,
+  targetY: 166,
+  launchX: 360,
+  launchY: 790,
+  inset: 24,
+  friction: 190,
+  wallBounce: 0.62,
+  collisionBounce: 0.88,
+  stopSpeed: 7,
+  maxShotSpeed: 570,
+  shotsPerPlayer: 3
+});
+
+function hashString(value) {
+  let hash = 2166136261;
+  const text = String(value);
+
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+export function createRng(seed) {
+  let value = hashString(seed) || 0x6d2b79f5;
+
+  return function random() {
+    value += 0x6d2b79f5;
+    let mixed = value;
+    mixed = Math.imul(mixed ^ (mixed >>> 15), mixed | 1);
+    mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), mixed | 61);
+    return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function makeSeed() {
+  if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === "function") {
+    const values = new Uint32Array(2);
+    globalThis.crypto.getRandomValues(values);
+    return values[0].toString(36) + values[1].toString(36);
+  }
+
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+export function buildPanicSchedule(seed, durationMs = PANIC_DURATION_MS) {
+  const random = createRng("panic:" + seed);
+  const schedule = [];
+  let at = 450;
+  let previousSlot = -1;
+
+  while (at < durationMs - 650) {
+    const good = random() < 0.68;
+    const poolStart = good ? 0 : 5;
+    const poolLength = good ? 5 : 4;
+    let slot = Math.floor(random() * 9);
+
+    if (slot === previousSlot) slot = (slot + 1 + Math.floor(random() * 7)) % 9;
+    previousSlot = slot;
+
+    schedule.push({
+      id: schedule.length,
+      at: Math.round(at),
+      slot,
+      eventIndex: poolStart + Math.floor(random() * poolLength),
+      lifetime: Math.round(900 + random() * 500),
+      tilt: Math.round((random() * 8 - 4) * 10) / 10
+    });
+
+    at += 470 + random() * 340;
+  }
+
+  return schedule;
+}
+
+export function panicClickScore(currentScore, combo, event) {
+  if (!event || event.kind !== "good") {
+    return {
+      score: Math.max(0, currentScore + (event ? event.points : 0)),
+      combo: 0,
+      delta: event ? event.points : 0
+    };
+  }
+
+  const nextCombo = combo + 1;
+  const bonus = Math.min(3, Math.floor(nextCombo / 3));
+  const delta = event.points + bonus;
+
+  return { score: currentScore + delta, combo: nextCombo, delta };
+}
+
+export function deadlineRoundConfig(seed, roundIndex) {
+  const random = createRng("deadline:" + seed + ":" + roundIndex);
+
+  return {
+    speed: 27 + random() * 10,
+    wobble: 0.08 + random() * 0.08,
+    frequency: 2.1 + random() * 1.7,
+    phase: random() * Math.PI * 2,
+    fogAt: 69 + random() * 6
+  };
+}
+
+export function deadlineProgress(config, heldMs) {
+  const seconds = Math.max(0, heldMs) / 1000;
+  const wave = Math.sin(seconds * config.frequency + config.phase) - Math.sin(config.phase);
+  const progress = config.speed * seconds + config.speed * config.wobble * wave / config.frequency;
+  return Math.max(0, progress);
+}
+
+export function deadlineRoundScore(progress) {
+  if (!Number.isFinite(progress) || progress > 100) return 0;
+  return Math.max(0, Math.round(100 - Math.abs(100 - progress) * 5));
+}
+
+export function createCurlingStone(owner, shotNumber) {
+  return {
+    id: "stone-" + shotNumber,
+    owner,
+    x: CURLING.launchX,
+    y: CURLING.launchY,
+    vx: 0,
+    vy: 0,
+    radius: CURLING.ballRadius
+  };
+}
+
+export function clampShotVelocity(vx, vy) {
+  let safeX = Number.isFinite(vx) ? vx : 0;
+  let safeY = Number.isFinite(vy) ? vy : 0;
+  const speed = Math.hypot(safeX, safeY);
+
+  if (speed > CURLING.maxShotSpeed) {
+    const scale = CURLING.maxShotSpeed / speed;
+    safeX *= scale;
+    safeY *= scale;
+  }
+
+  return { vx: safeX, vy: safeY };
+}
+
+function resolveWallCollision(stone) {
+  const radius = stone.radius || CURLING.ballRadius;
+  const minX = CURLING.inset + radius;
+  const maxX = CURLING.width - CURLING.inset - radius;
+  const minY = CURLING.inset + radius;
+  const maxY = CURLING.height - CURLING.inset - radius;
+
+  if (stone.x < minX) {
+    stone.x = minX;
+    stone.vx = Math.abs(stone.vx) * CURLING.wallBounce;
+  } else if (stone.x > maxX) {
+    stone.x = maxX;
+    stone.vx = -Math.abs(stone.vx) * CURLING.wallBounce;
+  }
+
+  if (stone.y < minY) {
+    stone.y = minY;
+    stone.vy = Math.abs(stone.vy) * CURLING.wallBounce;
+  } else if (stone.y > maxY) {
+    stone.y = maxY;
+    stone.vy = -Math.abs(stone.vy) * CURLING.wallBounce;
+  }
+}
+
+function resolveStoneCollision(first, second) {
+  const dx = second.x - first.x;
+  const dy = second.y - first.y;
+  const distance = Math.hypot(dx, dy);
+  const minimum = (first.radius || CURLING.ballRadius) + (second.radius || CURLING.ballRadius);
+
+  if (distance >= minimum) return;
+
+  const safeDistance = distance || 0.0001;
+  const nx = dx / safeDistance;
+  const ny = dy / safeDistance;
+  const overlap = minimum - safeDistance;
+
+  first.x -= nx * overlap * 0.5;
+  first.y -= ny * overlap * 0.5;
+  second.x += nx * overlap * 0.5;
+  second.y += ny * overlap * 0.5;
+
+  const relativeX = second.vx - first.vx;
+  const relativeY = second.vy - first.vy;
+  const normalSpeed = relativeX * nx + relativeY * ny;
+
+  if (normalSpeed >= 0) return;
+
+  const impulse = -(1 + CURLING.collisionBounce) * normalSpeed / 2;
+  const impulseX = impulse * nx;
+  const impulseY = impulse * ny;
+
+  first.vx -= impulseX;
+  first.vy -= impulseY;
+  second.vx += impulseX;
+  second.vy += impulseY;
+}
+
+export function stepCurling(stones, dt) {
+  const safeDt = Math.min(Math.max(Number(dt) || 0, 0), 1 / 30);
+
+  stones.forEach(function (stone) {
+    stone.x += stone.vx * safeDt;
+    stone.y += stone.vy * safeDt;
+
+    const speed = Math.hypot(stone.vx, stone.vy);
+    if (speed > 0) {
+      const nextSpeed = Math.max(0, speed - CURLING.friction * safeDt);
+      const scale = nextSpeed / speed;
+      stone.vx *= scale;
+      stone.vy *= scale;
+    }
+
+    resolveWallCollision(stone);
+  });
+
+  for (let firstIndex = 0; firstIndex < stones.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < stones.length; secondIndex += 1) {
+      resolveStoneCollision(stones[firstIndex], stones[secondIndex]);
+    }
+  }
+
+  let moving = false;
+  stones.forEach(function (stone) {
+    const speed = Math.hypot(stone.vx, stone.vy);
+    if (speed < CURLING.stopSpeed) {
+      stone.vx = 0;
+      stone.vy = 0;
+    } else {
+      moving = true;
+    }
+  });
+
+  return moving;
+}
+
+export function sanitizeCurlingStones(value) {
+  if (!Array.isArray(value)) return null;
+  const maxStones = CURLING.shotsPerPlayer * 2;
+  if (value.length > maxStones) return null;
+
+  const stones = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const source = value[index];
+    if (!source || (source.owner !== 0 && source.owner !== 1)) return null;
+    if (![source.x, source.y, source.vx, source.vy].every(Number.isFinite)) return null;
+
+    stones.push({
+      id: "stone-" + index,
+      owner: source.owner,
+      x: Math.min(CURLING.width, Math.max(0, source.x)),
+      y: Math.min(CURLING.height, Math.max(0, source.y)),
+      vx: 0,
+      vy: 0,
+      radius: CURLING.ballRadius
+    });
+  }
+
+  return stones;
+}
+
+export function calculateCurlingScore(stones) {
+  const inHouse = stones
+    .map(function (stone) {
+      return {
+        owner: stone.owner,
+        distance: Math.hypot(stone.x - CURLING.targetX, stone.y - CURLING.targetY)
+      };
+    })
+    .filter(function (stone) { return stone.distance <= CURLING.houseRadius + CURLING.ballRadius; })
+    .sort(function (first, second) { return first.distance - second.distance; });
+
+  if (!inHouse.length) return { scores: [0, 0], winner: null, nearest: null };
+  if (inHouse.length > 1 && Math.abs(inHouse[0].distance - inHouse[1].distance) < 0.5 && inHouse[0].owner !== inHouse[1].owner) {
+    return { scores: [0, 0], winner: null, nearest: inHouse[0].distance };
+  }
+
+  const winner = inHouse[0].owner;
+  const nearestOpponent = inHouse.find(function (stone) { return stone.owner !== winner; });
+  const cutoff = nearestOpponent ? nearestOpponent.distance : Infinity;
+  const points = inHouse.filter(function (stone) {
+    return stone.owner === winner && stone.distance < cutoff;
+  }).length;
+  const scores = [0, 0];
+  scores[winner] = points;
+
+  return { scores, winner, nearest: inHouse[0].distance };
+}
+
+export function makeBotCurlingShot(seed, shotNumber, stones) {
+  const random = createRng("curling-bot:" + seed + ":" + shotNumber);
+  const opponentStone = stones
+    .filter(function (stone) { return stone.owner === 0; })
+    .sort(function (first, second) {
+      const firstDistance = Math.hypot(first.x - CURLING.targetX, first.y - CURLING.targetY);
+      const secondDistance = Math.hypot(second.x - CURLING.targetX, second.y - CURLING.targetY);
+      return firstDistance - secondDistance;
+    })[0];
+
+  const attacksOpponent = opponentStone && random() < 0.32;
+  const targetX = attacksOpponent ? opponentStone.x : CURLING.targetX + (random() - 0.5) * 54;
+  const targetY = attacksOpponent ? opponentStone.y : CURLING.targetY + (random() - 0.5) * 42;
+  const dx = targetX - CURLING.launchX;
+  const dy = targetY - CURLING.launchY;
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  const idealSpeed = Math.sqrt(2 * CURLING.friction * distance) * (0.98 + random() * 0.08);
+
+  return clampShotVelocity(
+    dx / distance * idealSpeed + (random() - 0.5) * 18,
+    dy / distance * idealSpeed + (random() - 0.5) * 12
+  );
+}

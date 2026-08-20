@@ -2687,7 +2687,7 @@ function startCoffeeRelay(context) {
   COFFEE_CATEGORIES.forEach(function (category) {
     const group = document.createElement("section");
     group.className = "coffee-group";
-    const heading = document.createElement("h4");
+    const heading = document.createElement("h3");
     heading.textContent = category.label;
     const choices = document.createElement("div");
     category.options.forEach(function (option) {

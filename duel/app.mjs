@@ -37,6 +37,21 @@ const GAME_META = Object.freeze({
     title: "Task Stack",
     instruction: "Skládej padající úkoly. Smazané řádky pošlou soupeři urgentní práci.",
     scoreLabel: "bodů za úkoly"
+  }),
+  pong: Object.freeze({
+    title: "Inbox Pong",
+    instruction: "Pohybuj inboxem nahoru a dolů. První, kdo zachrání pět urgentních e-mailů, vítězí.",
+    scoreLabel: "zachráněných e-mailů"
+  }),
+  escape: Object.freeze({
+    title: "Meeting Escape",
+    instruction: "Přeskakuj meetingy, skrč se pod Reply All a cestou sbírej kávu.",
+    scoreLabel: "bodů za útěk"
+  }),
+  jargon: Object.freeze({
+    title: "Jargon Decoder",
+    instruction: "Zapamatuj si větu a poskládej rozházená korporátní slova ve správném pořadí.",
+    scoreLabel: "bodů za synergii"
   })
 });
 
@@ -793,6 +808,19 @@ function normalizeResult(game, result) {
     normalized.lines = safeSmallInteger(result.lines, 100);
     normalized.sent = safeSmallInteger(result.sent, 100);
     normalized.topOut = Boolean(result.topOut);
+  } else if (game === "pong") {
+    normalized.score = Math.min(5, normalized.score);
+    normalized.winner = result.winner === 0 || result.winner === 1 ? result.winner : null;
+    normalized.bestRally = safeSmallInteger(result.bestRally, 999);
+  } else if (game === "escape") {
+    normalized.distance = safeSmallInteger(result.distance, 5000);
+    normalized.crashes = safeSmallInteger(result.crashes, 50);
+    normalized.coffees = safeSmallInteger(result.coffees, 50);
+  } else if (game === "jargon") {
+    normalized.score = Math.min(6000, normalized.score);
+    normalized.solved = safeSmallInteger(result.solved, 6);
+    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+    normalized.average = safeSmallInteger(result.average, 20_000);
   }
 
   return normalized;
@@ -917,7 +945,16 @@ function resultDetail(game, result) {
   if (game === "battleship") {
     return result.hits + " zásahů z " + result.shots + " pokusů";
   }
-  return result.lines + " řádků · " + result.sent + " odesláno";
+  if (game === "taskstack") {
+    return result.lines + " řádků · " + result.sent + " odesláno";
+  }
+  if (game === "pong") {
+    return "nejdelší výměna " + result.bestRally;
+  }
+  if (game === "escape") {
+    return result.distance + " m · " + result.coffees + "× káva · " + result.crashes + " kolizí";
+  }
+  return result.solved + "/6 vět · průměr " + (result.average || "—") + (result.average ? " ms" : "");
 }
 
 function launchConfetti() {

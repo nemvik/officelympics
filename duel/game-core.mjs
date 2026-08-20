@@ -4,7 +4,10 @@ export const GAME_IDS = Object.freeze([
   "curling",
   "alttab",
   "battleship",
-  "taskstack"
+  "taskstack",
+  "pong",
+  "escape",
+  "jargon"
 ]);
 
 export const ALT_TAB_ROUNDS = 8;
@@ -30,6 +33,47 @@ export const TASK_PIECES = Object.freeze({
   S: Object.freeze([[0, 1, 1], [1, 1, 0]]),
   Z: Object.freeze([[1, 1, 0], [0, 1, 1]])
 });
+
+export const PONG = Object.freeze({
+  width: 800,
+  height: 450,
+  paddleWidth: 14,
+  paddleHeight: 96,
+  paddleInset: 24,
+  ballRadius: 11,
+  startSpeed: 315,
+  maximumSpeed: 540,
+  winningScore: 5
+});
+
+export const ESCAPE = Object.freeze({
+  width: 900,
+  height: 360,
+  groundY: 292,
+  playerX: 132,
+  playerWidth: 42,
+  playerHeight: 58,
+  duckHeight: 31,
+  durationMs: 35_000,
+  scrollSpeed: 0.27
+});
+
+export const JARGON_ROUNDS = 6;
+
+export const JARGON_PHRASES = Object.freeze([
+  "Musíme sladit očekávání napříč stakeholdery",
+  "Pojďme zaparkovat detail a řešit kontext",
+  "Potřebujeme škálovat synergii bez dalšího headcountu",
+  "Tenhle quick win otevře nové příležitosti",
+  "Uděláme hlubší ponor do priorit kvartálu",
+  "Zkusme to uchopit více end to end",
+  "Na roadmapě chybí vlastník tohoto akčního bodu",
+  "Přenesme diskusi do menší pracovní skupiny",
+  "Data potřebují trochu kreativnější interpretaci",
+  "Nejdřív si pojďme srovnat společný sever",
+  "Tohle téma potřebuje robustnější governance",
+  "Musíme odemknout potenciál napříč celou organizací"
+]);
 
 export const PANIC_DURATION_MS = 20_000;
 
@@ -209,6 +253,118 @@ export function addTaskGarbage(board, lines, hole) {
   }
 
   return { board: next, overflow };
+}
+
+export function createPongBall(seed, serveNumber = 0) {
+  const random = createRng("pong-serve:" + seed + ":" + serveNumber);
+  const direction = random() < 0.5 ? -1 : 1;
+  const angle = (random() - 0.5) * 0.9;
+
+  return {
+    x: PONG.width / 2,
+    y: PONG.height / 2,
+    vx: Math.cos(angle) * PONG.startSpeed * direction,
+    vy: Math.sin(angle) * PONG.startSpeed
+  };
+}
+
+export function stepPong(state, dt) {
+  if (!state || !state.ball || !Array.isArray(state.paddles) || state.paddles.length !== 2) return null;
+  const safeDt = Math.min(1 / 30, Math.max(0, Number(dt) || 0));
+  const ball = state.ball;
+  ball.x += ball.vx * safeDt;
+  ball.y += ball.vy * safeDt;
+
+  if (ball.y - PONG.ballRadius < 0) {
+    ball.y = PONG.ballRadius;
+    ball.vy = Math.abs(ball.vy);
+  } else if (ball.y + PONG.ballRadius > PONG.height) {
+    ball.y = PONG.height - PONG.ballRadius;
+    ball.vy = -Math.abs(ball.vy);
+  }
+
+  const leftEdge = PONG.paddleInset + PONG.paddleWidth;
+  const rightEdge = PONG.width - PONG.paddleInset - PONG.paddleWidth;
+  const paddleHit = function (owner) {
+    const paddleY = state.paddles[owner];
+    return ball.y + PONG.ballRadius >= paddleY && ball.y - PONG.ballRadius <= paddleY + PONG.paddleHeight;
+  };
+
+  if (ball.vx < 0 && ball.x - PONG.ballRadius <= leftEdge && ball.x > PONG.paddleInset - PONG.ballRadius && paddleHit(0)) {
+    const relative = (ball.y - (state.paddles[0] + PONG.paddleHeight / 2)) / (PONG.paddleHeight / 2);
+    const speed = Math.min(PONG.maximumSpeed, Math.hypot(ball.vx, ball.vy) * 1.045);
+    ball.x = leftEdge + PONG.ballRadius;
+    ball.vx = Math.max(190, speed * Math.cos(relative * 0.85));
+    ball.vy = speed * Math.sin(relative * 0.85);
+    return { hit: 0, scored: null };
+  }
+
+  if (ball.vx > 0 && ball.x + PONG.ballRadius >= rightEdge && ball.x < PONG.width - PONG.paddleInset + PONG.ballRadius && paddleHit(1)) {
+    const relative = (ball.y - (state.paddles[1] + PONG.paddleHeight / 2)) / (PONG.paddleHeight / 2);
+    const speed = Math.min(PONG.maximumSpeed, Math.hypot(ball.vx, ball.vy) * 1.045);
+    ball.x = rightEdge - PONG.ballRadius;
+    ball.vx = -Math.max(190, speed * Math.cos(relative * 0.85));
+    ball.vy = speed * Math.sin(relative * 0.85);
+    return { hit: 1, scored: null };
+  }
+
+  if (ball.x + PONG.ballRadius < 0) return { hit: null, scored: 1 };
+  if (ball.x - PONG.ballRadius > PONG.width) return { hit: null, scored: 0 };
+  return { hit: null, scored: null };
+}
+
+export function buildEscapeCourse(seed, durationMs = ESCAPE.durationMs) {
+  const random = createRng("meeting-escape:" + seed);
+  const course = [];
+  let at = 1700;
+
+  while (at < durationMs - 900) {
+    const roll = random();
+    const type = roll < 0.56 ? "meeting" : roll < 0.84 ? "reply" : "coffee";
+    course.push({
+      id: course.length,
+      at: Math.round(at),
+      type,
+      variant: Math.floor(random() * 3)
+    });
+    at += 920 + random() * 720;
+  }
+
+  return course;
+}
+
+export function rectanglesOverlap(first, second) {
+  return first.x < second.x + second.width
+    && first.x + first.width > second.x
+    && first.y < second.y + second.height
+    && first.y + first.height > second.y;
+}
+
+export function buildJargonRounds(seed, count = JARGON_ROUNDS) {
+  const random = createRng("jargon:" + seed);
+  const indexes = JARGON_PHRASES.map(function (_, index) { return index; });
+
+  for (let index = indexes.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    const value = indexes[index];
+    indexes[index] = indexes[swapIndex];
+    indexes[swapIndex] = value;
+  }
+
+  return indexes.slice(0, Math.min(count, indexes.length)).map(function (phraseIndex, roundIndex) {
+    const phrase = JARGON_PHRASES[phraseIndex];
+    const answer = phrase.split(" ");
+    const words = answer.slice();
+    for (let index = words.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = words[index];
+      words[index] = words[swapIndex];
+      words[swapIndex] = value;
+    }
+    if (words.every(function (word, index) { return word === answer[index]; })) words.push(words.shift());
+
+    return { id: roundIndex, phrase, answer, words };
+  });
 }
 
 export function buildPanicSchedule(seed, durationMs = PANIC_DURATION_MS) {

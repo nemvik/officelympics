@@ -4,23 +4,86 @@ import assert from "node:assert/strict";
 import {
   BATTLESHIP,
   CURLING,
+  ESCAPE,
+  GAME_IDS,
+  JARGON_ROUNDS,
+  PONG,
   TASK_STACK,
   addTaskGarbage,
   altTabReactionScore,
   battleshipShotResult,
   buildAltTabRounds,
   buildBattleshipFleet,
+  buildEscapeCourse,
+  buildJargonRounds,
   buildPanicSchedule,
   buildTaskBag,
   calculateCurlingScore,
   clampShotVelocity,
   clearTaskRows,
   createCurlingStone,
+  createPongBall,
   deadlineProgress,
   deadlineRoundConfig,
   deadlineRoundScore,
-  stepCurling
+  rectanglesOverlap,
+  stepCurling,
+  stepPong
 } from "../duel/game-core.mjs";
+
+test("Katalog obsahuje všech devět kancelářských disciplín", function () {
+  assert.equal(GAME_IDS.length, 9);
+  assert.deepEqual(GAME_IDS.slice(-3), ["pong", "escape", "jargon"]);
+});
+
+test("Inbox Pong vytváří deterministický servis a odráží e-mail od inboxu", function () {
+  assert.deepEqual(createPongBall("mail-seed", 0), createPongBall("mail-seed", 0));
+  const state = {
+    ball: {
+      x: PONG.paddleInset + PONG.paddleWidth + PONG.ballRadius + 2,
+      y: PONG.height / 2,
+      vx: -PONG.startSpeed,
+      vy: 0
+    },
+    paddles: [PONG.height / 2 - PONG.paddleHeight / 2, 0]
+  };
+  const bounce = stepPong(state, 1 / 30);
+  assert.equal(bounce.hit, 0);
+  assert.ok(state.ball.vx > 0);
+
+  state.ball = { x: -PONG.ballRadius - 2, y: 10, vx: -200, vy: 0 };
+  assert.equal(stepPong(state, 0).scored, 1);
+});
+
+test("Meeting Escape připraví stejnou bezpečně rozestoupenou trať", function () {
+  const first = buildEscapeCourse("meeting-seed");
+  const second = buildEscapeCourse("meeting-seed");
+  assert.deepEqual(first, second);
+  assert.ok(first.length >= 20);
+  assert.ok(first.every(function (item, index) {
+    return ["meeting", "reply", "coffee"].includes(item.type)
+      && (index === 0 || item.at - first[index - 1].at >= 920);
+  }));
+  assert.equal(rectanglesOverlap(
+    { x: 0, y: 0, width: 10, height: 10 },
+    { x: 5, y: 5, width: 10, height: 10 }
+  ), true);
+  assert.equal(rectanglesOverlap(
+    { x: 0, y: 0, width: 10, height: 10 },
+    { x: 12, y: 12, width: 2, height: 2 }
+  ), false);
+  assert.equal(ESCAPE.durationMs, 35_000);
+});
+
+test("Jargon Decoder vybírá šest unikátních a skutečně zamíchaných vět", function () {
+  const rounds = buildJargonRounds("jargon-seed");
+  assert.equal(rounds.length, JARGON_ROUNDS);
+  assert.equal(new Set(rounds.map(function (round) { return round.phrase; })).size, JARGON_ROUNDS);
+  rounds.forEach(function (round) {
+    assert.deepEqual(round.words.slice().sort(), round.answer.slice().sort());
+    assert.notDeepEqual(round.words, round.answer);
+  });
+});
 
 test("Alt+Tab má osm deterministických kol a přesně pět návštěv šéfa", function () {
   const first = buildAltTabRounds("kontrola-seed");

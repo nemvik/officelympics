@@ -2,8 +2,11 @@ import {
   ALT_TAB_ROUNDS,
   BATTLESHIP,
   CURLING,
+  ESCAPE,
+  JARGON_ROUNDS,
   PANIC_DURATION_MS,
   PANIC_EVENTS,
+  PONG,
   TASK_PIECES,
   TASK_STACK,
   addTaskGarbage,
@@ -11,20 +14,25 @@ import {
   battleshipShotResult,
   buildAltTabRounds,
   buildBattleshipFleet,
+  buildEscapeCourse,
+  buildJargonRounds,
   buildPanicSchedule,
   buildTaskBag,
   calculateCurlingScore,
   clampShotVelocity,
   clearTaskRows,
   createCurlingStone,
+  createPongBall,
   createRng,
   deadlineProgress,
   deadlineRoundConfig,
   deadlineRoundScore,
   makeBotCurlingShot,
   panicClickScore,
+  rectanglesOverlap,
   sanitizeCurlingStones,
-  stepCurling
+  stepCurling,
+  stepPong
 } from "./game-core.mjs";
 
 const NOOP = function () {};
@@ -35,6 +43,9 @@ export function startGame(gameId, context) {
   if (gameId === "alttab") return startAltTabDuel(context);
   if (gameId === "battleship") return startSpreadsheetBattleship(context);
   if (gameId === "taskstack") return startTaskStack(context);
+  if (gameId === "pong") return startInboxPong(context);
+  if (gameId === "escape") return startMeetingEscape(context);
+  if (gameId === "jargon") return startJargonDecoder(context);
   return startOfficePanic(context);
 }
 
@@ -78,6 +89,29 @@ export function createPracticeResult(gameId, seed) {
       lines,
       sent: Math.max(0, lines - 2),
       topOut: random() < 0.18
+    };
+  }
+
+  if (gameId === "escape") {
+    const crashes = Math.floor(random() * 4);
+    const coffees = 1 + Math.floor(random() * 4);
+    const distance = 2850 + Math.floor(random() * 1050);
+    return {
+      score: Math.max(0, distance + coffees * 150 - crashes * 250),
+      distance,
+      crashes,
+      coffees
+    };
+  }
+
+  if (gameId === "jargon") {
+    const solved = 3 + Math.floor(random() * 4);
+    const average = 2300 + Math.floor(random() * 3300);
+    return {
+      score: solved * 520 + Math.floor(random() * 850),
+      solved,
+      mistakes: Math.floor(random() * 5),
+      average
     };
   }
 
@@ -1644,6 +1678,904 @@ function startTaskStack(context) {
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("keydown", onKeyDown);
       shell.removeEventListener("click", onControlClick);
+    }
+  };
+}
+
+function startInboxPong(context) {
+  const localRole = context.localRole;
+  const isAuthority = localRole === 0;
+  const timers = [];
+  const pongState = {
+    ball: createPongBall(context.seed, 0),
+    paddles: [
+      (PONG.height - PONG.paddleHeight) / 2,
+      (PONG.height - PONG.paddleHeight) / 2
+    ],
+    scores: [0, 0]
+  };
+  let animationFrame = 0;
+  let previousFrame = performance.now();
+  let pausedUntil = performance.now() + 700;
+  let snapshotAt = 0;
+  let snapshotTick = 0;
+  let receivedTick = -1;
+  let inputSequence = 0;
+  let receivedInputSequence = -1;
+  let serveNumber = 0;
+  let rally = 0;
+  let bestRally = 0;
+  let finished = false;
+  let ending = false;
+
+  context.setRoundLabel("První na 5 e-mailů");
+  context.stage.innerHTML = `
+    <div class="pong-shell">
+      <div class="pong-board-wrap">
+        <canvas class="pong-canvas" width="800" height="450" tabindex="0" aria-label="Inbox Pong. Pohybuj inboxem nahoru a dolů pomocí šipek nebo dotykem."></canvas>
+      </div>
+      <aside class="pong-sidebar">
+        <span class="eyebrow">Inbox Pong</span>
+        <h3>Nenech urgentní mail propadnout.</h3>
+        <p class="pong-status" role="status" aria-live="polite">Připravuji velmi důležitou elektronickou poštu…</p>
+        <div class="pong-mini-score"><strong>0</strong><span>:</span><strong>0</strong></div>
+        <div class="pong-rally"><small>Nejdelší výměna</small><b>0</b></div>
+        <p class="pong-help">Pohyb myší nebo dotykem po hřišti. Klávesnice: ↑ ↓ nebo W S.</p>
+        <div class="pong-controls" role="group" aria-label="Ovládání inboxu">
+          <button type="button" data-pong-move="up" aria-label="Posunout nahoru">↑</button>
+          <button type="button" data-pong-move="down" aria-label="Posunout dolů">↓</button>
+        </div>
+      </aside>
+    </div>`;
+
+  const shell = context.stage.querySelector(".pong-shell");
+  const canvas = context.stage.querySelector(".pong-canvas");
+  const drawing = canvas.getContext("2d");
+  const status = context.stage.querySelector(".pong-status");
+  const miniScores = context.stage.querySelectorAll(".pong-mini-score strong");
+  const rallyLabel = context.stage.querySelector(".pong-rally b");
+
+  function clampPaddle(y) {
+    return Math.min(PONG.height - PONG.paddleHeight, Math.max(0, Number(y) || 0));
+  }
+
+  function updateScores() {
+    context.setScores(pongState.scores[localRole], pongState.scores[1 - localRole]);
+    miniScores[0].textContent = String(pongState.scores[localRole]);
+    miniScores[1].textContent = String(pongState.scores[1 - localRole]);
+    rallyLabel.textContent = String(bestRally);
+  }
+
+  function setLocalPaddle(y, shouldSend) {
+    if (finished) return;
+    pongState.paddles[localRole] = clampPaddle(y);
+    if (shouldSend && context.mode === "online" && !isAuthority) {
+      context.send({
+        type: "game:pong-paddle",
+        owner: localRole,
+        sequence: inputSequence,
+        y: pongState.paddles[localRole]
+      });
+      inputSequence += 1;
+    }
+  }
+
+  function ownerName(owner) {
+    return owner === localRole ? "Ty" : context.names[owner];
+  }
+
+  function resetBall() {
+    serveNumber += 1;
+    pongState.ball = createPongBall(context.seed, serveNumber);
+    rally = 0;
+    pausedUntil = performance.now() + 720;
+  }
+
+  function stateMessage() {
+    return {
+      type: "game:pong-state",
+      tick: snapshotTick,
+      ball: {
+        x: pongState.ball.x,
+        y: pongState.ball.y,
+        vx: pongState.ball.vx,
+        vy: pongState.ball.vy
+      },
+      paddles: pongState.paddles.slice(),
+      scores: pongState.scores.slice(),
+      rally,
+      bestRally
+    };
+  }
+
+  function broadcastState(force) {
+    if (!isAuthority || context.mode !== "online") return;
+    const now = performance.now();
+    if (!force && now - snapshotAt < 45) return;
+    snapshotAt = now;
+    snapshotTick += 1;
+    context.send(stateMessage());
+  }
+
+  function complete(winner, broadcast) {
+    if (finished) return;
+    finished = true;
+    ending = true;
+    updateScores();
+    status.textContent = ownerName(winner) + (winner === localRole ? " chytáš poslední urgentní mail!" : " chytá poslední urgentní mail!");
+    const results = [0, 1].map(function (owner) {
+      return {
+        score: pongState.scores[owner],
+        winner,
+        bestRally
+      };
+    });
+    if (broadcast && context.mode === "online") {
+      context.send({
+        type: "game:pong-finish",
+        scores: pongState.scores.slice(),
+        winner,
+        bestRally
+      });
+    }
+    context.finishShared(results);
+  }
+
+  function scorePoint(owner) {
+    if (ending) return;
+    pongState.scores[owner] += 1;
+    updateScores();
+    status.textContent = ownerName(owner) + " zachraňuje e-mail. HR zapisuje bod.";
+    broadcastState(true);
+    if (pongState.scores[owner] >= PONG.winningScore) {
+      ending = true;
+      timers.push(window.setTimeout(function () { complete(owner, true); }, 700));
+    } else {
+      resetBall();
+    }
+  }
+
+  function updateBot(dt) {
+    if (context.mode !== "practice") return;
+    const target = pongState.ball.y - PONG.paddleHeight / 2 + Math.sin(performance.now() / 650) * 18;
+    const difference = target - pongState.paddles[1];
+    const maximum = 245 * dt;
+    pongState.paddles[1] = clampPaddle(pongState.paddles[1] + Math.max(-maximum, Math.min(maximum, difference)));
+  }
+
+  function updateAuthority(now, dt) {
+    updateBot(dt);
+    if (ending || now < pausedUntil) {
+      broadcastState(false);
+      return;
+    }
+    const event = stepPong(pongState, dt);
+    if (event && event.hit !== null) {
+      rally += 1;
+      bestRally = Math.max(bestRally, rally);
+    }
+    if (event && event.scored !== null) scorePoint(event.scored);
+    broadcastState(false);
+  }
+
+  function drawEnvelope() {
+    const ball = pongState.ball;
+    drawing.save();
+    drawing.translate(ball.x, ball.y);
+    drawing.rotate(Math.atan2(ball.vy, ball.vx) * 0.12);
+    drawing.fillStyle = "#ffd51f";
+    drawing.strokeStyle = "#111";
+    drawing.lineWidth = 3;
+    drawing.fillRect(-15, -11, 30, 22);
+    drawing.strokeRect(-15, -11, 30, 22);
+    drawing.beginPath();
+    drawing.moveTo(-14, -9);
+    drawing.lineTo(0, 2);
+    drawing.lineTo(14, -9);
+    drawing.stroke();
+    drawing.restore();
+  }
+
+  function draw() {
+    const gradient = drawing.createLinearGradient(0, 0, PONG.width, PONG.height);
+    gradient.addColorStop(0, "#071a3d");
+    gradient.addColorStop(0.5, "#102b55");
+    gradient.addColorStop(1, "#071a3d");
+    drawing.fillStyle = gradient;
+    drawing.fillRect(0, 0, PONG.width, PONG.height);
+
+    drawing.save();
+    drawing.setLineDash([13, 13]);
+    drawing.strokeStyle = "rgba(255,255,255,.34)";
+    drawing.lineWidth = 3;
+    drawing.beginPath();
+    drawing.moveTo(PONG.width / 2, 18);
+    drawing.lineTo(PONG.width / 2, PONG.height - 18);
+    drawing.stroke();
+    drawing.restore();
+
+    drawing.fillStyle = "rgba(255,255,255,.06)";
+    drawing.font = "900 64px Arial";
+    drawing.textAlign = "center";
+    drawing.fillText(String(pongState.scores[0]), PONG.width * 0.36, 82);
+    drawing.fillText(String(pongState.scores[1]), PONG.width * 0.64, 82);
+
+    pongState.paddles.forEach(function (paddleY, owner) {
+      const x = owner === 0 ? PONG.paddleInset : PONG.width - PONG.paddleInset - PONG.paddleWidth;
+      drawing.fillStyle = owner === 0 ? "#ff0f7b" : "#48a7ff";
+      drawing.strokeStyle = "#fff";
+      drawing.lineWidth = 3;
+      drawing.fillRect(x, paddleY, PONG.paddleWidth, PONG.paddleHeight);
+      drawing.strokeRect(x, paddleY, PONG.paddleWidth, PONG.paddleHeight);
+    });
+    drawEnvelope();
+
+    drawing.fillStyle = "rgba(255,255,255,.68)";
+    drawing.font = "900 13px Arial";
+    drawing.textAlign = "left";
+    drawing.fillText("INBOX", 18, PONG.height - 17);
+    drawing.textAlign = "right";
+    drawing.fillText("INBOX", PONG.width - 18, PONG.height - 17);
+  }
+
+  function frame(now) {
+    if (finished) return;
+    const dt = Math.min(.05, Math.max(0, (now - previousFrame) / 1000));
+    previousFrame = now;
+    if (isAuthority) updateAuthority(now, dt);
+    draw();
+    animationFrame = window.requestAnimationFrame(frame);
+  }
+
+  function pointerToPaddle(event) {
+    const bounds = canvas.getBoundingClientRect();
+    const y = (event.clientY - bounds.top) / bounds.height * PONG.height - PONG.paddleHeight / 2;
+    setLocalPaddle(y, true);
+  }
+
+  function onPointerMove(event) {
+    if (event.pointerType === "mouse" && event.buttons === 0) return;
+    event.preventDefault();
+    pointerToPaddle(event);
+  }
+
+  function onPointerDown(event) {
+    event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);
+    pointerToPaddle(event);
+    canvas.focus({ preventScroll: true });
+  }
+
+  function onKeyDown(event) {
+    if (!["ArrowUp", "ArrowDown", "KeyW", "KeyS"].includes(event.code)) return;
+    event.preventDefault();
+    const direction = event.code === "ArrowUp" || event.code === "KeyW" ? -1 : 1;
+    setLocalPaddle(pongState.paddles[localRole] + direction * 34, true);
+  }
+
+  function onControls(event) {
+    const button = event.target.closest("[data-pong-move]");
+    if (!button) return;
+    const direction = button.dataset.pongMove === "up" ? -1 : 1;
+    setLocalPaddle(pongState.paddles[localRole] + direction * 48, true);
+    canvas.focus({ preventScroll: true });
+  }
+
+  function receiveState(message) {
+    if (isAuthority || !Number.isInteger(message.tick) || message.tick <= receivedTick
+      || !message.ball || ![message.ball.x, message.ball.y, message.ball.vx, message.ball.vy].every(Number.isFinite)
+      || !Array.isArray(message.paddles) || message.paddles.length !== 2 || !message.paddles.every(Number.isFinite)
+      || !Array.isArray(message.scores) || message.scores.length !== 2
+      || !message.scores.every(function (score) { return Number.isInteger(score) && score >= 0 && score <= PONG.winningScore; })) return;
+    receivedTick = message.tick;
+    pongState.ball = {
+      x: Math.min(PONG.width + 30, Math.max(-30, message.ball.x)),
+      y: Math.min(PONG.height, Math.max(0, message.ball.y)),
+      vx: Math.min(800, Math.max(-800, message.ball.vx)),
+      vy: Math.min(800, Math.max(-800, message.ball.vy))
+    };
+    pongState.paddles = message.paddles.map(clampPaddle);
+    pongState.scores = message.scores.slice();
+    rally = Math.max(0, Math.min(999, Math.round(Number(message.rally) || 0)));
+    bestRally = Math.max(0, Math.min(999, Math.round(Number(message.bestRally) || 0)));
+    updateScores();
+    status.textContent = "Přímé spojení drží. Inboxy se plní v reálném čase.";
+  }
+
+  canvas.addEventListener("pointerdown", onPointerDown);
+  canvas.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("keydown", onKeyDown);
+  shell.addEventListener("click", onControls);
+  updateScores();
+  draw();
+  canvas.focus({ preventScroll: true });
+  status.textContent = context.mode === "practice"
+    ? "Kolega-bot tvrdí, že všechny e-maily četl. Dokaž opak."
+    : isAuthority ? "Jsi správce mailserveru. První servis právě startuje." : "Čekám na první zásilku od hostitele…";
+  animationFrame = window.requestAnimationFrame(frame);
+
+  return {
+    receiveNetwork: function (message) {
+      if (!message || finished) return;
+      if (message.type === "game:pong-paddle" && isAuthority && message.owner === 1
+        && Number.isInteger(message.sequence) && message.sequence > receivedInputSequence && Number.isFinite(message.y)) {
+        receivedInputSequence = message.sequence;
+        pongState.paddles[1] = clampPaddle(message.y);
+      }
+      if (message.type === "game:pong-state") receiveState(message);
+      if (message.type === "game:pong-finish" && !isAuthority && Array.isArray(message.scores)
+        && message.scores.length === 2 && message.scores.every(function (score) {
+          return Number.isInteger(score) && score >= 0 && score <= PONG.winningScore;
+        }) && (message.winner === 0 || message.winner === 1)) {
+        pongState.scores = message.scores.slice();
+        bestRally = Math.max(0, Math.min(999, Math.round(Number(message.bestRally) || 0)));
+        complete(message.winner, false);
+      }
+    },
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+      window.cancelAnimationFrame(animationFrame);
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("keydown", onKeyDown);
+      shell.removeEventListener("click", onControls);
+    }
+  };
+}
+
+function startMeetingEscape(context) {
+  const course = buildEscapeCourse(context.seed);
+  const handled = new Set();
+  let animationFrame = 0;
+  let jumpOffset = 0;
+  let jumpVelocity = 0;
+  let ducking = false;
+  let crashes = 0;
+  let coffees = 0;
+  let score = 0;
+  let distance = 0;
+  let lastPublishedAt = 0;
+  let invulnerableUntil = 0;
+  let flashUntil = 0;
+  let finished = false;
+  const startedAt = performance.now();
+  let previousFrame = startedAt;
+
+  context.setRoundLabel("35 sekund útěku");
+  context.stage.innerHTML = `
+    <div class="escape-shell">
+      <div class="escape-hud">
+        <div><small>Do cíle</small><strong class="escape-time">35,0 s</strong></div>
+        <div><small>Vzdálenost</small><strong class="escape-distance">0 m</strong></div>
+        <div><small>Kolize</small><strong class="escape-crashes">0</strong></div>
+        <div><small>Káva</small><strong class="escape-coffees">0</strong></div>
+      </div>
+      <div class="escape-board-wrap">
+        <canvas class="escape-canvas" width="900" height="360" tabindex="0" aria-label="Meeting Escape. Přeskakuj meetingy a skrč se pod e-maily."></canvas>
+        <div class="escape-progress" aria-hidden="true"><span></span></div>
+      </div>
+      <div class="escape-bottom">
+        <p class="escape-status" role="status" aria-live="polite">Utíkej před meetingy. Káva obnovuje profesionální sebevědomí.</p>
+        <div class="escape-controls" role="group" aria-label="Ovládání Meeting Escape">
+          <button type="button" data-escape-action="jump">↑ Přeskočit</button>
+          <button type="button" data-escape-action="duck">↓ Skrčit se</button>
+        </div>
+      </div>
+    </div>`;
+
+  const canvas = context.stage.querySelector(".escape-canvas");
+  const drawing = canvas.getContext("2d");
+  const timeLabel = context.stage.querySelector(".escape-time");
+  const distanceLabel = context.stage.querySelector(".escape-distance");
+  const crashLabel = context.stage.querySelector(".escape-crashes");
+  const coffeeLabel = context.stage.querySelector(".escape-coffees");
+  const progressBar = context.stage.querySelector(".escape-progress span");
+  const status = context.stage.querySelector(".escape-status");
+  const jumpButton = context.stage.querySelector("[data-escape-action=\"jump\"]");
+  const duckButton = context.stage.querySelector("[data-escape-action=\"duck\"]");
+
+  function currentPlayerRect() {
+    const isDucking = ducking && jumpOffset <= 0;
+    const height = isDucking ? ESCAPE.duckHeight : ESCAPE.playerHeight;
+    return {
+      x: ESCAPE.playerX,
+      y: ESCAPE.groundY - height - jumpOffset,
+      width: ESCAPE.playerWidth,
+      height
+    };
+  }
+
+  function obstacleRect(item, elapsed) {
+    const x = ESCAPE.playerX + (item.at - elapsed) * ESCAPE.scrollSpeed;
+    if (item.type === "meeting") {
+      return { x, y: ESCAPE.groundY - 52, width: 48, height: 52 };
+    }
+    if (item.type === "reply") {
+      return { x, y: ESCAPE.groundY - 78, width: 62, height: 34 };
+    }
+    return { x, y: ESCAPE.groundY - 126, width: 35, height: 35 };
+  }
+
+  function jump() {
+    if (finished || jumpOffset > 1) return;
+    ducking = false;
+    jumpVelocity = 635;
+    canvas.focus({ preventScroll: true });
+  }
+
+  function updateScore(elapsed, publish) {
+    distance = Math.floor(elapsed * .108);
+    score = Math.max(0, distance + coffees * 150 - crashes * 250);
+    distanceLabel.textContent = distance + " m";
+    crashLabel.textContent = String(crashes);
+    coffeeLabel.textContent = String(coffees);
+    if (publish || elapsed - lastPublishedAt >= 500) {
+      lastPublishedAt = elapsed;
+      context.publishScore(score);
+    }
+  }
+
+  function handleObstacles(elapsed, now) {
+    const player = currentPlayerRect();
+    course.forEach(function (item) {
+      if (handled.has(item.id)) return;
+      const obstacle = obstacleRect(item, elapsed);
+      if (obstacle.x + obstacle.width < ESCAPE.playerX - 12) {
+        handled.add(item.id);
+        return;
+      }
+      if (!rectanglesOverlap(player, obstacle)) return;
+
+      handled.add(item.id);
+      if (item.type === "coffee") {
+        coffees += 1;
+        status.textContent = "Káva chycena. Produktivita byla na okamžik obnovena.";
+      } else if (now >= invulnerableUntil) {
+        crashes += 1;
+        invulnerableUntil = now + 900;
+        flashUntil = now + 260;
+        status.textContent = item.type === "meeting"
+          ? "Kolize s meetingem bez agendy. −250 bodů."
+          : "Zásah Reply All. Tohle už nejde vzít zpět. −250 bodů.";
+      }
+      updateScore(elapsed, true);
+    });
+  }
+
+  function drawBackground(elapsed) {
+    const gradient = drawing.createLinearGradient(0, 0, 0, ESCAPE.height);
+    gradient.addColorStop(0, "#dff2ff");
+    gradient.addColorStop(1, "#fff8e9");
+    drawing.fillStyle = gradient;
+    drawing.fillRect(0, 0, ESCAPE.width, ESCAPE.height);
+
+    const offset = (elapsed * ESCAPE.scrollSpeed * .22) % 180;
+    drawing.fillStyle = "rgba(7,26,61,.08)";
+    for (let x = -offset; x < ESCAPE.width + 180; x += 180) {
+      drawing.fillRect(x, 54, 112, 128);
+      drawing.fillStyle = "rgba(255,255,255,.66)";
+      drawing.fillRect(x + 12, 68, 39, 44);
+      drawing.fillRect(x + 61, 68, 39, 44);
+      drawing.fillStyle = "rgba(7,26,61,.08)";
+    }
+
+    drawing.fillStyle = "#d4aa72";
+    drawing.fillRect(0, ESCAPE.groundY, ESCAPE.width, ESCAPE.height - ESCAPE.groundY);
+    drawing.strokeStyle = "#111";
+    drawing.lineWidth = 4;
+    drawing.beginPath();
+    drawing.moveTo(0, ESCAPE.groundY);
+    drawing.lineTo(ESCAPE.width, ESCAPE.groundY);
+    drawing.stroke();
+    drawing.strokeStyle = "rgba(82,44,18,.18)";
+    drawing.lineWidth = 2;
+    for (let x = -(elapsed * ESCAPE.scrollSpeed) % 70; x < ESCAPE.width; x += 70) {
+      drawing.beginPath();
+      drawing.moveTo(x, ESCAPE.groundY);
+      drawing.lineTo(x + 24, ESCAPE.height);
+      drawing.stroke();
+    }
+  }
+
+  function drawObstacle(item, rect) {
+    drawing.save();
+    if (handled.has(item.id)) drawing.globalAlpha = .34;
+    if (item.type === "meeting") {
+      drawing.fillStyle = item.variant === 0 ? "#ff5b4d" : item.variant === 1 ? "#ff0f7b" : "#b86cff";
+      drawing.strokeStyle = "#111";
+      drawing.lineWidth = 3;
+      drawing.fillRect(rect.x, rect.y, rect.width, rect.height);
+      drawing.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      drawing.fillStyle = "#fff";
+      drawing.font = "900 12px Arial";
+      drawing.textAlign = "center";
+      drawing.fillText("MEET", rect.x + rect.width / 2, rect.y + 22);
+      drawing.fillText("ING", rect.x + rect.width / 2, rect.y + 38);
+    } else if (item.type === "reply") {
+      drawing.fillStyle = "#ffd51f";
+      drawing.strokeStyle = "#111";
+      drawing.lineWidth = 3;
+      drawing.fillRect(rect.x, rect.y, rect.width, rect.height);
+      drawing.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      drawing.beginPath();
+      drawing.moveTo(rect.x + 2, rect.y + 2);
+      drawing.lineTo(rect.x + rect.width / 2, rect.y + 20);
+      drawing.lineTo(rect.x + rect.width - 2, rect.y + 2);
+      drawing.stroke();
+      drawing.fillStyle = "#111";
+      drawing.font = "900 9px Arial";
+      drawing.textAlign = "center";
+      drawing.fillText("REPLY ALL", rect.x + rect.width / 2, rect.y + 30);
+    } else {
+      drawing.font = "31px Arial";
+      drawing.textAlign = "center";
+      drawing.fillText("☕", rect.x + rect.width / 2, rect.y + 29);
+    }
+    drawing.restore();
+  }
+
+  function drawPlayer(now) {
+    const player = currentPlayerRect();
+    drawing.save();
+    if (now < invulnerableUntil && Math.floor(now / 90) % 2 === 0) drawing.globalAlpha = .3;
+    drawing.fillStyle = "#fff";
+    drawing.strokeStyle = "#111";
+    drawing.lineWidth = 3;
+    drawing.fillRect(player.x, player.y, player.width, player.height);
+    drawing.strokeRect(player.x, player.y, player.width, player.height);
+    drawing.fillStyle = context.localRole === 1 ? "#48a7ff" : "#ff0f7b";
+    drawing.fillRect(player.x + 4, player.y + 5, player.width - 8, 13);
+    drawing.fillStyle = "#111";
+    drawing.font = "900 11px Arial";
+    drawing.textAlign = "center";
+    drawing.fillText(ducking && jumpOffset <= 0 ? "OOO" : "RUN", player.x + player.width / 2, player.y + player.height - 10);
+    drawing.restore();
+  }
+
+  function draw(elapsed, now) {
+    drawBackground(elapsed);
+    course.forEach(function (item) {
+      const rect = obstacleRect(item, elapsed);
+      if (rect.x > -90 && rect.x < ESCAPE.width + 80) drawObstacle(item, rect);
+    });
+    drawPlayer(now);
+    if (now < flashUntil) {
+      drawing.fillStyle = "rgba(201,34,27,.2)";
+      drawing.fillRect(0, 0, ESCAPE.width, ESCAPE.height);
+    }
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    ducking = false;
+    timeLabel.textContent = "0,0 s";
+    progressBar.style.transform = "scaleX(1)";
+    updateScore(ESCAPE.durationMs, true);
+    status.textContent = "Únik dokončen. Kalendář byl preventivně označen jako nedostupný.";
+    context.finish({ score, distance, crashes, coffees });
+  }
+
+  function frame(now) {
+    if (finished) return;
+    const elapsed = Math.min(ESCAPE.durationMs, now - startedAt);
+    const dt = Math.min(.04, Math.max(0, (now - previousFrame) / 1000));
+    previousFrame = now;
+
+    if (jumpOffset > 0 || jumpVelocity > 0) {
+      jumpOffset += jumpVelocity * dt;
+      jumpVelocity -= 1540 * dt;
+      if (jumpOffset <= 0) {
+        jumpOffset = 0;
+        jumpVelocity = 0;
+      }
+    }
+
+    handleObstacles(elapsed, now);
+    updateScore(elapsed, false);
+    timeLabel.textContent = ((ESCAPE.durationMs - elapsed) / 1000).toFixed(1).replace(".", ",") + " s";
+    progressBar.style.transform = "scaleX(" + (elapsed / ESCAPE.durationMs) + ")";
+    draw(elapsed, now);
+    if (elapsed >= ESCAPE.durationMs) {
+      finish();
+      return;
+    }
+    animationFrame = window.requestAnimationFrame(frame);
+  }
+
+  function onKeyDown(event) {
+    if (event.code === "Space" || event.code === "ArrowUp") {
+      event.preventDefault();
+      jump();
+    }
+    if (event.code === "ArrowDown") {
+      event.preventDefault();
+      ducking = true;
+    }
+  }
+
+  function onKeyUp(event) {
+    if (event.code !== "ArrowDown") return;
+    event.preventDefault();
+    ducking = false;
+  }
+
+  function onDuckStart(event) {
+    event.preventDefault();
+    ducking = true;
+    canvas.focus({ preventScroll: true });
+  }
+
+  function onDuckEnd(event) {
+    event.preventDefault();
+    ducking = false;
+  }
+
+  function onCanvasPointer(event) {
+    event.preventDefault();
+    jump();
+  }
+
+  jumpButton.addEventListener("click", jump);
+  duckButton.addEventListener("pointerdown", onDuckStart);
+  duckButton.addEventListener("pointerup", onDuckEnd);
+  duckButton.addEventListener("pointercancel", onDuckEnd);
+  duckButton.addEventListener("pointerleave", onDuckEnd);
+  canvas.addEventListener("pointerdown", onCanvasPointer);
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+  context.publishScore(0);
+  draw(0, startedAt);
+  canvas.focus({ preventScroll: true });
+  animationFrame = window.requestAnimationFrame(frame);
+
+  return {
+    receiveNetwork: NOOP,
+    cleanup: function () {
+      finished = true;
+      window.cancelAnimationFrame(animationFrame);
+      jumpButton.removeEventListener("click", jump);
+      duckButton.removeEventListener("pointerdown", onDuckStart);
+      duckButton.removeEventListener("pointerup", onDuckEnd);
+      duckButton.removeEventListener("pointercancel", onDuckEnd);
+      duckButton.removeEventListener("pointerleave", onDuckEnd);
+      canvas.removeEventListener("pointerdown", onCanvasPointer);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    }
+  };
+}
+
+function startJargonDecoder(context) {
+  const rounds = buildJargonRounds(context.seed);
+  const timers = [];
+  const reactionTimes = [];
+  let roundTimer = 0;
+  let roundIndex = -1;
+  let phase = "idle";
+  let selected = [];
+  let solveStartedAt = 0;
+  let score = 0;
+  let solved = 0;
+  let mistakes = 0;
+  let finished = false;
+
+  context.setRoundLabel(JARGON_ROUNDS + " kol korporátštiny");
+  context.stage.innerHTML = `
+    <div class="jargon-shell">
+      <div class="jargon-topline">
+        <div class="jargon-rounds" aria-label="Průběh kol"></div>
+        <strong class="jargon-score">0 bodů</strong>
+      </div>
+      <div class="jargon-card">
+        <span class="eyebrow">Interní komunikační standard</span>
+        <h3>Zapamatuj a poskládej korporátní moudro</h3>
+        <div class="jargon-preview" role="status" aria-live="polite">Načítám slovník stakeholderů…</div>
+        <div class="jargon-answer" aria-label="Sestavená věta"><span>Zde vznikne tvoje věta</span></div>
+        <div class="jargon-tiles" role="group" aria-label="Slova k poskládání"></div>
+        <button class="jargon-undo" type="button" disabled>← Vrátit poslední slovo</button>
+        <p class="jargon-feedback" role="status" aria-live="polite">Správné pořadí má větší hodnotu než samotný význam.</p>
+      </div>
+    </div>`;
+
+  const roundDots = context.stage.querySelector(".jargon-rounds");
+  const scoreLabel = context.stage.querySelector(".jargon-score");
+  const preview = context.stage.querySelector(".jargon-preview");
+  const answerBox = context.stage.querySelector(".jargon-answer");
+  const tiles = context.stage.querySelector(".jargon-tiles");
+  const undoButton = context.stage.querySelector(".jargon-undo");
+  const feedback = context.stage.querySelector(".jargon-feedback");
+  const card = context.stage.querySelector(".jargon-card");
+
+  rounds.forEach(function (_, index) {
+    const dot = document.createElement("i");
+    dot.setAttribute("aria-label", "Kolo " + (index + 1));
+    roundDots.append(dot);
+  });
+
+  function schedule(callback, delay) {
+    const timer = window.setTimeout(callback, delay);
+    timers.push(timer);
+    return timer;
+  }
+
+  function updateScore() {
+    scoreLabel.textContent = score + " " + pointsWord(score);
+    context.publishScore(score);
+  }
+
+  function renderSelection() {
+    answerBox.replaceChildren();
+    if (!selected.length) {
+      const placeholder = document.createElement("span");
+      placeholder.textContent = "Klikáním sestav větu…";
+      answerBox.append(placeholder);
+    } else {
+      selected.forEach(function (entry) {
+        const word = document.createElement("b");
+        word.textContent = entry.word;
+        answerBox.append(word);
+      });
+    }
+    undoButton.disabled = phase !== "solve" || !selected.length;
+    tiles.querySelectorAll("button").forEach(function (button) {
+      button.disabled = phase !== "solve" || selected.some(function (entry) {
+        return entry.index === Number(button.dataset.wordIndex);
+      });
+    });
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    phase = "finished";
+    window.clearTimeout(roundTimer);
+    tiles.replaceChildren();
+    undoButton.disabled = true;
+    preview.textContent = "Slovník úspěšně vyčerpán";
+    feedback.textContent = "Hotovo. Význam nebyl nalezen, ale forma byla bezchybná.";
+    const average = reactionTimes.length
+      ? Math.round(reactionTimes.reduce(function (total, value) { return total + value; }, 0) / reactionTimes.length)
+      : 0;
+    context.finish({ score, solved, mistakes, average });
+  }
+
+  function nextRound() {
+    if (finished) return;
+    if (roundIndex + 1 >= rounds.length) {
+      finish();
+      return;
+    }
+    startRound(roundIndex + 1);
+  }
+
+  function resolveTimeout(expectedRound) {
+    if (finished || phase !== "solve" || roundIndex !== expectedRound) return;
+    phase = "resolved";
+    roundDots.children[roundIndex].classList.add("is-bad");
+    preview.textContent = rounds[roundIndex].phrase;
+    feedback.textContent = "Čas vypršel. Tohle bude chtít navazující workshop.";
+    renderSelection();
+    schedule(nextRound, 1200);
+  }
+
+  function beginSolve(expectedRound) {
+    if (finished || roundIndex !== expectedRound || phase !== "preview") return;
+    phase = "solve";
+    selected = [];
+    solveStartedAt = performance.now();
+    preview.textContent = "Teď větu obnov z rozházených slov";
+    preview.classList.add("is-hidden-phrase");
+    feedback.textContent = "Klikni na slova ve správném pořadí. Na význam se neptej.";
+    renderSelection();
+    roundTimer = schedule(function () { resolveTimeout(expectedRound); }, 9000);
+    const firstAvailable = tiles.querySelector("button:not(:disabled)");
+    if (firstAvailable) firstAvailable.focus({ preventScroll: true });
+  }
+
+  function startRound(index) {
+    if (finished || !rounds[index]) return;
+    window.clearTimeout(roundTimer);
+    roundIndex = index;
+    phase = "preview";
+    selected = [];
+    preview.classList.remove("is-hidden-phrase");
+    preview.textContent = rounds[index].phrase;
+    feedback.textContent = "Kolo " + (index + 1) + " z " + rounds.length + " · máš 1,7 sekundy na zapamatování.";
+    roundDots.children[index].classList.add("is-current");
+    tiles.replaceChildren();
+
+    rounds[index].words.forEach(function (word, wordIndex) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.wordIndex = String(wordIndex);
+      button.textContent = word;
+      button.disabled = true;
+      tiles.append(button);
+    });
+    renderSelection();
+    schedule(function () { beginSolve(index); }, 1700);
+  }
+
+  function resetAfterMistake(expectedRound) {
+    if (finished || roundIndex !== expectedRound || phase !== "penalty") return;
+    phase = "solve";
+    selected = [];
+    card.classList.remove("is-mistake");
+    renderSelection();
+  }
+
+  function chooseWord(index) {
+    if (finished || phase !== "solve" || !Number.isInteger(index)) return;
+    const round = rounds[roundIndex];
+    if (!round || index < 0 || index >= round.words.length || selected.some(function (entry) { return entry.index === index; })) return;
+    const word = round.words[index];
+    selected.push({ index, word });
+    const expectedWord = round.answer[selected.length - 1];
+
+    if (word !== expectedWord) {
+      mistakes += 1;
+      phase = "penalty";
+      feedback.textContent = "Tohle pořadí neprošlo připomínkovým řízením. Zkus znovu.";
+      card.classList.add("is-mistake");
+      renderSelection();
+      schedule(function () { resetAfterMistake(roundIndex); }, 430);
+      return;
+    }
+
+    renderSelection();
+    if (selected.length !== round.answer.length) return;
+    window.clearTimeout(roundTimer);
+    phase = "resolved";
+    const reaction = Math.round(performance.now() - solveStartedAt);
+    const points = Math.max(120, Math.min(1000, Math.round(1080 - reaction / 6)));
+    reactionTimes.push(reaction);
+    solved += 1;
+    score += points;
+    roundDots.children[roundIndex].classList.add("is-good");
+    preview.classList.remove("is-hidden-phrase");
+    preview.textContent = round.phrase;
+    feedback.textContent = reaction + " ms · +" + points + " bodů. Synergie obnovena.";
+    renderSelection();
+    updateScore();
+    schedule(nextRound, 1050);
+  }
+
+  function onTileClick(event) {
+    const button = event.target.closest("[data-word-index]");
+    if (!button) return;
+    chooseWord(Number(button.dataset.wordIndex));
+  }
+
+  function undo() {
+    if (phase !== "solve" || !selected.length) return;
+    selected.pop();
+    feedback.textContent = "Slovo vráceno do oběhu. Nikdo nic neviděl.";
+    renderSelection();
+  }
+
+  function onKeyDown(event) {
+    if (event.code !== "Backspace" || phase !== "solve") return;
+    event.preventDefault();
+    undo();
+  }
+
+  tiles.addEventListener("click", onTileClick);
+  undoButton.addEventListener("click", undo);
+  window.addEventListener("keydown", onKeyDown);
+  updateScore();
+  schedule(function () { startRound(0); }, 450);
+
+  return {
+    receiveNetwork: NOOP,
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+      window.clearTimeout(roundTimer);
+      tiles.removeEventListener("click", onTileClick);
+      undoButton.removeEventListener("click", undo);
+      window.removeEventListener("keydown", onKeyDown);
     }
   };
 }

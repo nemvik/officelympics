@@ -22,6 +22,21 @@ const GAME_META = Object.freeze({
     title: "Papírový curling",
     instruction: "Střídejte se po jednom hodu. Bodují koule nejblíž středu kancelářského koše.",
     scoreLabel: "curlingových bodů"
+  }),
+  alttab: Object.freeze({
+    title: "Alt+Tab Duel",
+    instruction: "Přepni okno jen ve chvíli, kdy se objeví šéf. Falešné poplachy ignoruj.",
+    scoreLabel: "bodů za krytí"
+  }),
+  battleship: Object.freeze({
+    title: "Tabulková námořní bitva",
+    instruction: "Najdi dvě schované řady meetingů v soupeřově kalendáři. Zásah dává další tah.",
+    scoreLabel: "potopených flotil"
+  }),
+  taskstack: Object.freeze({
+    title: "Task Stack",
+    instruction: "Skládej padající úkoly. Smazané řádky pošlou soupeři urgentní práci.",
+    scoreLabel: "bodů za úkoly"
   })
 });
 
@@ -182,7 +197,7 @@ function showScreen(name) {
 
 function chooseGame(gameId, broadcast) {
   if (!GAME_IDS.includes(gameId)) return;
-  if (state.mode === "online" && state.role === 1 && !refs.lobbyScreen.hidden) return;
+  if (broadcast && state.mode === "online" && state.role === 1 && !refs.lobbyScreen.hidden) return;
 
   state.selectedGame = gameId;
   document.querySelectorAll("[data-game-choice]").forEach(function (button) {
@@ -235,7 +250,7 @@ function createRoom() {
 
   const peer = createPeer(peerIdForRoom(code));
   if (!peer) {
-    leaveToSetup();
+    returnAfterNetworkFailure();
     return;
   }
   state.peer = peer;
@@ -284,7 +299,7 @@ function joinRoom(event) {
 
   const peer = createPeer();
   if (!peer) {
-    leaveToSetup();
+    returnAfterNetworkFailure();
     return;
   }
   state.peer = peer;
@@ -466,7 +481,8 @@ function receiveMessage(message) {
     return;
   }
 
-  if ((message.type === "curling-shot" || message.type === "curling-settle") && state.match && message.matchId === state.match.id) {
+  if ((message.type === "curling-shot" || message.type === "curling-settle" || message.type.startsWith("game:"))
+    && state.match && message.matchId === state.match.id) {
     if (state.controller) state.controller.receiveNetwork(message);
     return;
   }
@@ -760,6 +776,23 @@ function normalizeResult(game, result) {
   } else if (game === "curling") {
     normalized.score = Math.min(3, normalized.score);
     normalized.nearest = Number.isFinite(result.nearest) ? Math.min(1000, Math.max(0, result.nearest)) : null;
+  } else if (game === "alttab") {
+    normalized.score = Math.min(6000, normalized.score);
+    normalized.reactions = Array.isArray(result.reactions)
+      ? result.reactions.slice(0, 5).map(function (reaction) { return safeSmallInteger(reaction, 5000); })
+      : [];
+    normalized.mistakes = safeSmallInteger(result.mistakes, 8);
+    normalized.missed = safeSmallInteger(result.missed, 8);
+    normalized.average = safeSmallInteger(result.average, 5000);
+  } else if (game === "battleship") {
+    normalized.score = Math.min(1, normalized.score);
+    normalized.hits = safeSmallInteger(result.hits, 5);
+    normalized.shots = safeSmallInteger(result.shots, 36);
+    normalized.sunk = safeSmallInteger(result.sunk, 2);
+  } else if (game === "taskstack") {
+    normalized.lines = safeSmallInteger(result.lines, 100);
+    normalized.sent = safeSmallInteger(result.sent, 100);
+    normalized.topOut = Boolean(result.topOut);
   }
 
   return normalized;
@@ -796,15 +829,16 @@ function submitLocalResult(matchId, result) {
 
 function submitSharedResults(matchId, results) {
   if (!state.match || state.match.id !== matchId || !Array.isArray(results) || results.length !== 2) return;
-  const localResult = normalizeResult("curling", results[state.role]);
-  const remoteResult = normalizeResult("curling", results[1 - state.role]);
+  const game = state.match.game;
+  const localResult = normalizeResult(game, results[state.role]);
+  const remoteResult = normalizeResult(game, results[1 - state.role]);
   if (!localResult || !remoteResult) return;
   state.match.localResult = localResult;
   state.match.remoteResult = remoteResult;
   state.match.localScore = localResult.score;
   state.match.remoteScore = remoteResult.score;
   renderMatchScores();
-  sendMessage({ type: "result", matchId, game: "curling", result: localResult });
+  sendMessage({ type: "result", matchId, game, result: localResult });
   maybeShowResult();
 }
 
@@ -874,7 +908,16 @@ function resultDetail(game, result) {
       : 0;
     return busts ? busts + "× vyhoření" : "bez vyhoření";
   }
-  return result.score === 1 ? "1 curlingový bod" : result.score + " curlingové body";
+  if (game === "curling") {
+    return result.score === 1 ? "1 curlingový bod" : result.score + " curlingové body";
+  }
+  if (game === "alttab") {
+    return (result.average ? "průměr " + result.average + " ms" : "bez reakce") + " · " + result.mistakes + " pastí";
+  }
+  if (game === "battleship") {
+    return result.hits + " zásahů z " + result.shots + " pokusů";
+  }
+  return result.lines + " řádků · " + result.sent + " odesláno";
 }
 
 function launchConfetti() {
@@ -1016,6 +1059,13 @@ function clearInviteUrl() {
   url.search = "";
   url.hash = "";
   history.replaceState(null, "", url);
+}
+
+function returnAfterNetworkFailure() {
+  resetSession(true);
+  showScreen("setup");
+  clearInviteUrl();
+  setConnectionStatus("error", "● Síť nedostupná");
 }
 
 function leaveToSetup() {

@@ -1,10 +1,21 @@
 import {
+  ALT_TAB_ROUNDS,
+  BATTLESHIP,
   CURLING,
   PANIC_DURATION_MS,
   PANIC_EVENTS,
+  TASK_PIECES,
+  TASK_STACK,
+  addTaskGarbage,
+  altTabReactionScore,
+  battleshipShotResult,
+  buildAltTabRounds,
+  buildBattleshipFleet,
   buildPanicSchedule,
+  buildTaskBag,
   calculateCurlingScore,
   clampShotVelocity,
+  clearTaskRows,
   createCurlingStone,
   createRng,
   deadlineProgress,
@@ -21,6 +32,9 @@ const NOOP = function () {};
 export function startGame(gameId, context) {
   if (gameId === "deadline") return startDeadlineChicken(context);
   if (gameId === "curling") return startPaperCurling(context);
+  if (gameId === "alttab") return startAltTabDuel(context);
+  if (gameId === "battleship") return startSpreadsheetBattleship(context);
+  if (gameId === "taskstack") return startTaskStack(context);
   return startOfficePanic(context);
 }
 
@@ -38,6 +52,32 @@ export function createPracticeResult(gameId, seed) {
     return {
       score: rounds.reduce(function (total, round) { return total + round.points; }, 0),
       rounds
+    };
+  }
+
+  if (gameId === "alttab") {
+    const reactions = Array.from({ length: 5 }, function () {
+      return Math.round(285 + random() * 520);
+    });
+    const mistakes = random() < 0.45 ? 1 : 0;
+    return {
+      score: reactions.reduce(function (total, reaction) {
+        return total + altTabReactionScore(reaction);
+      }, 3 * 350) - mistakes * 350,
+      reactions,
+      mistakes,
+      missed: random() < 0.22 ? 1 : 0,
+      average: Math.round(reactions.reduce(function (total, value) { return total + value; }, 0) / reactions.length)
+    };
+  }
+
+  if (gameId === "taskstack") {
+    const lines = 3 + Math.floor(random() * 7);
+    return {
+      score: lines * 115 + Math.floor(random() * 420),
+      lines,
+      sent: Math.max(0, lines - 2),
+      topOut: random() < 0.18
     };
   }
 
@@ -396,7 +436,7 @@ function startPaperCurling(context) {
   let moving = false;
   let awaitingSettle = false;
   let drag = null;
-  let keyboardAim = { vx: 0, vy: -485 };
+  let keyboardAim = { vx: 0, vy: -465 };
   let animationFrame = 0;
   let animationGeneration = 0;
   let finished = false;
@@ -679,7 +719,7 @@ function startPaperCurling(context) {
     awaitingSettle = false;
     activeShotOwner = null;
     shotNumber += 1;
-    keyboardAim = { vx: 0, vy: -485 };
+    keyboardAim = { vx: 0, vy: -465 };
     updateTurnUi();
     draw();
 
@@ -805,6 +845,12 @@ function startPaperCurling(context) {
     }
   }
 
+  function onPointerCancel() {
+    if (!drag) return;
+    drag = null;
+    draw();
+  }
+
   function onKeyDown(event) {
     if (!canLocalShoot()) return;
     const handled = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Enter"].includes(event.code);
@@ -825,7 +871,7 @@ function startPaperCurling(context) {
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove);
   canvas.addEventListener("pointerup", onPointerUp);
-  canvas.addEventListener("pointercancel", onPointerUp);
+  canvas.addEventListener("pointercancel", onPointerCancel);
   canvas.addEventListener("keydown", onKeyDown);
 
   updateTurnUi();
@@ -853,8 +899,751 @@ function startPaperCurling(context) {
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
-      canvas.removeEventListener("pointercancel", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerCancel);
       canvas.removeEventListener("keydown", onKeyDown);
+    }
+  };
+}
+
+function startAltTabDuel(context) {
+  const rounds = buildAltTabRounds(context.seed);
+  const timers = [];
+  const reactions = [];
+  let roundIndex = -1;
+  let phase = "idle";
+  let shownAt = 0;
+  let score = 0;
+  let mistakes = 0;
+  let missed = 0;
+  let finished = false;
+
+  context.setRoundLabel(ALT_TAB_ROUNDS + " kontrol šéfa");
+  context.stage.innerHTML = `
+    <div class="alttab-shell">
+      <div class="alttab-topline">
+        <div class="alttab-rounds" aria-label="Průběh kol"></div>
+        <strong class="alttab-score">0 bodů</strong>
+      </div>
+      <div class="alttab-monitor" data-state="working">
+        <div class="monitor-chrome"><i></i><i></i><i></i><span>Q4_vysledky_FINAL_opravdu.xlsx</span></div>
+        <div class="monitor-work">
+          <div class="fake-sheet" aria-hidden="true">
+            <b>A</b><b>B</b><b>C</b><b>D</b><b>E</b>
+            <span>Q4</span><span>128</span><span>?</span><span>☕</span><span>#REF!</span>
+            <span>KPI</span><span>42 %</span><span>👍</span><span>0</span><span>brzy</span>
+            <span>ROI</span><span>∞</span><span>📈</span><span>ano</span><span>možná</span>
+          </div>
+          <div class="alttab-alert" role="status" aria-live="assertive">
+            <span class="alttab-alert-icon" aria-hidden="true">⌛</span>
+            <div><strong>Pracuj nenápadně</strong><small>Reaguj jen, když se objeví šéf.</small></div>
+          </div>
+        </div>
+      </div>
+      <button class="alttab-button" type="button"><span>ALT + TAB</span><small>nebo mezerník</small></button>
+      <p class="alttab-feedback" role="status" aria-live="polite">Až přijde šéf, zachraň tabulku. Ostatní notifikace ignoruj.</p>
+    </div>`;
+
+  const monitor = context.stage.querySelector(".alttab-monitor");
+  const alert = context.stage.querySelector(".alttab-alert");
+  const alertIcon = context.stage.querySelector(".alttab-alert-icon");
+  const alertTitle = alert.querySelector("strong");
+  const alertCopy = alert.querySelector("small");
+  const button = context.stage.querySelector(".alttab-button");
+  const feedback = context.stage.querySelector(".alttab-feedback");
+  const scoreLabel = context.stage.querySelector(".alttab-score");
+  const roundPips = context.stage.querySelector(".alttab-rounds");
+
+  rounds.forEach(function (_, index) {
+    const pip = document.createElement("i");
+    pip.setAttribute("aria-label", "Kolo " + (index + 1));
+    roundPips.append(pip);
+  });
+
+  function schedule(callback, delay) {
+    const timer = window.setTimeout(callback, delay);
+    timers.push(timer);
+    return timer;
+  }
+
+  function updateScore() {
+    scoreLabel.textContent = score + " " + pointsWord(score);
+    context.publishScore(score);
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    phase = "finished";
+    button.disabled = true;
+    monitor.dataset.state = "done";
+    alertIcon.textContent = "✅";
+    alertTitle.textContent = "Směna přežita";
+    alertCopy.textContent = "Historie prohlížeče byla preventivně skartována.";
+    feedback.textContent = "Hotovo. Šéf nic neviděl — nebo to aspoň profesionálně předstírá.";
+    const average = reactions.length
+      ? Math.round(reactions.reduce(function (total, value) { return total + value; }, 0) / reactions.length)
+      : 0;
+    context.finish({ score, reactions, mistakes, missed, average });
+  }
+
+  function resolveRound(outcome) {
+    if (finished || (phase !== "waiting" && phase !== "signal")) return;
+    const round = rounds[roundIndex];
+    let successful = false;
+    let delta = 0;
+
+    if (phase === "waiting") {
+      mistakes += 1;
+      feedback.textContent = "Předčasně! Tohle byl jen kolega jdoucí pro kávu.";
+      monitor.dataset.state = "mistake";
+    } else if (round.kind === "boss" && outcome === "press") {
+      const reaction = Math.max(0, Math.round(performance.now() - shownAt));
+      reactions.push(reaction);
+      delta = altTabReactionScore(reaction);
+      score += delta;
+      successful = true;
+      feedback.textContent = reaction + " ms · +" + delta + " bodů. Tabulka zachráněna!";
+      monitor.dataset.state = "success";
+    } else if (round.kind === "safe" && outcome === "timeout") {
+      delta = 350;
+      score += delta;
+      successful = true;
+      feedback.textContent = "+350 bodů · Slack úspěšně ignorován.";
+      monitor.dataset.state = "success";
+    } else if (round.kind === "boss") {
+      missed += 1;
+      feedback.textContent = "Pozdě! Šéf právě viděl otevřený turnaj v curlingu.";
+      monitor.dataset.state = "mistake";
+    } else {
+      mistakes += 1;
+      feedback.textContent = "Past! Kvůli běžné zprávě ses prozradil úplně sám.";
+      monitor.dataset.state = "mistake";
+    }
+
+    phase = "resolved";
+    roundPips.children[roundIndex].classList.add(successful ? "is-good" : "is-bad");
+    updateScore();
+
+    if (roundIndex + 1 >= rounds.length) {
+      schedule(finish, 850);
+    } else {
+      schedule(beginRound, 800);
+    }
+  }
+
+  function showSignal(expectedRound) {
+    if (finished || phase !== "waiting" || roundIndex !== expectedRound) return;
+    const round = rounds[roundIndex];
+    phase = "signal";
+    shownAt = performance.now();
+
+    if (round.kind === "boss") {
+      monitor.dataset.state = "boss";
+      alertIcon.textContent = "👔";
+      alertTitle.textContent = "ŠÉF ZA ZÁDY!";
+      alertCopy.textContent = "Teď! Přepni na důležitě vypadající tabulku.";
+    } else {
+      monitor.dataset.state = "safe";
+      alertIcon.textContent = "💬";
+      alertTitle.textContent = "Slack: oběd?";
+      alertCopy.textContent = "Tohle není šéf. Zachovej chladnou hlavu.";
+    }
+
+    schedule(function () {
+      if (roundIndex === expectedRound) resolveRound("timeout");
+    }, round.window);
+  }
+
+  function beginRound() {
+    if (finished) return;
+    roundIndex += 1;
+    phase = "waiting";
+    monitor.dataset.state = "working";
+    alertIcon.textContent = "⌛";
+    alertTitle.textContent = "Kolo " + (roundIndex + 1) + " z " + rounds.length;
+    alertCopy.textContent = "Pracuj nenápadně a čekej…";
+    feedback.textContent = "Ruce v pohotovosti. Panika až na povel.";
+    roundPips.children[roundIndex].classList.add("is-current");
+    const expectedRound = roundIndex;
+    schedule(function () { showSignal(expectedRound); }, rounds[roundIndex].wait);
+  }
+
+  function press() {
+    if (finished || phase === "resolved" || phase === "idle") return;
+    resolveRound("press");
+  }
+
+  function onKeyDown(event) {
+    if (event.code !== "Space") return;
+    event.preventDefault();
+    press();
+  }
+
+  button.addEventListener("click", press);
+  window.addEventListener("keydown", onKeyDown);
+  schedule(beginRound, 450);
+
+  return {
+    receiveNetwork: NOOP,
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+      button.removeEventListener("click", press);
+      window.removeEventListener("keydown", onKeyDown);
+    }
+  };
+}
+
+function startSpreadsheetBattleship(context) {
+  const localRole = context.localRole;
+  const fleets = [buildBattleshipFleet(context.seed, 0), buildBattleshipFleet(context.seed, 1)];
+  const shots = [new Set(), new Set()];
+  const timers = [];
+  const botRandom = createRng("battleship-bot:" + context.seed);
+  let turnOwner = 0;
+  let sequence = 0;
+  let finished = false;
+
+  context.setRoundLabel("2 lodě · mřížka 6 × 6");
+  context.stage.innerHTML = `
+    <div class="battleship-shell">
+      <div class="battleship-status" role="status" aria-live="polite">
+        <span class="eyebrow">Tabulková námořní bitva</span>
+        <h3>Růžový tým zahajuje audit</h3>
+        <p>Zásah dává další tah. Minutí předává slovo soupeři.</p>
+      </div>
+      <div class="battleship-boards">
+        <section>
+          <div class="battleship-board-heading"><strong>Cizí kalendář</strong><span class="enemy-fleet">5 bloků zbývá</span></div>
+          <div class="battleship-grid enemy-grid" role="grid" aria-label="Mřížka soupeře"></div>
+        </section>
+        <section>
+          <div class="battleship-board-heading"><strong>Tvůj kalendář</strong><span class="own-fleet">2 meetingy plují</span></div>
+          <div class="battleship-grid own-grid" role="grid" aria-label="Vlastní mřížka"></div>
+        </section>
+      </div>
+      <div class="battleship-legend"><span><i class="ship"></i> meeting</span><span><i class="hit"></i> zásah</span><span><i class="miss"></i> voda</span></div>
+    </div>`;
+
+  const heading = context.stage.querySelector(".battleship-status h3");
+  const status = context.stage.querySelector(".battleship-status p");
+  const enemyGrid = context.stage.querySelector(".enemy-grid");
+  const ownGrid = context.stage.querySelector(".own-grid");
+  const enemyFleetLabel = context.stage.querySelector(".enemy-fleet");
+  const ownFleetLabel = context.stage.querySelector(".own-fleet");
+
+  function ownerName(owner) {
+    return owner === localRole ? "Ty" : context.names[owner];
+  }
+
+  function targetFleet(owner) {
+    return fleets[1 - owner];
+  }
+
+  function hitCount(owner) {
+    const occupied = new Set(targetFleet(owner).flat());
+    let hits = 0;
+    shots[owner].forEach(function (cell) { if (occupied.has(cell)) hits += 1; });
+    return hits;
+  }
+
+  function sunkCount(owner) {
+    return targetFleet(owner).filter(function (ship) {
+      return ship.every(function (cell) { return shots[owner].has(cell); });
+    }).length;
+  }
+
+  function cellLabel(cell) {
+    const column = String.fromCharCode(65 + cell % BATTLESHIP.size);
+    const row = Math.floor(cell / BATTLESHIP.size) + 1;
+    return column + row;
+  }
+
+  function isSunkCell(fleet, receivedShots, cell) {
+    return fleet.some(function (ship) {
+      return ship.includes(cell) && ship.every(function (shipCell) { return receivedShots.has(shipCell); });
+    });
+  }
+
+  function renderGrid(container, shotOwner, fleetOwner, interactive) {
+    const fragment = document.createDocumentFragment();
+    const fired = shots[shotOwner];
+    const fleet = fleets[fleetOwner];
+    const occupied = new Set(fleet.flat());
+
+    for (let cell = 0; cell < BATTLESHIP.size * BATTLESHIP.size; cell += 1) {
+      const button = document.createElement("button");
+      const wasFired = fired.has(cell);
+      const hit = wasFired && occupied.has(cell);
+      button.type = "button";
+      button.className = "battleship-cell";
+      button.dataset.cell = String(cell);
+      button.setAttribute("role", "gridcell");
+      button.setAttribute("aria-label", cellLabel(cell) + (wasFired ? hit ? ", zásah" : ", voda" : interactive ? ", vystřelit" : occupied.has(cell) ? ", vlastní meeting" : ", prázdné"));
+
+      if (!interactive && occupied.has(cell)) button.classList.add("is-ship");
+      if (wasFired) button.classList.add(hit ? "is-hit" : "is-miss");
+      if (hit && isSunkCell(fleet, fired, cell)) button.classList.add("is-sunk");
+      if (!interactive || finished || turnOwner !== localRole || wasFired) button.setAttribute("aria-disabled", "true");
+      if (interactive) {
+        button.addEventListener("click", function () {
+          performShot(localRole, sequence, cell, true);
+        });
+      }
+      fragment.append(button);
+    }
+    container.replaceChildren(fragment);
+  }
+
+  function render() {
+    renderGrid(enemyGrid, localRole, 1 - localRole, true);
+    renderGrid(ownGrid, 1 - localRole, localRole, false);
+    const enemyRemaining = BATTLESHIP.totalDecks - hitCount(localRole);
+    const ownRemaining = BATTLESHIP.totalDecks - hitCount(1 - localRole);
+    enemyFleetLabel.textContent = enemyRemaining + " " + (enemyRemaining === 1 ? "blok zbývá" : "bloků zbývá");
+    ownFleetLabel.textContent = ownRemaining + " " + (ownRemaining === 1 ? "blok zbývá" : "bloků zbývá");
+    context.setScores(hitCount(localRole), hitCount(1 - localRole));
+  }
+
+  function complete(winner) {
+    if (finished) return;
+    finished = true;
+    render();
+    heading.textContent = ownerName(winner) + (winner === localRole ? " potápíš poslední meeting!" : " potápí poslední meeting!");
+    status.textContent = "Audit uzavřen. Všechny pozvánky byly nenávratně archivovány.";
+    timers.push(window.setTimeout(function () {
+      const results = [0, 1].map(function (owner) {
+        return {
+          score: owner === winner ? 1 : 0,
+          hits: hitCount(owner),
+          shots: shots[owner].size,
+          sunk: sunkCount(owner)
+        };
+      });
+      context.finishShared(results);
+    }, 750));
+  }
+
+  function scheduleBot() {
+    if (context.mode !== "practice" || finished || turnOwner !== 1) return;
+    timers.push(window.setTimeout(function () {
+      if (finished || turnOwner !== 1) return;
+      const available = [];
+      for (let cell = 0; cell < BATTLESHIP.size * BATTLESHIP.size; cell += 1) {
+        if (!shots[1].has(cell)) available.push(cell);
+      }
+      if (!available.length) return;
+
+      const possibleNeighbors = [];
+      shots[1].forEach(function (cell) {
+        if (!fleets[0].flat().includes(cell)) return;
+        const x = cell % BATTLESHIP.size;
+        const y = Math.floor(cell / BATTLESHIP.size);
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (offset) {
+          const nextX = x + offset[0];
+          const nextY = y + offset[1];
+          const next = nextY * BATTLESHIP.size + nextX;
+          if (nextX >= 0 && nextX < BATTLESHIP.size && nextY >= 0 && nextY < BATTLESHIP.size && !shots[1].has(next)) {
+            possibleNeighbors.push(next);
+          }
+        });
+      });
+      const pool = possibleNeighbors.length ? possibleNeighbors : available;
+      const cell = pool[Math.floor(botRandom() * pool.length)];
+      performShot(1, sequence, cell, false);
+    }, 620 + Math.round(botRandom() * 520)));
+  }
+
+  function performShot(owner, incomingSequence, cell, shouldSend) {
+    if (finished || owner !== turnOwner || incomingSequence !== sequence || !Number.isInteger(cell) || cell < 0 || cell >= BATTLESHIP.size * BATTLESHIP.size || shots[owner].has(cell)) return false;
+    shots[owner].add(cell);
+    const result = battleshipShotResult(targetFleet(owner), shots[owner], cell);
+
+    if (shouldSend && context.mode === "online") {
+      context.send({ type: "game:battleship-shot", owner, sequence, cell });
+    }
+    sequence += 1;
+
+    if (result.hit) {
+      heading.textContent = result.sunk ? "Meeting potopen!" : "Zásah do kalendáře!";
+      status.textContent = ownerName(owner) + " trefuje " + cellLabel(cell) + " a pokračuje dalším tahem.";
+    } else {
+      turnOwner = 1 - turnOwner;
+      heading.textContent = turnOwner === localRole ? "Jsi na tahu" : "Na tahu je " + ownerName(turnOwner);
+      status.textContent = ownerName(owner) + " na " + cellLabel(cell) + " našel jen volný čas. Tah se střídá.";
+    }
+
+    render();
+    if (result.fleetSunk) {
+      complete(owner);
+    } else {
+      scheduleBot();
+    }
+    return true;
+  }
+
+  heading.textContent = turnOwner === localRole ? "Jsi na tahu" : "Začíná " + ownerName(turnOwner);
+  status.textContent = turnOwner === localRole
+    ? "Klikni do soupeřova kalendáře. Zásah ti nechá další tah."
+    : "Soupeř vybírá první podezřelý blok v tabulce.";
+  render();
+  scheduleBot();
+
+  return {
+    receiveNetwork: function (message) {
+      if (!message || message.type !== "game:battleship-shot" || message.owner !== 1 - localRole) return;
+      performShot(message.owner, message.sequence, message.cell, false);
+    },
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+    }
+  };
+}
+
+function startTaskStack(context) {
+  const columns = TASK_STACK.columns;
+  const rows = TASK_STACK.rows;
+  const cellSize = 30;
+  const timers = [];
+  const garbageRandom = createRng("task-garbage:" + context.seed + ":" + context.localRole);
+  let animationFrame = 0;
+  let gravityTimer = 0;
+  let finishTimer = 0;
+  let board = Array.from({ length: rows }, function () { return Array(columns).fill(0); });
+  let piece = null;
+  let bag = [];
+  let bagIndex = 0;
+  let nextKind = "";
+  let score = 0;
+  let clearedLines = 0;
+  let sentLines = 0;
+  let garbageSequence = 0;
+  let lastRemoteGarbage = -1;
+  let finished = false;
+  const startedAt = performance.now();
+
+  context.setRoundLabel("40 sekund · urgentní úkoly");
+  context.stage.innerHTML = `
+    <div class="taskstack-shell">
+      <div class="taskstack-board-wrap">
+        <canvas class="taskstack-canvas" width="300" height="540" tabindex="0" aria-label="Hrací plocha Task Stack. Ovládání šipkami, mezerník položí dílek."></canvas>
+        <div class="taskstack-overlay" hidden><strong>Inbox přetekl</strong><span>Čekáme na výsledek soupeře…</span></div>
+      </div>
+      <aside class="taskstack-sidebar">
+        <span class="eyebrow">Task Stack</span>
+        <h3>Skládej úkoly. Maž řádky.</h3>
+        <div class="taskstack-stats">
+          <div><small>Čas</small><strong class="task-time">40,0</strong></div>
+          <div><small>Řádky</small><strong class="task-lines">0</strong></div>
+          <div><small>Další</small><strong class="task-next">—</strong></div>
+          <div><small>Odesláno</small><strong class="task-sent">0</strong></div>
+        </div>
+        <p class="taskstack-status" role="status" aria-live="polite">Každý smazaný řádek pošle soupeři urgentní práci.</p>
+        <p class="taskstack-help">← → posun · ↑ otočit · ↓ zrychlit · mezerník položit</p>
+      </aside>
+      <div class="taskstack-controls" role="group" aria-label="Ovládání Task Stack">
+        <button type="button" data-task-action="left" aria-label="Doleva">←</button>
+        <button type="button" data-task-action="rotate" aria-label="Otočit">↻</button>
+        <button type="button" data-task-action="right" aria-label="Doprava">→</button>
+        <button type="button" data-task-action="down" aria-label="Dolů">↓</button>
+        <button type="button" data-task-action="drop" aria-label="Položit">⇊</button>
+      </div>
+    </div>`;
+
+  const shell = context.stage.querySelector(".taskstack-shell");
+  const canvas = context.stage.querySelector(".taskstack-canvas");
+  const drawing = canvas.getContext("2d");
+  const overlay = context.stage.querySelector(".taskstack-overlay");
+  const timeLabel = context.stage.querySelector(".task-time");
+  const linesLabel = context.stage.querySelector(".task-lines");
+  const nextLabel = context.stage.querySelector(".task-next");
+  const sentLabel = context.stage.querySelector(".task-sent");
+  const status = context.stage.querySelector(".taskstack-status");
+  const colors = {
+    I: "#48a7ff",
+    O: "#ffd51f",
+    T: "#b86cff",
+    L: "#ff8b32",
+    J: "#315ee8",
+    S: "#55e895",
+    Z: "#ff4f70",
+    garbage: "#566174"
+  };
+
+  function takeKind() {
+    if (!bag.length) {
+      bag = buildTaskBag(context.seed, bagIndex);
+      bagIndex += 1;
+    }
+    return bag.shift();
+  }
+
+  function ensureNext() {
+    if (!nextKind) nextKind = takeKind();
+    nextLabel.textContent = nextKind;
+  }
+
+  function cloneMatrix(matrix) {
+    return matrix.map(function (row) { return row.slice(); });
+  }
+
+  function canPlace(matrix, x, y) {
+    for (let matrixY = 0; matrixY < matrix.length; matrixY += 1) {
+      for (let matrixX = 0; matrixX < matrix[matrixY].length; matrixX += 1) {
+        if (!matrix[matrixY][matrixX]) continue;
+        const boardX = x + matrixX;
+        const boardY = y + matrixY;
+        if (boardX < 0 || boardX >= columns || boardY >= rows) return false;
+        if (boardY >= 0 && board[boardY][boardX]) return false;
+      }
+    }
+    return true;
+  }
+
+  function spawnPiece() {
+    ensureNext();
+    const kind = nextKind;
+    nextKind = takeKind();
+    nextLabel.textContent = nextKind;
+    const matrix = cloneMatrix(TASK_PIECES[kind]);
+    piece = {
+      kind,
+      matrix,
+      x: Math.floor((columns - matrix[0].length) / 2),
+      y: 0
+    };
+    if (!canPlace(piece.matrix, piece.x, piece.y)) finishGame(true);
+  }
+
+  function rotateMatrix(matrix) {
+    return matrix[0].map(function (_, column) {
+      return matrix.map(function (row) { return row[column]; }).reverse();
+    });
+  }
+
+  function move(horizontal, vertical) {
+    if (finished || !piece || !canPlace(piece.matrix, piece.x + horizontal, piece.y + vertical)) return false;
+    piece.x += horizontal;
+    piece.y += vertical;
+    draw();
+    return true;
+  }
+
+  function rotate() {
+    if (finished || !piece) return;
+    const rotated = rotateMatrix(piece.matrix);
+    const kicks = [0, -1, 1, -2, 2];
+    for (let index = 0; index < kicks.length; index += 1) {
+      if (!canPlace(rotated, piece.x + kicks[index], piece.y)) continue;
+      piece.matrix = rotated;
+      piece.x += kicks[index];
+      draw();
+      return;
+    }
+  }
+
+  function lockPiece() {
+    if (finished || !piece) return;
+    let overflow = false;
+    piece.matrix.forEach(function (row, matrixY) {
+      row.forEach(function (occupied, matrixX) {
+        if (!occupied) return;
+        const boardY = piece.y + matrixY;
+        const boardX = piece.x + matrixX;
+        if (boardY < 0) {
+          overflow = true;
+        } else {
+          board[boardY][boardX] = piece.kind;
+        }
+      });
+    });
+    if (overflow) {
+      finishGame(true);
+      return;
+    }
+
+    const cleared = clearTaskRows(board);
+    board = cleared.board;
+    if (cleared.cleared) {
+      const scoreTable = [0, 100, 300, 500, 800];
+      const delta = scoreTable[Math.min(4, cleared.cleared)];
+      const attack = Math.min(3, cleared.cleared);
+      score += delta;
+      clearedLines += cleared.cleared;
+      sentLines += attack;
+      linesLabel.textContent = String(clearedLines);
+      sentLabel.textContent = String(sentLines);
+      status.textContent = "+" + delta + " bodů · soupeři letí " + attack + " urgentní " + (attack === 1 ? "řádek" : "řádky") + ".";
+      context.publishScore(score);
+      if (context.mode === "online") {
+        const hole = Math.floor(garbageRandom() * columns);
+        context.send({ type: "game:taskstack-garbage", sequence: garbageSequence, lines: attack, hole });
+        garbageSequence += 1;
+      }
+    }
+    spawnPiece();
+    draw();
+  }
+
+  function stepDown() {
+    if (finished || !piece) return;
+    if (!move(0, 1)) lockPiece();
+  }
+
+  function hardDrop() {
+    if (finished || !piece) return;
+    while (canPlace(piece.matrix, piece.x, piece.y + 1)) piece.y += 1;
+    lockPiece();
+  }
+
+  function applyGarbage(lines, hole) {
+    if (finished || !piece) return;
+    const result = addTaskGarbage(board, lines, hole);
+    board = result.board;
+    piece.y -= lines;
+    status.textContent = "Soupeř poslal " + lines + " urgentní " + (lines === 1 ? "řádek" : "řádky") + ". Priority byly přepsány.";
+    if (result.overflow || !canPlace(piece.matrix, piece.x, piece.y)) {
+      finishGame(true);
+      return;
+    }
+    draw();
+  }
+
+  function drawCell(x, y, color, alpha) {
+    drawing.save();
+    drawing.globalAlpha = alpha === undefined ? 1 : alpha;
+    drawing.fillStyle = color;
+    drawing.fillRect(x * cellSize + 2, y * cellSize + 2, cellSize - 4, cellSize - 4);
+    drawing.strokeStyle = "rgba(17,17,17,.7)";
+    drawing.lineWidth = 2;
+    drawing.strokeRect(x * cellSize + 2, y * cellSize + 2, cellSize - 4, cellSize - 4);
+    drawing.restore();
+  }
+
+  function drawPiece(activePiece, yOverride, alpha) {
+    if (!activePiece) return;
+    activePiece.matrix.forEach(function (row, matrixY) {
+      row.forEach(function (occupied, matrixX) {
+        const y = (yOverride === undefined ? activePiece.y : yOverride) + matrixY;
+        if (occupied && y >= 0) drawCell(activePiece.x + matrixX, y, colors[activePiece.kind], alpha);
+      });
+    });
+  }
+
+  function draw() {
+    drawing.fillStyle = "#0b1730";
+    drawing.fillRect(0, 0, canvas.width, canvas.height);
+    drawing.strokeStyle = "rgba(255,255,255,.07)";
+    drawing.lineWidth = 1;
+    for (let x = 0; x <= columns; x += 1) {
+      drawing.beginPath();
+      drawing.moveTo(x * cellSize, 0);
+      drawing.lineTo(x * cellSize, canvas.height);
+      drawing.stroke();
+    }
+    for (let y = 0; y <= rows; y += 1) {
+      drawing.beginPath();
+      drawing.moveTo(0, y * cellSize);
+      drawing.lineTo(canvas.width, y * cellSize);
+      drawing.stroke();
+    }
+    board.forEach(function (row, y) {
+      row.forEach(function (value, x) {
+        if (value) drawCell(x, y, colors[value] || colors.garbage);
+      });
+    });
+    if (piece && !finished) {
+      let ghostY = piece.y;
+      while (canPlace(piece.matrix, piece.x, ghostY + 1)) ghostY += 1;
+      drawPiece(piece, ghostY, .22);
+      drawPiece(piece);
+    }
+  }
+
+  function finishGame(topOut) {
+    if (finished) return;
+    finished = true;
+    window.clearInterval(gravityTimer);
+    window.clearTimeout(finishTimer);
+    window.cancelAnimationFrame(animationFrame);
+    overlay.hidden = false;
+    overlay.querySelector("strong").textContent = topOut ? "Inbox přetekl" : "Směna skončila";
+    overlay.querySelector("span").textContent = "Čekáme na výsledek soupeře…";
+    context.finish({ score, lines: clearedLines, sent: sentLines, topOut: Boolean(topOut) });
+  }
+
+  function updateClock(now) {
+    if (finished) return;
+    const remaining = Math.max(0, TASK_STACK.durationMs - (now - startedAt));
+    timeLabel.textContent = (remaining / 1000).toFixed(1).replace(".", ",");
+    animationFrame = window.requestAnimationFrame(updateClock);
+  }
+
+  function performAction(action) {
+    if (action === "left") move(-1, 0);
+    if (action === "right") move(1, 0);
+    if (action === "down") stepDown();
+    if (action === "rotate") rotate();
+    if (action === "drop") hardDrop();
+  }
+
+  function onKeyDown(event) {
+    const actions = {
+      ArrowLeft: "left",
+      ArrowRight: "right",
+      ArrowDown: "down",
+      ArrowUp: "rotate",
+      Space: "drop"
+    };
+    const action = actions[event.code];
+    if (!action) return;
+    event.preventDefault();
+    performAction(action);
+  }
+
+  function onControlClick(event) {
+    const button = event.target.closest("[data-task-action]");
+    if (!button) return;
+    canvas.focus({ preventScroll: true });
+    performAction(button.dataset.taskAction);
+  }
+
+  window.addEventListener("keydown", onKeyDown);
+  shell.addEventListener("click", onControlClick);
+  canvas.addEventListener("pointerdown", function () { canvas.focus({ preventScroll: true }); });
+  ensureNext();
+  spawnPiece();
+  draw();
+  canvas.focus({ preventScroll: true });
+  gravityTimer = window.setInterval(stepDown, 620);
+  finishTimer = window.setTimeout(function () { finishGame(false); }, TASK_STACK.durationMs);
+  animationFrame = window.requestAnimationFrame(updateClock);
+
+  if (context.mode === "practice") {
+    [10_000, 21_500, 32_500].forEach(function (delay, index) {
+      timers.push(window.setTimeout(function () {
+        if (!finished) applyGarbage(index === 2 ? 2 : 1, Math.floor(garbageRandom() * columns));
+      }, delay));
+    });
+  }
+
+  return {
+    receiveNetwork: function (message) {
+      if (!message || message.type !== "game:taskstack-garbage" || !Number.isInteger(message.sequence)
+        || message.sequence <= lastRemoteGarbage || !Number.isInteger(message.lines) || message.lines < 1
+        || message.lines > 3 || !Number.isInteger(message.hole) || message.hole < 0 || message.hole >= columns) return;
+      lastRemoteGarbage = message.sequence;
+      applyGarbage(message.lines, message.hole);
+    },
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+      window.clearInterval(gravityTimer);
+      window.clearTimeout(finishTimer);
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("keydown", onKeyDown);
+      shell.removeEventListener("click", onControlClick);
     }
   };
 }

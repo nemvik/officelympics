@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Office Duel — Officelympics 2026</title>
-  <meta name="description" content="Vyzvi kolegu na Office Panic, Deadline Chicken nebo Papírový curling. Stačí odkaz a kód místnosti.">
+  <meta name="description" content="Vyzvi kolegu na šest rychlých kancelářských her. Stačí odkaz a kód místnosti.">
   <meta name="theme-color" content="#ff0f7b">
 
   <meta property="og:type" content="website">
   <meta property="og:locale" content="cs_CZ">
   <meta property="og:title" content="Office Duel — Officelympics 2026">
-  <meta property="og:description" content="Tři hry. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.">
+  <meta property="og:description" content="Šest her. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.">
   <meta property="og:image" content="../2026.png">
 
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -23,16 +23,17 @@
 
   <nav class="duel-nav" aria-label="Navigace">
     <a class="back-link" href="../">← Officelympics</a>
-    <span class="nav-brand" aria-label="Office Duel"><b>Office</b><em>Duel</em></span>
+    <span class="nav-brand"><b>Office</b><em>Duel</em></span>
     <span class="connection-pill" id="connection-pill" data-state="offline">● Bez spojení</span>
   </nav>
 
   <main class="duel-wrap" id="main">
+    <h1 class="sr-only">Office Duel — Officelympics 2026</h1>
     <header class="duel-hero">
       <div>
         <span class="kicker">Neoficiální digitální disciplíny</span>
-        <h1><span>Office</span> Duel</h1>
-        <p>Tři hry. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.</p>
+        <div class="hero-title" aria-hidden="true"><span>Office</span> Duel</div>
+        <p>Šest her. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.</p>
       </div>
       <div class="hero-stamp" aria-hidden="true">HR TO<br>NEHRAJE</div>
     </header>
@@ -46,7 +47,7 @@
         <p>Hostitel ji může změnit ještě v čekárně.</p>
       </div>
 
-      <div class="game-picker" id="setup-game-picker" aria-label="Výběr hry">
+      <div class="game-picker" id="setup-game-picker" role="group" aria-label="Výběr hry">
         <button class="game-card is-selected" type="button" data-game-choice="panic" aria-pressed="true">
           <span class="game-icon" aria-hidden="true">🔥</span>
           <span><strong>Office Panic</strong><small>20 sekund inboxového chaosu</small></span>
@@ -61,6 +62,21 @@
           <span class="game-icon" aria-hidden="true">🗑️</span>
           <span><strong>Papírový curling</strong><small>Tři koule, jeden kancelářský koš</small></span>
           <span class="difficulty">taktika</span>
+        </button>
+        <button class="game-card" type="button" data-game-choice="alttab" aria-pressed="false">
+          <span class="game-icon" aria-hidden="true">👔</span>
+          <span><strong>Alt+Tab Duel</strong><small>Přepni okno dřív, než šéf něco uvidí</small></span>
+          <span class="difficulty">reflex</span>
+        </button>
+        <button class="game-card" type="button" data-game-choice="battleship" aria-pressed="false">
+          <span class="game-icon" aria-hidden="true">📊</span>
+          <span><strong>Tabulková námořní bitva</strong><small>Potop meetingy v kolegově kalendáři</small></span>
+          <span class="difficulty">strategie</span>
+        </button>
+        <button class="game-card" type="button" data-game-choice="taskstack" aria-pressed="false">
+          <span class="game-icon" aria-hidden="true">🧱</span>
+          <span><strong>Task Stack</strong><small>Tetris s urgentními úkoly</small></span>
+          <span class="difficulty">arkáda</span>
         </button>
       </div>
 
@@ -117,7 +133,7 @@
         </div>
       </div>
 
-      <div class="players" aria-label="Hráči v místnosti">
+      <div class="players" role="group" aria-label="Hráči v místnosti">
         <article class="player-card player-one">
           <span class="player-avatar" aria-hidden="true">🩷</span>
           <span><small>Růžový tým</small><strong id="player-one-name">Čekám…</strong></span>
@@ -138,7 +154,7 @@
           <p id="selection-help">Hostitel vybírá, demokracie začne až po pracovní době.</p>
         </div>
 
-        <div class="game-picker compact-picker" id="lobby-game-picker" aria-label="Výběr hry v čekárně">
+        <div class="game-picker compact-picker" id="lobby-game-picker" role="group" aria-label="Výběr hry v čekárně">
           <button class="game-card is-selected" type="button" data-game-choice="panic" aria-pressed="true">
             <span class="game-icon" aria-hidden="true">🔥</span><span><strong>Office Panic</strong><small>rychlost</small></span>
           </button>
@@ -147,6 +163,15 @@
           </button>
           <button class="game-card" type="button" data-game-choice="curling" aria-pressed="false">
             <span class="game-icon" aria-hidden="true">🗑️</span><span><strong>Papírový curling</strong><small>taktika</small></span>
+          </button>
+          <button class="game-card" type="button" data-game-choice="alttab" aria-pressed="false">
+            <span class="game-icon" aria-hidden="true">👔</span><span><strong>Alt+Tab Duel</strong><small>reflex</small></span>
+          </button>
+          <button class="game-card" type="button" data-game-choice="battleship" aria-pressed="false">
+            <span class="game-icon" aria-hidden="true">📊</span><span><strong>Námořní bitva</strong><small>strategie</small></span>
+          </button>
+          <button class="game-card" type="button" data-game-choice="taskstack" aria-pressed="false">
+            <span class="game-icon" aria-hidden="true">🧱</span><span><strong>Task Stack</strong><small>arkáda</small></span>
           </button>
         </div>
       </div>

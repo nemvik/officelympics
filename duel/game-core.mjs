@@ -1,4 +1,35 @@
-export const GAME_IDS = Object.freeze(["panic", "deadline", "curling"]);
+export const GAME_IDS = Object.freeze([
+  "panic",
+  "deadline",
+  "curling",
+  "alttab",
+  "battleship",
+  "taskstack"
+]);
+
+export const ALT_TAB_ROUNDS = 8;
+
+export const BATTLESHIP = Object.freeze({
+  size: 6,
+  fleetLengths: Object.freeze([3, 2]),
+  totalDecks: 5
+});
+
+export const TASK_STACK = Object.freeze({
+  columns: 10,
+  rows: 18,
+  durationMs: 40_000
+});
+
+export const TASK_PIECES = Object.freeze({
+  I: Object.freeze([[1, 1, 1, 1]]),
+  O: Object.freeze([[1, 1], [1, 1]]),
+  T: Object.freeze([[0, 1, 0], [1, 1, 1]]),
+  L: Object.freeze([[0, 0, 1], [1, 1, 1]]),
+  J: Object.freeze([[1, 0, 0], [1, 1, 1]]),
+  S: Object.freeze([[0, 1, 1], [1, 1, 0]]),
+  Z: Object.freeze([[1, 1, 0], [0, 1, 1]])
+});
 
 export const PANIC_DURATION_MS = 20_000;
 
@@ -22,7 +53,7 @@ export const CURLING = Object.freeze({
   targetX: 360,
   targetY: 166,
   launchX: 360,
-  launchY: 790,
+  launchY: 730,
   inset: 24,
   friction: 190,
   wallBounce: 0.62,
@@ -64,6 +95,120 @@ export function makeSeed() {
   }
 
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+export function buildAltTabRounds(seed) {
+  const random = createRng("alt-tab:" + seed);
+  const kinds = ["boss", "boss", "boss", "boss", "boss", "safe", "safe", "safe"];
+
+  for (let index = kinds.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    const value = kinds[index];
+    kinds[index] = kinds[swapIndex];
+    kinds[swapIndex] = value;
+  }
+
+  return kinds.map(function (kind, index) {
+    return {
+      id: index,
+      kind,
+      wait: Math.round(1050 + random() * 1250),
+      window: kind === "boss" ? 1450 : 1050
+    };
+  });
+}
+
+export function altTabReactionScore(milliseconds) {
+  if (!Number.isFinite(milliseconds) || milliseconds < 0) return 0;
+  return Math.max(100, Math.min(900, Math.round(1100 - milliseconds)));
+}
+
+export function buildBattleshipFleet(seed, owner) {
+  const random = createRng("battleship:" + seed + ":" + owner);
+  const occupied = new Set();
+  const fleet = [];
+
+  BATTLESHIP.fleetLengths.forEach(function (length) {
+    for (let attempt = 0; attempt < 500; attempt += 1) {
+      const horizontal = random() < 0.5;
+      const maxX = horizontal ? BATTLESHIP.size - length : BATTLESHIP.size - 1;
+      const maxY = horizontal ? BATTLESHIP.size - 1 : BATTLESHIP.size - length;
+      const x = Math.floor(random() * (maxX + 1));
+      const y = Math.floor(random() * (maxY + 1));
+      const cells = Array.from({ length }, function (_, offset) {
+        const cellX = horizontal ? x + offset : x;
+        const cellY = horizontal ? y : y + offset;
+        return cellY * BATTLESHIP.size + cellX;
+      });
+
+      if (cells.some(function (cell) { return occupied.has(cell); })) continue;
+      cells.forEach(function (cell) { occupied.add(cell); });
+      fleet.push(cells);
+      return;
+    }
+  });
+
+  return fleet;
+}
+
+export function battleshipShotResult(fleet, shots, cell) {
+  const safeShots = shots instanceof Set ? shots : new Set(Array.isArray(shots) ? shots : []);
+  const shipIndex = fleet.findIndex(function (ship) { return ship.includes(cell); });
+  const hit = shipIndex >= 0;
+  const sunk = hit && fleet[shipIndex].every(function (shipCell) { return safeShots.has(shipCell); });
+  const allCells = fleet.flat();
+
+  return {
+    hit,
+    sunk,
+    fleetSunk: allCells.length > 0 && allCells.every(function (shipCell) { return safeShots.has(shipCell); })
+  };
+}
+
+export function buildTaskBag(seed, bagIndex) {
+  const random = createRng("task-bag:" + seed + ":" + bagIndex);
+  const bag = Object.keys(TASK_PIECES);
+
+  for (let index = bag.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    const value = bag[index];
+    bag[index] = bag[swapIndex];
+    bag[swapIndex] = value;
+  }
+
+  return bag;
+}
+
+export function clearTaskRows(board) {
+  const columns = board[0] ? board[0].length : TASK_STACK.columns;
+  const remaining = board.filter(function (row) {
+    return !row.every(Boolean);
+  }).map(function (row) { return row.slice(); });
+  const cleared = board.length - remaining.length;
+
+  while (remaining.length < board.length) {
+    remaining.unshift(Array(columns).fill(0));
+  }
+
+  return { board: remaining, cleared };
+}
+
+export function addTaskGarbage(board, lines, hole) {
+  const next = board.map(function (row) { return row.slice(); });
+  const columns = next[0] ? next[0].length : TASK_STACK.columns;
+  const safeLines = Math.min(4, Math.max(0, Math.floor(Number(lines) || 0)));
+  const safeHole = Math.min(columns - 1, Math.max(0, Math.floor(Number(hole) || 0)));
+  let overflow = false;
+
+  for (let line = 0; line < safeLines; line += 1) {
+    if (next[0] && next[0].some(Boolean)) overflow = true;
+    next.shift();
+    next.push(Array.from({ length: columns }, function (_, column) {
+      return column === safeHole ? 0 : "garbage";
+    }));
+  }
+
+  return { board: next, overflow };
 }
 
 export function buildPanicSchedule(seed, durationMs = PANIC_DURATION_MS) {

@@ -7,7 +7,10 @@ export const GAME_IDS = Object.freeze([
   "taskstack",
   "pong",
   "escape",
-  "jargon"
+  "jargon",
+  "coffee",
+  "calendar",
+  "printer"
 ]);
 
 export const ALT_TAB_ROUNDS = 8;
@@ -59,6 +62,93 @@ export const ESCAPE = Object.freeze({
 });
 
 export const JARGON_ROUNDS = 6;
+
+export const COFFEE_ROUNDS = 5;
+
+export const COFFEE_CATEGORIES = Object.freeze([
+  Object.freeze({
+    id: "size",
+    label: "Velikost",
+    options: Object.freeze([
+      Object.freeze({ id: "small", emoji: "🤏", label: "Malé" }),
+      Object.freeze({ id: "large", emoji: "🫗", label: "Velké" })
+    ])
+  }),
+  Object.freeze({
+    id: "base",
+    label: "Základ",
+    options: Object.freeze([
+      Object.freeze({ id: "espresso", emoji: "☕", label: "Espresso" }),
+      Object.freeze({ id: "filter", emoji: "🫘", label: "Filtrovaná" }),
+      Object.freeze({ id: "decaf", emoji: "🌙", label: "Bez kofeinu" })
+    ])
+  }),
+  Object.freeze({
+    id: "milk",
+    label: "Mléko",
+    options: Object.freeze([
+      Object.freeze({ id: "none", emoji: "⚫", label: "Bez mléka" }),
+      Object.freeze({ id: "regular", emoji: "🥛", label: "Kravské" }),
+      Object.freeze({ id: "oat", emoji: "🌾", label: "Ovesné" })
+    ])
+  }),
+  Object.freeze({
+    id: "extra",
+    label: "Navíc",
+    options: Object.freeze([
+      Object.freeze({ id: "plain", emoji: "👌", label: "Nic" }),
+      Object.freeze({ id: "sugar", emoji: "🧊", label: "Cukr" }),
+      Object.freeze({ id: "syrup", emoji: "🍯", label: "Sirup" })
+    ])
+  })
+]);
+
+export const CALENDAR_ROUNDS = 6;
+export const CALENDAR_SLOTS = 16;
+
+export const PRINTER_ROUNDS = 10;
+
+export const PRINTER_ACTIONS = Object.freeze([
+  Object.freeze({ id: "paper", emoji: "📄", label: "Vytáhnout papír" }),
+  Object.freeze({ id: "toner", emoji: "🧂", label: "Protřepat toner" }),
+  Object.freeze({ id: "cable", emoji: "🔌", label: "Zapojit kabel" }),
+  Object.freeze({ id: "queue", emoji: "🗑️", label: "Zrušit frontu" })
+]);
+
+export const PRINTER_ISSUES = Object.freeze([
+  Object.freeze({
+    id: "paper",
+    messages: Object.freeze([
+      "Papír uvízl v zásobníku 2",
+      "Zařízení hlásí PAPER JAM",
+      "List A4 trčí z útrob tiskárny"
+    ])
+  }),
+  Object.freeze({
+    id: "toner",
+    messages: Object.freeze([
+      "Výtisk je bledší než firemní vize",
+      "Dochází černý toner",
+      "Na papíře zůstávají jen duchové písmen"
+    ])
+  }),
+  Object.freeze({
+    id: "cable",
+    messages: Object.freeze([
+      "Tiskárna je záhadně offline",
+      "Zařízení nebylo v síti nalezeno",
+      "Kontrolka sítě odmítá spolupracovat"
+    ])
+  }),
+  Object.freeze({
+    id: "queue",
+    messages: Object.freeze([
+      "Ve frontě čeká 84 kopií reportu",
+      "Dokument FINAL se tiskne pořád dokola",
+      "Fronta tisku přestala odpovídat"
+    ])
+  })
+]);
 
 export const JARGON_PHRASES = Object.freeze([
   "Musíme sladit očekávání napříč stakeholdery",
@@ -365,6 +455,153 @@ export function buildJargonRounds(seed, count = JARGON_ROUNDS) {
 
     return { id: roundIndex, phrase, answer, words };
   });
+}
+
+export function buildCoffeeRounds(seed, count = COFFEE_ROUNDS) {
+  const random = createRng("coffee:" + seed);
+  const customers = ["Finance", "Vývoj", "Marketing", "Recepce", "HR", "Obchod", "Provoz"];
+  const usedOrders = new Set();
+  const rounds = [];
+
+  for (let roundIndex = 0; roundIndex < Math.max(0, count); roundIndex += 1) {
+    let order = null;
+    let signature = "";
+
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      order = {};
+      COFFEE_CATEGORIES.forEach(function (category) {
+        const option = category.options[Math.floor(random() * category.options.length)];
+        order[category.id] = option.id;
+      });
+      signature = COFFEE_CATEGORIES.map(function (category) { return order[category.id]; }).join(":");
+      if (!usedOrders.has(signature)) break;
+    }
+
+    usedOrders.add(signature);
+    rounds.push({
+      id: roundIndex,
+      customer: customers[Math.floor(random() * customers.length)],
+      order
+    });
+  }
+
+  return rounds;
+}
+
+export function coffeeOrderScore(expected, selection, elapsedMs, mistakes = 0) {
+  const correct = Boolean(expected && selection) && COFFEE_CATEGORIES.every(function (category) {
+    return expected[category.id] === selection[category.id];
+  });
+
+  if (!correct) return { correct: false, points: 0 };
+  const safeElapsed = Math.min(9000, Math.max(0, Number(elapsedMs) || 0));
+  const safeMistakes = Math.max(0, Math.floor(Number(mistakes) || 0));
+  const points = Math.max(180, Math.round(900 - safeElapsed / 14 - safeMistakes * 130));
+  return { correct: true, points };
+}
+
+export function findCalendarSlots(occupied, duration) {
+  if (!Array.isArray(occupied)) return [];
+  const safeDuration = Math.max(1, Math.floor(Number(duration) || 0));
+  const starts = [];
+
+  for (let start = 0; start <= occupied.length - safeDuration; start += 1) {
+    let available = true;
+    for (let offset = 0; offset < safeDuration; offset += 1) {
+      if (occupied[start + offset]) {
+        available = false;
+        break;
+      }
+    }
+    if (available) starts.push(start);
+  }
+
+  return starts;
+}
+
+export function buildCalendarRounds(seed, count = CALENDAR_ROUNDS) {
+  const random = createRng("calendar:" + seed);
+  const meetingTitles = ["Stand-up", "Sync", "1:1", "Roadmapa", "Retro", "Budget", "Workshop", "Oběd?"];
+
+  return Array.from({ length: Math.max(0, count) }, function (_, roundIndex) {
+    const duration = roundIndex % 3 + 1;
+    const reservedStart = Math.floor(random() * (CALENDAR_SLOTS - duration + 1));
+    const occupied = Array.from({ length: CALENDAR_SLOTS }, function () { return random() < 0.57; });
+
+    for (let offset = 0; offset < duration; offset += 1) occupied[reservedStart + offset] = false;
+    if (reservedStart > 0) occupied[reservedStart - 1] = true;
+    if (reservedStart + duration < occupied.length) occupied[reservedStart + duration] = true;
+
+    const titles = occupied.map(function (busy) {
+      return busy ? meetingTitles[Math.floor(random() * meetingTitles.length)] : null;
+    });
+
+    return {
+      id: roundIndex,
+      duration,
+      occupied,
+      titles,
+      validStarts: findCalendarSlots(occupied, duration)
+    };
+  });
+}
+
+export function calendarSlotScore(elapsedMs, mistakes = 0) {
+  const safeElapsed = Math.min(8000, Math.max(0, Number(elapsedMs) || 0));
+  const safeMistakes = Math.max(0, Math.floor(Number(mistakes) || 0));
+  return Math.max(150, Math.round(850 - safeElapsed / 12 - safeMistakes * 120));
+}
+
+export function buildPrinterRounds(seed, count = PRINTER_ROUNDS) {
+  const random = createRng("printer:" + seed);
+  const rounds = [];
+  let bag = [];
+  let previousIssue = "";
+
+  function refillBag() {
+    bag = PRINTER_ISSUES.map(function (_, index) { return index; });
+    for (let index = bag.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = bag[index];
+      bag[index] = bag[swapIndex];
+      bag[swapIndex] = value;
+    }
+    if (bag.length > 1 && PRINTER_ISSUES[bag[0]].id === previousIssue) {
+      const value = bag[0];
+      bag[0] = bag[1];
+      bag[1] = value;
+    }
+  }
+
+  for (let roundIndex = 0; roundIndex < Math.max(0, count); roundIndex += 1) {
+    if (!bag.length) refillBag();
+    const issue = PRINTER_ISSUES[bag.shift()];
+    const actions = PRINTER_ACTIONS.map(function (action) { return action.id; });
+
+    for (let index = actions.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = actions[index];
+      actions[index] = actions[swapIndex];
+      actions[swapIndex] = value;
+    }
+
+    rounds.push({
+      id: roundIndex,
+      code: "E-" + String(10 + Math.floor(random() * 90)),
+      issue: issue.id,
+      message: issue.messages[Math.floor(random() * issue.messages.length)],
+      actions
+    });
+    previousIssue = issue.id;
+  }
+
+  return rounds;
+}
+
+export function printerRepairScore(elapsedMs, mistakes = 0) {
+  const safeElapsed = Math.min(3500, Math.max(0, Number(elapsedMs) || 0));
+  const safeMistakes = Math.max(0, Math.floor(Number(mistakes) || 0));
+  return Math.max(100, Math.round(560 - safeElapsed / 7 - safeMistakes * 110));
 }
 
 export function buildPanicSchedule(seed, durationMs = PANIC_DURATION_MS) {

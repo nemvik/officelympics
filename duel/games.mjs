@@ -1,12 +1,17 @@
 import {
   ALT_TAB_ROUNDS,
   BATTLESHIP,
+  CALENDAR_ROUNDS,
+  COFFEE_CATEGORIES,
+  COFFEE_ROUNDS,
   CURLING,
   ESCAPE,
   JARGON_ROUNDS,
   PANIC_DURATION_MS,
   PANIC_EVENTS,
   PONG,
+  PRINTER_ACTIONS,
+  PRINTER_ROUNDS,
   TASK_PIECES,
   TASK_STACK,
   addTaskGarbage,
@@ -14,13 +19,18 @@ import {
   battleshipShotResult,
   buildAltTabRounds,
   buildBattleshipFleet,
+  buildCalendarRounds,
+  buildCoffeeRounds,
   buildEscapeCourse,
   buildJargonRounds,
   buildPanicSchedule,
+  buildPrinterRounds,
   buildTaskBag,
   calculateCurlingScore,
+  calendarSlotScore,
   clampShotVelocity,
   clearTaskRows,
+  coffeeOrderScore,
   createCurlingStone,
   createPongBall,
   createRng,
@@ -29,6 +39,7 @@ import {
   deadlineRoundScore,
   makeBotCurlingShot,
   panicClickScore,
+  printerRepairScore,
   rectanglesOverlap,
   sanitizeCurlingStones,
   stepCurling,
@@ -46,6 +57,9 @@ export function startGame(gameId, context) {
   if (gameId === "pong") return startInboxPong(context);
   if (gameId === "escape") return startMeetingEscape(context);
   if (gameId === "jargon") return startJargonDecoder(context);
+  if (gameId === "coffee") return startCoffeeRelay(context);
+  if (gameId === "calendar") return startCalendarSqueeze(context);
+  if (gameId === "printer") return startPrinterExorcist(context);
   return startOfficePanic(context);
 }
 
@@ -111,6 +125,42 @@ export function createPracticeResult(gameId, seed) {
       score: solved * 520 + Math.floor(random() * 850),
       solved,
       mistakes: Math.floor(random() * 5),
+      average
+    };
+  }
+
+  if (gameId === "coffee") {
+    const served = 3 + Math.floor(random() * 3);
+    const mistakes = Math.floor(random() * 4);
+    const average = 1900 + Math.floor(random() * 2800);
+    return {
+      score: served * 610 + Math.floor(random() * 620),
+      served,
+      mistakes,
+      average
+    };
+  }
+
+  if (gameId === "calendar") {
+    const booked = 4 + Math.floor(random() * 3);
+    const mistakes = Math.floor(random() * 4);
+    const average = 1400 + Math.floor(random() * 2600);
+    return {
+      score: booked * 650 + Math.floor(random() * 700),
+      booked,
+      mistakes,
+      average
+    };
+  }
+
+  if (gameId === "printer") {
+    const repaired = 7 + Math.floor(random() * 4);
+    const mistakes = Math.floor(random() * 5);
+    const average = 620 + Math.floor(random() * 1250);
+    return {
+      score: repaired * 390 + Math.floor(random() * 650),
+      repaired,
+      mistakes,
       average
     };
   }
@@ -292,7 +342,7 @@ function startDeadlineChicken(context) {
   context.setRoundLabel("5 kol nervů");
   context.stage.innerHTML = `
     <div class="deadline-shell">
-      <div class="deadline-rounds" aria-label="Průběh kol"></div>
+      <div class="deadline-rounds" role="group" aria-label="Průběh kol"></div>
       <h3 class="deadline-heading">Dotáhni úkol co nejblíž 100 %</h3>
       <div class="deadline-gauge" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Dokončení úkolu">
         <div class="deadline-fill"></div>
@@ -955,7 +1005,7 @@ function startAltTabDuel(context) {
   context.stage.innerHTML = `
     <div class="alttab-shell">
       <div class="alttab-topline">
-        <div class="alttab-rounds" aria-label="Průběh kol"></div>
+        <div class="alttab-rounds" role="group" aria-label="Průběh kol"></div>
         <strong class="alttab-score">0 bodů</strong>
       </div>
       <div class="alttab-monitor" data-state="working">
@@ -989,7 +1039,7 @@ function startAltTabDuel(context) {
 
   rounds.forEach(function (_, index) {
     const pip = document.createElement("i");
-    pip.setAttribute("aria-label", "Kolo " + (index + 1));
+    pip.setAttribute("aria-hidden", "true");
     roundPips.append(pip);
   });
 
@@ -1934,7 +1984,6 @@ function startInboxPong(context) {
   }
 
   function onPointerMove(event) {
-    if (event.pointerType === "mouse" && event.buttons === 0) return;
     event.preventDefault();
     pointerToPaddle(event);
   }
@@ -1974,7 +2023,9 @@ function startInboxPong(context) {
       vx: Math.min(800, Math.max(-800, message.ball.vx)),
       vy: Math.min(800, Math.max(-800, message.ball.vy))
     };
+    const controlledPaddle = pongState.paddles[localRole];
     pongState.paddles = message.paddles.map(clampPaddle);
+    pongState.paddles[localRole] = controlledPaddle;
     pongState.scores = message.scores.slice();
     rally = Math.max(0, Math.min(999, Math.round(Number(message.rally) || 0)));
     bestRally = Math.max(0, Math.min(999, Math.round(Number(message.bestRally) || 0)));
@@ -2365,14 +2416,14 @@ function startJargonDecoder(context) {
   context.stage.innerHTML = `
     <div class="jargon-shell">
       <div class="jargon-topline">
-        <div class="jargon-rounds" aria-label="Průběh kol"></div>
+        <div class="jargon-rounds" role="group" aria-label="Průběh kol"></div>
         <strong class="jargon-score">0 bodů</strong>
       </div>
       <div class="jargon-card">
         <span class="eyebrow">Interní komunikační standard</span>
         <h3>Zapamatuj a poskládej korporátní moudro</h3>
         <div class="jargon-preview" role="status" aria-live="polite">Načítám slovník stakeholderů…</div>
-        <div class="jargon-answer" aria-label="Sestavená věta"><span>Zde vznikne tvoje věta</span></div>
+        <div class="jargon-answer" role="status" aria-live="polite" aria-label="Sestavená věta"><span>Zde vznikne tvoje věta</span></div>
         <div class="jargon-tiles" role="group" aria-label="Slova k poskládání"></div>
         <button class="jargon-undo" type="button" disabled>← Vrátit poslední slovo</button>
         <p class="jargon-feedback" role="status" aria-live="polite">Správné pořadí má větší hodnotu než samotný význam.</p>
@@ -2390,7 +2441,7 @@ function startJargonDecoder(context) {
 
   rounds.forEach(function (_, index) {
     const dot = document.createElement("i");
-    dot.setAttribute("aria-label", "Kolo " + (index + 1));
+    dot.setAttribute("aria-hidden", "true");
     roundDots.append(dot);
   });
 
@@ -2451,7 +2502,7 @@ function startJargonDecoder(context) {
   }
 
   function resolveTimeout(expectedRound) {
-    if (finished || phase !== "solve" || roundIndex !== expectedRound) return;
+    if (finished || (phase !== "solve" && phase !== "penalty") || roundIndex !== expectedRound) return;
     phase = "resolved";
     roundDots.children[roundIndex].classList.add("is-bad");
     preview.textContent = rounds[roundIndex].phrase;
@@ -2575,6 +2626,702 @@ function startJargonDecoder(context) {
       window.clearTimeout(roundTimer);
       tiles.removeEventListener("click", onTileClick);
       undoButton.removeEventListener("click", undo);
+      window.removeEventListener("keydown", onKeyDown);
+    }
+  };
+}
+
+function startCoffeeRelay(context) {
+  const rounds = buildCoffeeRounds(context.seed);
+  const timers = [];
+  const reactionTimes = [];
+  let roundTimer = 0;
+  let roundIndex = -1;
+  let phase = "idle";
+  let selection = {};
+  let score = 0;
+  let served = 0;
+  let mistakes = 0;
+  let roundMistakes = 0;
+  let solveStartedAt = 0;
+  let finished = false;
+
+  context.setRoundLabel(COFFEE_ROUNDS + " objednávek bez papírku");
+  context.stage.innerHTML = `
+    <div class="coffee-shell">
+      <div class="coffee-topline">
+        <div class="coffee-rounds" role="group" aria-label="Průběh objednávek"></div>
+        <strong class="coffee-score">0 bodů</strong>
+      </div>
+      <div class="coffee-layout">
+        <article class="coffee-ticket" aria-live="polite">
+          <span class="eyebrow">Objednávka pro</span>
+          <h3 class="coffee-customer">Načítám patro…</h3>
+          <ul class="coffee-order"></ul>
+          <div class="coffee-ticket-fold">Objednávka založena<br>do šanonu</div>
+        </article>
+        <section class="coffee-station" aria-label="Kávová stanice">
+          <div class="coffee-groups"></div>
+          <button class="coffee-serve" type="button" disabled>☕ Vydat objednávku</button>
+        </section>
+      </div>
+      <p class="coffee-feedback" role="status" aria-live="polite">Zapamatuj si čtyři položky a namíchej je zpaměti.</p>
+    </div>`;
+
+  const shell = context.stage.querySelector(".coffee-shell");
+  const roundDots = context.stage.querySelector(".coffee-rounds");
+  const scoreLabel = context.stage.querySelector(".coffee-score");
+  const ticket = context.stage.querySelector(".coffee-ticket");
+  const customer = context.stage.querySelector(".coffee-customer");
+  const orderList = context.stage.querySelector(".coffee-order");
+  const groups = context.stage.querySelector(".coffee-groups");
+  const serveButton = context.stage.querySelector(".coffee-serve");
+  const feedback = context.stage.querySelector(".coffee-feedback");
+
+  rounds.forEach(function () {
+    const dot = document.createElement("i");
+    dot.setAttribute("aria-hidden", "true");
+    roundDots.append(dot);
+  });
+
+  COFFEE_CATEGORIES.forEach(function (category) {
+    const group = document.createElement("section");
+    group.className = "coffee-group";
+    const heading = document.createElement("h4");
+    heading.textContent = category.label;
+    const choices = document.createElement("div");
+    category.options.forEach(function (option) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.coffeeCategory = category.id;
+      button.dataset.coffeeValue = option.id;
+      button.setAttribute("aria-pressed", "false");
+      button.disabled = true;
+      const emoji = document.createElement("span");
+      emoji.setAttribute("aria-hidden", "true");
+      emoji.textContent = option.emoji;
+      const label = document.createElement("b");
+      label.textContent = option.label;
+      button.append(emoji, label);
+      choices.append(button);
+    });
+    group.append(heading, choices);
+    groups.append(group);
+  });
+
+  function schedule(callback, delay) {
+    const timer = window.setTimeout(callback, delay);
+    timers.push(timer);
+    return timer;
+  }
+
+  function optionFor(category, value) {
+    return category.options.find(function (option) { return option.id === value; });
+  }
+
+  function updateScore() {
+    scoreLabel.textContent = score + " " + pointsWord(score);
+    context.publishScore(score);
+  }
+
+  function renderOrder(round) {
+    customer.textContent = round.customer;
+    orderList.replaceChildren();
+    COFFEE_CATEGORIES.forEach(function (category) {
+      const option = optionFor(category, round.order[category.id]);
+      const item = document.createElement("li");
+      const emoji = document.createElement("span");
+      emoji.setAttribute("aria-hidden", "true");
+      emoji.textContent = option.emoji;
+      const label = document.createElement("span");
+      label.textContent = option.label;
+      item.append(emoji, label);
+      orderList.append(item);
+    });
+  }
+
+  function renderSelection() {
+    groups.querySelectorAll("[data-coffee-category]").forEach(function (button) {
+      const selected = selection[button.dataset.coffeeCategory] === button.dataset.coffeeValue;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+      button.disabled = phase !== "mix";
+    });
+    const complete = COFFEE_CATEGORIES.every(function (category) { return Boolean(selection[category.id]); });
+    serveButton.disabled = phase !== "mix" || !complete;
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    phase = "finished";
+    window.clearTimeout(roundTimer);
+    ticket.classList.remove("is-folded");
+    ticket.setAttribute("aria-hidden", "false");
+    renderSelection();
+    feedback.textContent = "Výdej uzavřen. Kofeinové škody právě počítá účetní oddělení.";
+    const average = reactionTimes.length
+      ? Math.round(reactionTimes.reduce(function (total, value) { return total + value; }, 0) / reactionTimes.length)
+      : 0;
+    context.finish({ score, served, mistakes, average });
+  }
+
+  function nextRound() {
+    if (finished) return;
+    if (roundIndex + 1 >= rounds.length) {
+      finish();
+      return;
+    }
+    startRound(roundIndex + 1);
+  }
+
+  function resolveTimeout(expectedRound) {
+    if (finished || phase !== "mix" || roundIndex !== expectedRound) return;
+    phase = "resolved";
+    ticket.classList.remove("is-folded");
+    ticket.setAttribute("aria-hidden", "false");
+    roundDots.children[roundIndex].classList.remove("is-current");
+    roundDots.children[roundIndex].classList.add("is-bad");
+    feedback.textContent = "Objednávka vystydla. Správná kombinace se na chvíli odtajnila.";
+    renderSelection();
+    schedule(nextRound, 1350);
+  }
+
+  function beginMix(expectedRound) {
+    if (finished || phase !== "preview" || roundIndex !== expectedRound) return;
+    phase = "mix";
+    solveStartedAt = performance.now();
+    ticket.classList.add("is-folded");
+    ticket.setAttribute("aria-hidden", "true");
+    feedback.textContent = "Teď ji namíchej zpaměti. Každá oprava stojí body.";
+    renderSelection();
+    const firstButton = groups.querySelector("button:not(:disabled)");
+    if (firstButton) firstButton.focus({ preventScroll: true });
+    roundTimer = schedule(function () { resolveTimeout(expectedRound); }, 9000);
+  }
+
+  function startRound(index) {
+    if (finished || !rounds[index]) return;
+    window.clearTimeout(roundTimer);
+    roundIndex = index;
+    phase = "preview";
+    selection = {};
+    roundMistakes = 0;
+    shell.classList.remove("is-mistake");
+    ticket.classList.remove("is-folded");
+    ticket.setAttribute("aria-hidden", "false");
+    renderOrder(rounds[index]);
+    renderSelection();
+    Array.from(roundDots.children).forEach(function (dot) { dot.classList.remove("is-current"); });
+    roundDots.children[index].classList.add("is-current");
+    feedback.textContent = "Objednávka " + (index + 1) + " z " + rounds.length + " · máš 1,8 sekundy na zapamatování.";
+    schedule(function () { beginMix(index); }, 1800);
+  }
+
+  function chooseOption(category, value) {
+    if (finished || phase !== "mix") return;
+    const validCategory = COFFEE_CATEGORIES.find(function (entry) { return entry.id === category; });
+    if (!validCategory || !validCategory.options.some(function (option) { return option.id === value; })) return;
+    selection[category] = value;
+    renderSelection();
+  }
+
+  function submitOrder() {
+    if (finished || phase !== "mix" || serveButton.disabled) return;
+    const elapsed = Math.round(performance.now() - solveStartedAt);
+    const result = coffeeOrderScore(rounds[roundIndex].order, selection, elapsed, roundMistakes);
+
+    if (!result.correct) {
+      mistakes += 1;
+      roundMistakes += 1;
+      shell.classList.remove("is-mistake");
+      void shell.offsetWidth;
+      shell.classList.add("is-mistake");
+      feedback.textContent = "Tohle si neobjednali. Uprav recept a zachraň reputaci kuchyňky.";
+      return;
+    }
+
+    window.clearTimeout(roundTimer);
+    phase = "resolved";
+    score += result.points;
+    served += 1;
+    reactionTimes.push(elapsed);
+    ticket.classList.remove("is-folded");
+    ticket.setAttribute("aria-hidden", "false");
+    roundDots.children[roundIndex].classList.remove("is-current");
+    roundDots.children[roundIndex].classList.add("is-good");
+    feedback.textContent = elapsed + " ms · +" + result.points + " bodů. Káva dorazí dřív než odpověď z HR.";
+    renderSelection();
+    updateScore();
+    schedule(nextRound, 1050);
+  }
+
+  function onGroupClick(event) {
+    const button = event.target.closest("[data-coffee-category]");
+    if (!button) return;
+    chooseOption(button.dataset.coffeeCategory, button.dataset.coffeeValue);
+  }
+
+  groups.addEventListener("click", onGroupClick);
+  serveButton.addEventListener("click", submitOrder);
+  updateScore();
+  schedule(function () { startRound(0); }, 450);
+
+  return {
+    receiveNetwork: NOOP,
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+      window.clearTimeout(roundTimer);
+      groups.removeEventListener("click", onGroupClick);
+      serveButton.removeEventListener("click", submitOrder);
+    }
+  };
+}
+
+function startCalendarSqueeze(context) {
+  const rounds = buildCalendarRounds(context.seed);
+  const timers = [];
+  const reactionTimes = [];
+  let animationFrame = 0;
+  let roundTimer = 0;
+  let roundIndex = -1;
+  let phase = "idle";
+  let score = 0;
+  let booked = 0;
+  let mistakes = 0;
+  let roundMistakes = 0;
+  let solveStartedAt = 0;
+  let finished = false;
+
+  context.setRoundLabel(CALENDAR_ROUNDS + " mezer v kalendáři");
+  context.stage.innerHTML = `
+    <div class="calendar-shell">
+      <div class="calendar-topline">
+        <div class="calendar-rounds" role="group" aria-label="Průběh rezervací"></div>
+        <strong class="calendar-score">0 bodů</strong>
+      </div>
+      <div class="calendar-brief">
+        <span class="calendar-icon" aria-hidden="true">🗓️</span>
+        <div><span class="eyebrow">Urgentní požadavek</span><h3 class="calendar-request">Hledám volno…</h3></div>
+        <div class="calendar-clock"><b>8,0</b><small>s</small></div>
+      </div>
+      <div class="calendar-timer" aria-hidden="true"><span></span></div>
+      <div class="calendar-grid" role="group" aria-label="Pracovní kalendář"></div>
+      <p class="calendar-feedback" role="status" aria-live="polite">Klikni na začátek dostatečně dlouhého volného okna.</p>
+    </div>`;
+
+  const roundDots = context.stage.querySelector(".calendar-rounds");
+  const scoreLabel = context.stage.querySelector(".calendar-score");
+  const request = context.stage.querySelector(".calendar-request");
+  const clock = context.stage.querySelector(".calendar-clock b");
+  const timerBar = context.stage.querySelector(".calendar-timer span");
+  const grid = context.stage.querySelector(".calendar-grid");
+  const feedback = context.stage.querySelector(".calendar-feedback");
+
+  rounds.forEach(function () {
+    const dot = document.createElement("i");
+    dot.setAttribute("aria-hidden", "true");
+    roundDots.append(dot);
+  });
+
+  function schedule(callback, delay) {
+    const timer = window.setTimeout(callback, delay);
+    timers.push(timer);
+    return timer;
+  }
+
+  function timeLabel(index) {
+    const minutes = 9 * 60 + index * 30;
+    return String(Math.floor(minutes / 60)).padStart(2, "0") + ":" + String(minutes % 60).padStart(2, "0");
+  }
+
+  function durationLabel(duration) {
+    const minutes = duration * 30;
+    return minutes + " minut";
+  }
+
+  function updateScore() {
+    scoreLabel.textContent = score + " " + pointsWord(score);
+    context.publishScore(score);
+  }
+
+  function setGridDisabled(disabled) {
+    grid.querySelectorAll("button:not(.is-busy)").forEach(function (button) {
+      button.disabled = disabled || button.classList.contains("is-wrong");
+    });
+  }
+
+  function renderRound(round) {
+    grid.replaceChildren();
+    round.occupied.forEach(function (busy, index) {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.dataset.calendarSlot = String(index);
+      row.className = "calendar-slot" + (busy ? " is-busy" : "");
+      row.disabled = busy || phase !== "solve";
+      const time = document.createElement("span");
+      time.textContent = timeLabel(index);
+      const label = document.createElement("b");
+      label.textContent = busy ? round.titles[index] : "volno";
+      row.append(time, label);
+      grid.append(row);
+    });
+  }
+
+  function markWindow(start, duration, className) {
+    for (let offset = 0; offset < duration; offset += 1) {
+      const row = grid.querySelector('[data-calendar-slot="' + (start + offset) + '"]');
+      if (row) row.classList.add(className);
+    }
+  }
+
+  function updateClock(now) {
+    if (finished || phase !== "solve") return;
+    const elapsed = Math.min(8000, now - solveStartedAt);
+    const remaining = Math.max(0, 8000 - elapsed);
+    clock.textContent = (remaining / 1000).toFixed(1).replace(".", ",");
+    timerBar.style.transform = "scaleX(" + (remaining / 8000) + ")";
+    animationFrame = window.requestAnimationFrame(updateClock);
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    phase = "finished";
+    window.clearTimeout(roundTimer);
+    window.cancelAnimationFrame(animationFrame);
+    setGridDisabled(true);
+    feedback.textContent = "Kalendář napěchován. Na skutečnou práci už naštěstí nezbylo místo.";
+    const average = reactionTimes.length
+      ? Math.round(reactionTimes.reduce(function (total, value) { return total + value; }, 0) / reactionTimes.length)
+      : 0;
+    context.finish({ score, booked, mistakes, average });
+  }
+
+  function nextRound() {
+    if (finished) return;
+    if (roundIndex + 1 >= rounds.length) {
+      finish();
+      return;
+    }
+    startRound(roundIndex + 1);
+  }
+
+  function resolveTimeout(expectedRound) {
+    if (finished || phase !== "solve" || roundIndex !== expectedRound) return;
+    phase = "resolved";
+    window.cancelAnimationFrame(animationFrame);
+    clock.textContent = "0,0";
+    timerBar.style.transform = "scaleX(0)";
+    setGridDisabled(true);
+    const round = rounds[roundIndex];
+    markWindow(round.validStarts[0], round.duration, "is-reveal");
+    roundDots.children[roundIndex].classList.remove("is-current");
+    roundDots.children[roundIndex].classList.add("is-bad");
+    feedback.textContent = "Pozdě. Tady se meeting ještě vešel, alespoň podle Outlooku.";
+    schedule(nextRound, 1250);
+  }
+
+  function startRound(index) {
+    if (finished || !rounds[index]) return;
+    window.clearTimeout(roundTimer);
+    window.cancelAnimationFrame(animationFrame);
+    roundIndex = index;
+    phase = "solve";
+    roundMistakes = 0;
+    solveStartedAt = performance.now();
+    const round = rounds[index];
+    request.textContent = "Najdi souvislých " + durationLabel(round.duration);
+    feedback.textContent = "Klikni na čas, kdy má schůzka začít. Přes oběd se profesionalita neřeší.";
+    Array.from(roundDots.children).forEach(function (dot) { dot.classList.remove("is-current"); });
+    roundDots.children[index].classList.add("is-current");
+    renderRound(round);
+    clock.textContent = "8,0";
+    timerBar.style.transform = "scaleX(1)";
+    animationFrame = window.requestAnimationFrame(updateClock);
+    roundTimer = schedule(function () { resolveTimeout(index); }, 8000);
+    const firstFree = grid.querySelector("button:not(:disabled)");
+    if (firstFree) firstFree.focus({ preventScroll: true });
+  }
+
+  function chooseSlot(index) {
+    if (finished || phase !== "solve" || !Number.isInteger(index)) return;
+    const round = rounds[roundIndex];
+    const button = grid.querySelector('[data-calendar-slot="' + index + '"]');
+    if (!button || button.disabled) return;
+
+    if (!round.validStarts.includes(index)) {
+      mistakes += 1;
+      roundMistakes += 1;
+      button.classList.add("is-wrong");
+      button.disabled = true;
+      feedback.textContent = "Sem se meeting nevejde. Korporátní časoprostor odmítá spolupráci.";
+      return;
+    }
+
+    const elapsed = Math.round(performance.now() - solveStartedAt);
+    const points = calendarSlotScore(elapsed, roundMistakes);
+    phase = "resolved";
+    window.clearTimeout(roundTimer);
+    window.cancelAnimationFrame(animationFrame);
+    score += points;
+    booked += 1;
+    reactionTimes.push(elapsed);
+    setGridDisabled(true);
+    markWindow(index, round.duration, "is-selected");
+    roundDots.children[roundIndex].classList.remove("is-current");
+    roundDots.children[roundIndex].classList.add("is-good");
+    feedback.textContent = timeLabel(index) + " · +" + points + " bodů. Pozvánka odeslána bez agendy.";
+    updateScore();
+    schedule(nextRound, 1000);
+  }
+
+  function onGridClick(event) {
+    const button = event.target.closest("[data-calendar-slot]");
+    if (!button) return;
+    chooseSlot(Number(button.dataset.calendarSlot));
+  }
+
+  grid.addEventListener("click", onGridClick);
+  updateScore();
+  schedule(function () { startRound(0); }, 450);
+
+  return {
+    receiveNetwork: NOOP,
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+      window.clearTimeout(roundTimer);
+      window.cancelAnimationFrame(animationFrame);
+      grid.removeEventListener("click", onGridClick);
+    }
+  };
+}
+
+function startPrinterExorcist(context) {
+  const rounds = buildPrinterRounds(context.seed);
+  const actionById = new Map(PRINTER_ACTIONS.map(function (action) { return [action.id, action]; }));
+  const timers = [];
+  const reactionTimes = [];
+  let animationFrame = 0;
+  let roundTimer = 0;
+  let roundIndex = -1;
+  let phase = "idle";
+  let score = 0;
+  let repaired = 0;
+  let mistakes = 0;
+  let roundMistakes = 0;
+  let shownAt = 0;
+  let finished = false;
+
+  context.setRoundLabel(PRINTER_ROUNDS + " poruch před výpovědí");
+  context.stage.innerHTML = `
+    <div class="printer-shell">
+      <div class="printer-topline">
+        <div class="printer-rounds" role="group" aria-label="Průběh oprav"></div>
+        <strong class="printer-score">0 bodů</strong>
+      </div>
+      <div class="printer-console">
+        <div class="printer-machine" aria-hidden="true">
+          <div class="printer-paper">Q4<br><b>FINAL</b></div>
+          <span>🖨️</span>
+          <i></i>
+        </div>
+        <div class="printer-display" role="status" aria-live="assertive">
+          <small class="printer-code">DIAGNOSTIKA</small>
+          <h3 class="printer-message">Probouzím kancelářského démona…</h3>
+          <div class="printer-timer" aria-hidden="true"><span></span></div>
+        </div>
+      </div>
+      <div class="printer-actions" role="group" aria-label="Možnosti opravy"></div>
+      <p class="printer-feedback" role="status" aria-live="polite">Přečti závadu a co nejrychleji zvol správný zásah.</p>
+    </div>`;
+
+  const shell = context.stage.querySelector(".printer-shell");
+  const roundDots = context.stage.querySelector(".printer-rounds");
+  const scoreLabel = context.stage.querySelector(".printer-score");
+  const codeLabel = context.stage.querySelector(".printer-code");
+  const messageLabel = context.stage.querySelector(".printer-message");
+  const timerBar = context.stage.querySelector(".printer-timer span");
+  const actions = context.stage.querySelector(".printer-actions");
+  const feedback = context.stage.querySelector(".printer-feedback");
+
+  rounds.forEach(function () {
+    const dot = document.createElement("i");
+    dot.setAttribute("aria-hidden", "true");
+    roundDots.append(dot);
+  });
+
+  function schedule(callback, delay) {
+    const timer = window.setTimeout(callback, delay);
+    timers.push(timer);
+    return timer;
+  }
+
+  function updateScore() {
+    scoreLabel.textContent = score + " " + pointsWord(score);
+    context.publishScore(score);
+  }
+
+  function setActionsDisabled(disabled) {
+    actions.querySelectorAll("button").forEach(function (button) {
+      button.disabled = disabled || button.classList.contains("is-wrong");
+    });
+  }
+
+  function renderActions(round) {
+    actions.replaceChildren();
+    round.actions.forEach(function (actionId, index) {
+      const action = actionById.get(actionId);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.printerAction = action.id;
+      button.disabled = phase !== "solve";
+      const shortcut = document.createElement("small");
+      shortcut.textContent = String(index + 1);
+      const emoji = document.createElement("span");
+      emoji.setAttribute("aria-hidden", "true");
+      emoji.textContent = action.emoji;
+      const label = document.createElement("b");
+      label.textContent = action.label;
+      button.append(shortcut, emoji, label);
+      actions.append(button);
+    });
+  }
+
+  function updateTimer(now) {
+    if (finished || phase !== "solve") return;
+    const elapsed = Math.min(3500, now - shownAt);
+    timerBar.style.transform = "scaleX(" + Math.max(0, 1 - elapsed / 3500) + ")";
+    animationFrame = window.requestAnimationFrame(updateTimer);
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    phase = "finished";
+    window.clearTimeout(roundTimer);
+    window.cancelAnimationFrame(animationFrame);
+    setActionsDisabled(true);
+    codeLabel.textContent = "OFFLINE";
+    messageLabel.textContent = "Tiskárna byla prohlášena za dočasně funkční";
+    feedback.textContent = "Exorcismus dokončen. Nikdo nesmí nic tisknout alespoň do pondělí.";
+    const average = reactionTimes.length
+      ? Math.round(reactionTimes.reduce(function (total, value) { return total + value; }, 0) / reactionTimes.length)
+      : 0;
+    context.finish({ score, repaired, mistakes, average });
+  }
+
+  function nextRound() {
+    if (finished) return;
+    if (roundIndex + 1 >= rounds.length) {
+      finish();
+      return;
+    }
+    startRound(roundIndex + 1);
+  }
+
+  function resolveTimeout(expectedRound) {
+    if (finished || phase !== "solve" || roundIndex !== expectedRound) return;
+    phase = "resolved";
+    window.cancelAnimationFrame(animationFrame);
+    timerBar.style.transform = "scaleX(0)";
+    setActionsDisabled(true);
+    roundDots.children[roundIndex].classList.remove("is-current");
+    roundDots.children[roundIndex].classList.add("is-bad");
+    shell.classList.add("is-failed");
+    const correctAction = actionById.get(rounds[roundIndex].issue);
+    feedback.textContent = "Pozdě. Správně bylo: " + correctAction.label + ". Tiskárna si připisuje bod.";
+    schedule(nextRound, 1050);
+  }
+
+  function startRound(index) {
+    if (finished || !rounds[index]) return;
+    window.clearTimeout(roundTimer);
+    window.cancelAnimationFrame(animationFrame);
+    roundIndex = index;
+    phase = "solve";
+    roundMistakes = 0;
+    shell.classList.remove("is-failed", "is-repaired", "is-mistake");
+    const round = rounds[index];
+    codeLabel.textContent = round.code + " · PORUCHA " + (index + 1) + "/" + rounds.length;
+    messageLabel.textContent = round.message;
+    feedback.textContent = "Diagnostikuj závadu. Klávesy 1–4 fungují rychleji než volání IT.";
+    Array.from(roundDots.children).forEach(function (dot) { dot.classList.remove("is-current"); });
+    roundDots.children[index].classList.add("is-current");
+    renderActions(round);
+    shownAt = performance.now();
+    timerBar.style.transform = "scaleX(1)";
+    animationFrame = window.requestAnimationFrame(updateTimer);
+    roundTimer = schedule(function () { resolveTimeout(index); }, 3500);
+    const firstAction = actions.querySelector("button:not(:disabled)");
+    if (firstAction) firstAction.focus({ preventScroll: true });
+  }
+
+  function chooseAction(actionId) {
+    if (finished || phase !== "solve") return;
+    const round = rounds[roundIndex];
+    const button = actions.querySelector('[data-printer-action="' + actionId + '"]');
+    if (!button || button.disabled) return;
+
+    if (actionId !== round.issue) {
+      mistakes += 1;
+      roundMistakes += 1;
+      button.classList.add("is-wrong");
+      button.disabled = true;
+      shell.classList.remove("is-mistake");
+      void shell.offsetWidth;
+      shell.classList.add("is-mistake");
+      feedback.textContent = "To nepomohlo. Tiskárna vrčí o něco osobněji.";
+      return;
+    }
+
+    const elapsed = Math.round(performance.now() - shownAt);
+    const points = printerRepairScore(elapsed, roundMistakes);
+    phase = "resolved";
+    window.clearTimeout(roundTimer);
+    window.cancelAnimationFrame(animationFrame);
+    score += points;
+    repaired += 1;
+    reactionTimes.push(elapsed);
+    setActionsDisabled(true);
+    button.classList.add("is-correct");
+    shell.classList.add("is-repaired");
+    roundDots.children[roundIndex].classList.remove("is-current");
+    roundDots.children[roundIndex].classList.add("is-good");
+    feedback.textContent = elapsed + " ms · +" + points + " bodů. Démon na chvíli ustoupil.";
+    updateScore();
+    schedule(nextRound, 720);
+  }
+
+  function onActionClick(event) {
+    const button = event.target.closest("[data-printer-action]");
+    if (!button) return;
+    chooseAction(button.dataset.printerAction);
+  }
+
+  function onKeyDown(event) {
+    if (phase !== "solve" || !/^[1-4]$/.test(event.key)) return;
+    const button = actions.children[Number(event.key) - 1];
+    if (!button || button.disabled) return;
+    event.preventDefault();
+    chooseAction(button.dataset.printerAction);
+  }
+
+  actions.addEventListener("click", onActionClick);
+  window.addEventListener("keydown", onKeyDown);
+  updateScore();
+  schedule(function () { startRound(0); }, 450);
+
+  return {
+    receiveNetwork: NOOP,
+    cleanup: function () {
+      finished = true;
+      timers.forEach(window.clearTimeout);
+      window.clearTimeout(roundTimer);
+      window.cancelAnimationFrame(animationFrame);
+      actions.removeEventListener("click", onActionClick);
       window.removeEventListener("keydown", onKeyDown);
     }
   };

@@ -52,6 +52,21 @@ const GAME_META = Object.freeze({
     title: "Jargon Decoder",
     instruction: "Zapamatuj si větu a poskládej rozházená korporátní slova ve správném pořadí.",
     scoreLabel: "bodů za synergii"
+  }),
+  coffee: Object.freeze({
+    title: "Kávová štafeta",
+    instruction: "Zapamatuj si objednávku a namíchej správnou velikost, základ, mléko i přísadu.",
+    scoreLabel: "bodů za kofein"
+  }),
+  calendar: Object.freeze({
+    title: "Kalendářový squeeze",
+    instruction: "Najdi v přeplněném dni souvislé volné okno pro další naprosto nezbytný meeting.",
+    scoreLabel: "bodů za plánování"
+  }),
+  printer: Object.freeze({
+    title: "Tiskárnový exorcista",
+    instruction: "Přečti závadu a co nejrychleji vyber správný zásah, než si tiskárna vyžádá oběť.",
+    scoreLabel: "bodů za servis"
   })
 });
 
@@ -821,6 +836,21 @@ function normalizeResult(game, result) {
     normalized.solved = safeSmallInteger(result.solved, 6);
     normalized.mistakes = safeSmallInteger(result.mistakes, 50);
     normalized.average = safeSmallInteger(result.average, 20_000);
+  } else if (game === "coffee") {
+    normalized.score = Math.min(4500, normalized.score);
+    normalized.served = safeSmallInteger(result.served, 5);
+    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+    normalized.average = safeSmallInteger(result.average, 20_000);
+  } else if (game === "calendar") {
+    normalized.score = Math.min(5100, normalized.score);
+    normalized.booked = safeSmallInteger(result.booked, 6);
+    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+    normalized.average = safeSmallInteger(result.average, 20_000);
+  } else if (game === "printer") {
+    normalized.score = Math.min(5600, normalized.score);
+    normalized.repaired = safeSmallInteger(result.repaired, 10);
+    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+    normalized.average = safeSmallInteger(result.average, 10_000);
   }
 
   return normalized;
@@ -954,7 +984,16 @@ function resultDetail(game, result) {
   if (game === "escape") {
     return result.distance + " m · " + result.coffees + "× káva · " + result.crashes + " kolizí";
   }
-  return result.solved + "/6 vět · průměr " + (result.average || "—") + (result.average ? " ms" : "");
+  if (game === "jargon") {
+    return result.solved + "/6 vět · průměr " + (result.average || "—") + (result.average ? " ms" : "");
+  }
+  if (game === "coffee") {
+    return result.served + "/5 káv · " + result.mistakes + " reklamací";
+  }
+  if (game === "calendar") {
+    return result.booked + "/6 meetingů · " + result.mistakes + " kolizí";
+  }
+  return result.repaired + "/10 oprav · průměr " + (result.average || "—") + (result.average ? " ms" : "");
 }
 
 function launchConfetti() {

@@ -3,37 +3,87 @@ import assert from "node:assert/strict";
 
 import {
   BATTLESHIP,
+  CALENDAR_ROUNDS,
+  COFFEE_CATEGORIES,
+  COFFEE_ROUNDS,
   CURLING,
   ESCAPE,
   GAME_IDS,
   JARGON_ROUNDS,
   PONG,
+  PRINTER_ROUNDS,
   TASK_STACK,
   addTaskGarbage,
   altTabReactionScore,
   battleshipShotResult,
   buildAltTabRounds,
   buildBattleshipFleet,
+  buildCalendarRounds,
+  buildCoffeeRounds,
   buildEscapeCourse,
   buildJargonRounds,
   buildPanicSchedule,
+  buildPrinterRounds,
   buildTaskBag,
   calculateCurlingScore,
+  calendarSlotScore,
   clampShotVelocity,
   clearTaskRows,
+  coffeeOrderScore,
   createCurlingStone,
   createPongBall,
   deadlineProgress,
   deadlineRoundConfig,
   deadlineRoundScore,
+  findCalendarSlots,
+  printerRepairScore,
   rectanglesOverlap,
   stepCurling,
   stepPong
 } from "../duel/game-core.mjs";
 
-test("Katalog obsahuje všech devět kancelářských disciplín", function () {
-  assert.equal(GAME_IDS.length, 9);
-  assert.deepEqual(GAME_IDS.slice(-3), ["pong", "escape", "jargon"]);
+test("Katalog obsahuje všech dvanáct kancelářských disciplín", function () {
+  assert.equal(GAME_IDS.length, 12);
+  assert.deepEqual(GAME_IDS.slice(-3), ["coffee", "calendar", "printer"]);
+});
+
+test("Coffee Relay tvoří pět unikátních objednávek a odměňuje přesnost", function () {
+  const first = buildCoffeeRounds("coffee-seed");
+  const second = buildCoffeeRounds("coffee-seed");
+  assert.deepEqual(first, second);
+  assert.equal(first.length, COFFEE_ROUNDS);
+  const signatures = first.map(function (round) {
+    return COFFEE_CATEGORIES.map(function (category) { return round.order[category.id]; }).join(":");
+  });
+  assert.equal(new Set(signatures).size, COFFEE_ROUNDS);
+
+  const exact = coffeeOrderScore(first[0].order, { ...first[0].order }, 1200, 0);
+  assert.equal(exact.correct, true);
+  assert.ok(exact.points > coffeeOrderScore(first[0].order, { ...first[0].order }, 5000, 1).points);
+  assert.deepEqual(coffeeOrderScore(first[0].order, {}, 500, 0), { correct: false, points: 0 });
+});
+
+test("Calendar Squeeze vždy nabídne řešitelnou mezeru", function () {
+  assert.deepEqual(findCalendarSlots([false, false, true, false, false, false], 2), [0, 3, 4]);
+  const rounds = buildCalendarRounds("calendar-seed");
+  assert.equal(rounds.length, CALENDAR_ROUNDS);
+  assert.ok(rounds.every(function (round) {
+    return round.validStarts.length > 0 && round.validStarts.every(function (start) {
+      return round.occupied.slice(start, start + round.duration).every(function (busy) { return !busy; });
+    });
+  }));
+  assert.ok(calendarSlotScore(900, 0) > calendarSlotScore(4200, 2));
+});
+
+test("Printer Exorcist střídá závady a rychlou opravu hodnotí výš", function () {
+  const rounds = buildPrinterRounds("printer-seed");
+  assert.equal(rounds.length, PRINTER_ROUNDS);
+  assert.deepEqual(rounds, buildPrinterRounds("printer-seed"));
+  assert.ok(rounds.every(function (round, index) {
+    return round.actions.length === 4 && new Set(round.actions).size === 4
+      && (index === 0 || round.issue !== rounds[index - 1].issue);
+  }));
+  assert.ok(printerRepairScore(300, 0) > printerRepairScore(2300, 2));
 });
 
 test("Inbox Pong vytváří deterministický servis a odráží e-mail od inboxu", function () {

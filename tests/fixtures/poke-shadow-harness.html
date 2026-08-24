@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PokéStín browser harness</title>
+  <link rel="stylesheet" href="../../duel/duel.css">
+</head>
+<body>
+  <main style="width:min(1000px, calc(100% - 24px)); margin:12px auto">
+    <div class="match-bar">
+      <strong id="round-label">PokéStín</strong>
+      <strong>Browser test</strong>
+      <strong id="score-label">0</strong>
+    </div>
+    <div class="game-stage" id="game-stage"></div>
+    <output id="result" aria-live="polite"></output>
+  </main>
+  <script type="module">
+    import { startPokeShadow } from "../../duel/games/poke-shadow.mjs";
+
+    const result = document.getElementById("result");
+    const controller = startPokeShadow({
+      stage: document.getElementById("game-stage"),
+      seed: "browser-harness-seed",
+      localRole: 0,
+      mode: "practice",
+      names: ["Tester", "Kolega-bot"],
+      setRoundLabel: function (value) { document.getElementById("round-label").textContent = value; },
+      publishScore: function (value) { document.getElementById("score-label").textContent = String(value); },
+      finish: function (value) {
+        window.__pokeShadowResult = value;
+        result.value = JSON.stringify(value);
+      }
+    });
+    window.addEventListener("beforeunload", function () { controller.cleanup(); });
+  </script>
+</body>
+</html>

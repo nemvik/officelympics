@@ -106,6 +106,32 @@ const englishNameById = new Map(tables.get("pokemon_species_names.csv")
   .map(function (row) { return [Number(row.pokemon_species_id), row.name]; }));
 const typesByPokemonId = new Map();
 const statsByPokemonId = new Map();
+const childCountByParentId = new Map();
+
+tables.get("pokemon_species.csv").forEach(function (species) {
+  const parentId = Number(species.evolves_from_species_id);
+  if (!Number.isInteger(parentId) || parentId < 1) return;
+  childCountByParentId.set(parentId, (childCountByParentId.get(parentId) || 0) + 1);
+});
+
+const branchingChainIds = new Set(tables.get("pokemon_species.csv").filter(function (species) {
+  const parentId = Number(species.evolves_from_species_id);
+  return Number.isInteger(parentId) && childCountByParentId.get(parentId) > 1;
+}).map(function (species) {
+  return Number(species.evolution_chain_id);
+}));
+
+const evolutionEdges = tables.get("pokemon_species.csv").filter(function (species) {
+  const childId = Number(species.id);
+  const parentId = Number(species.evolves_from_species_id);
+  return childId >= 1 && childId <= 151 && parentId >= 1 && parentId <= 151;
+}).map(function (species) {
+  return {
+    parentId: Number(species.evolves_from_species_id),
+    childId: Number(species.id),
+    branched: branchingChainIds.has(Number(species.evolution_chain_id))
+  };
+});
 
 tables.get("pokemon_stats.csv").forEach(function (row) {
   const pokemonId = Number(row.pokemon_id);
@@ -166,6 +192,11 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
 if (pokemon.length !== 151 || new Set(pokemon.map(function (item) { return item.id; })).size !== 151) {
   throw new Error("Snapshot musí obsahovat právě 151 unikátních Pokémonů.");
 }
+if (!evolutionEdges.length || new Set(evolutionEdges.map(function (edge) {
+  return edge.parentId + ":" + edge.childId;
+})).size !== evolutionEdges.length) {
+  throw new Error("Snapshot musí obsahovat unikátní přímé evoluční vazby.");
+}
 
 const generatedAt = new Date().toISOString();
 const snapshot = `// Vygenerováno skriptem update-snapshot.mjs; ruční změny budou při příští aktualizaci přepsány.
@@ -178,6 +209,8 @@ export const POKEMON_SNAPSHOT_META = Object.freeze(${JSON.stringify({
   minimumId: 1,
   maximumId: 151,
   count: pokemon.length,
+  evolutionKind: "direct_species_parent",
+  evolutionEdgeCount: evolutionEdges.length,
   statKind: "base_stat",
   heightUnit: "decimetre",
   weightUnit: "hectogram"
@@ -185,8 +218,14 @@ export const POKEMON_SNAPSHOT_META = Object.freeze(${JSON.stringify({
 
 const POKEMON_RECORDS = ${JSON.stringify(pokemon, null, 2)};
 
+const EVOLUTION_EDGES = ${JSON.stringify(evolutionEdges, null, 2)};
+
 export const POKEMON_SNAPSHOT = Object.freeze(POKEMON_RECORDS.map(function (pokemon) {
   return Object.freeze({ ...pokemon, types: Object.freeze(pokemon.types.slice()) });
+}));
+
+export const POKEMON_EVOLUTION_EDGES = Object.freeze(EVOLUTION_EDGES.map(function (edge) {
+  return Object.freeze({ ...edge });
 }));
 `;
 

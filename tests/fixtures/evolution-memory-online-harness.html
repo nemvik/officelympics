@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evoluční pexeso online harness</title>
+  <link rel="stylesheet" href="../../duel/duel.css">
+  <style>
+    body { padding: 10px; }
+    main { width: min(1500px, 100%); margin: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .client { min-width: 0; padding: 8px; border: 2px solid #111; background: #fffaf0; }
+    .client h1 { margin: 0 0 6px; font-size: 18px; }
+    .client .evolution-memory-shell { min-height: 450px; }
+    .client .evolution-memory-board { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="client"><h1>Klient role 0 · <output id="score-0">0 : 0</output></h1><div class="game-stage" id="stage-0"></div></section>
+    <section class="client"><h1>Klient role 1 · <output id="score-1">0 : 0</output></h1><div class="game-stage" id="stage-1"></div></section>
+  </main>
+  <script type="module">
+    import { startEvolutionMemory } from "../../duel/games/evolution-memory.mjs";
+
+    const controllers = [];
+    const advances = [];
+    const renders = [];
+    const pending = [[], []];
+    window.__evolutionMemoryMessages = [];
+    window.__evolutionMemoryOnlineResults = [null, null];
+
+    function deliver(role, message) {
+      const target = 1 - role;
+      window.__evolutionMemoryMessages.push(structuredClone(message));
+      const envelope = { ...structuredClone(message), role: target, matchId: "harness-match" };
+      queueMicrotask(function () {
+        if (controllers[target]) controllers[target].receiveNetwork(envelope);
+        else pending[target].push(envelope);
+      });
+    }
+
+    function start(role) {
+      const controller = startEvolutionMemory({
+        stage: document.getElementById("stage-" + role),
+        seed: "evolution-memory-browser-online",
+        localRole: role,
+        mode: "online",
+        names: ["Red", "Blue"],
+        setRoundLabel: function () {},
+        setScores: function (local, remote) {
+          document.getElementById("score-" + role).textContent = local + " : " + remote;
+        },
+        finishShared: function (value) { window.__evolutionMemoryOnlineResults[role] = value; },
+        send: function (message) { deliver(role, message); }
+      });
+      controllers[role] = controller;
+      advances[role] = window.advanceTime;
+      renders[role] = window.render_game_to_text;
+      pending[role].splice(0).forEach(function (message) { controller.receiveNetwork(message); });
+    }
+
+    start(0);
+    start(1);
+    window.__evolutionMemoryControllers = controllers;
+    window.__evolutionMemoryAdvances = advances;
+    window.advanceTime = function (milliseconds) { advances.forEach(function (advance) { advance(milliseconds); }); };
+    window.render_game_to_text = function () {
+      return JSON.stringify({
+        clients: renders.map(function (render) { return JSON.parse(render()); }),
+        messages: window.__evolutionMemoryMessages,
+        results: window.__evolutionMemoryOnlineResults
+      });
+    };
+    window.addEventListener("beforeunload", function () { controllers.forEach(function (controller) { controller.cleanup(); }); });
+  </script>
+</body>
+</html>

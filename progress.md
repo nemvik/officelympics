@@ -66,3 +66,19 @@ Original prompt: Kompletně implementovat sdílenou duelovou hru „Kanto Trumf�
 - Bezpečnostní review reprodukovalo podvržení generic shared výsledku a oprava v `duel/app.mjs` nyní vzdálené `result` zprávy u shared her ignoruje; stejný browser PoC po opravě ponechal kanonické skóre beze změny.
 - UI je responzivní a přístupné: skutečná tlačítka, klávesy 1–7 a Enter, aria-live stav, accessible názvy obou disciplín, focus preservation, touch layout a fullscreen. Na 375×812 je CTA celé ve viewportu a nevzniká horizontální overflow.
 - Finální ověření: 45/45 Node testů, syntax změněných modulů a `git diff --check`; celý practice zápas, dva online klienty, oba timeouty, commit-before-reveal, malformed/duplicate zprávy, delayed-reveal race, invalid→valid reveal race, idempotentní cleanup a podvržený finální výsledek byly ověřeny v headless Chromium. Produkční PokeAPI requesty: 0, browser console errors: 0.
+
+## Evoluční pexeso — aktuální úkol
+
+Original prompt: Kompletně implementovat shared duelovou hru „Evoluční pexeso“ (`evolution-memory`) s 16 kartami tvořícími osm disjunktních přímých evolučních párů z Kanto Pokémonů, seedovanou deskou a začínajícím hráčem, validovanou synchronní sítí, timeouty, poctivým practice botem, přístupným responzivním UI, registrací, testy a úplným ověřením.
+
+- Lokální `AGENTS.md` v pracovním stromu není; použity jsou instrukce vložené v zadání. Přečten `duel/games/README.md` a skill `develop-web-game`.
+- Snapshot Pokémonů byl rozšířen bez duplicity o 72 přímých parent–child vazeb a příznak větveného řetězce; generátor snapshotu udržuje stejný kontrakt. Runtime hra nepoužívá `fetch()`.
+- Hotový shared controller: osm disjunktních párů a layout ze seedu, seedovaný začínající hráč, 15s timeout každého otočení, blokace při 900ms vyhodnocení, role-ordered `finishShared()`, průběžné skóre a plný cleanup.
+- Online protokol posílá jen namespacovaný `{ type, action, index }`, odvozuje vzdálenou roli z kontextu, odmítá duplicity/future/late/invalid zprávy a má omezenou validovanou frontu nejvýše jednoho následujícího páru pro síťovou latenci během vyhodnocení.
+- Practice bot dostává pouze vlastní mapu skutečně odhalených indexů a neznámé karty zkoumá seedovaně; známý kompletní pár vždy využije.
+- Přístupné UI používá 16 skutečných tlačítek, bezpečné hidden aria labely, focus, aria-live, touch/keyboard, responzivní desktop/mobile/landscape layout a stav tahu/skóre/časovače.
+- Finální ověření: 58/58 Node testů, syntax všech herních `.mjs` a `git diff --check`; skill Playwright klient i vlastní celý practice/online/mobile průchod. Practice 8:0, online 0:8 shodně na obou klientech, oba rychlé flipy následujícího páru se po síťové prodlevě synchronizovaly, timeout/Enter/touch/cleanup prošly, 0 console/page errors a 0 runtime PokeAPI requestů.
+
+## TODO / doporučení
+
+- Pokud repozitář později dostane standardní Playwright dev dependency a CI job, převést současné browser harness scénáře na automaticky spouštěný e2e test; produkční kód kvůli tomu další změnu nepotřebuje.

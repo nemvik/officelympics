@@ -3,6 +3,7 @@ import { altTabDuelGame } from "./alt-tab-duel.mjs";
 import { calendarSqueezeGame } from "./calendar-squeeze.mjs";
 import { coffeeRelayGame } from "./coffee-relay.mjs";
 import { deadlineChickenGame } from "./deadline-chicken.mjs";
+import { evolutionMemoryGame } from "./evolution-memory.mjs";
 import { inboxPongGame } from "./inbox-pong.mjs";
 import { jargonDecoderGame } from "./jargon-decoder.mjs";
 import { kantoTrumfGame } from "./kanto-trumf.mjs";
@@ -20,6 +21,7 @@ import { taskStackGame } from "./task-stack.mjs";
 export const GAMES = Object.freeze([
   officePanicGame,
   deadlineChickenGame,
+  evolutionMemoryGame,
   paperCurlingGame,
   altTabDuelGame,
   spreadsheetBattleshipGame,

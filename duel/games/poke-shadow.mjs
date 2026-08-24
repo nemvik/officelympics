@@ -5,9 +5,9 @@ import { defineGame, NOOP, normalizeScoreResult, pointsWord, safeSmallInteger } 
 export const POKE_SHADOW = Object.freeze({
   rounds: 8,
   optionCount: 4,
-  typeHintMs: 2000,
-  sizeHintMs: 4000,
-  roundDurationMs: 6000,
+  typeHintMs: 5000,
+  sizeHintMs: 10000,
+  roundDurationMs: 15000,
   revealDurationMs: 1200,
   spriteLoadTimeoutMs: 3000,
   maximumScore: 8000
@@ -45,7 +45,7 @@ export const pokeShadowGame = defineGame({
     title: "PokéStín",
     teaser: "Poznej Pokémona podle siluety",
     difficulty: "postřeh",
-    instruction: "Poznej během šesti sekund osm Pokémonů podle siluety. Typ, výška a váha se postupně odhalí.",
+    instruction: "Poznej během patnácti sekund osm Pokémonů podle siluety. Typ, výška a váha se postupně odhalí.",
     scoreLabel: "bodů za Pokédex"
   },
   start: startPokeShadow,
@@ -68,7 +68,7 @@ export function createPokeShadowPracticeResult(seed) {
   const random = createRng("practice-result:poke-shadow:" + seed);
   const correct = 4 + Math.floor(random() * 4);
   const reactions = Array.from({ length: correct }, function () {
-    return Math.round(850 + random() * 3650);
+    return Math.round(2125 + random() * 9125);
   });
   return {
     score: reactions.reduce(function (total, reaction) {
@@ -197,7 +197,7 @@ export function startPokeShadow(context) {
   let finished = false;
   let lastTick = performance.now();
 
-  context.setRoundLabel(POKE_SHADOW.rounds + " kol · 6 sekund na stín");
+  context.setRoundLabel(POKE_SHADOW.rounds + " kol · 15 sekund na stín");
   context.stage.innerHTML = `
     <div class="poke-shadow-shell" data-phase="idle">
       <div class="poke-shadow-topline">
@@ -206,8 +206,8 @@ export function startPokeShadow(context) {
       </div>
       <div class="poke-shadow-arena">
         <section class="poke-shadow-visual" aria-labelledby="poke-shadow-question">
-          <div class="poke-shadow-clock" aria-label="Časový limit šest sekund">
-            <span aria-hidden="true">Zbývá</span><b aria-hidden="true">6,0</b><small aria-hidden="true">s</small>
+          <div class="poke-shadow-clock" aria-label="Časový limit patnáct sekund">
+            <span aria-hidden="true">Zbývá</span><b aria-hidden="true">15,0</b><small aria-hidden="true">s</small>
           </div>
           <div class="poke-shadow-timer" aria-hidden="true"><span></span></div>
           <div class="poke-shadow-portrait" role="img" aria-label="Silueta neznámého Pokémona">
@@ -220,8 +220,8 @@ export function startPokeShadow(context) {
           <span class="eyebrow">Pokédexový test</span>
           <h3 id="poke-shadow-question">Kdo se skrývá ve stínu?</h3>
           <div class="poke-shadow-hints" aria-live="polite" aria-atomic="true">
-            <p data-poke-hint="type"><span aria-hidden="true">◆</span><b>Typ se ukáže za 2 s</b></p>
-            <p data-poke-hint="size"><span aria-hidden="true">↕</span><b>Výška a váha za 4 s</b></p>
+            <p data-poke-hint="type"><span aria-hidden="true">◆</span><b>Typ se ukáže za 5 s</b></p>
+            <p data-poke-hint="size"><span aria-hidden="true">↕</span><b>Výška a váha za 10 s</b></p>
           </div>
           <div class="poke-shadow-options" role="group" aria-label="Možnosti odpovědi"></div>
           <p class="poke-shadow-feedback" role="status" aria-live="polite" aria-atomic="true">Máš jediný pokus. Vol klávesami 1–4 nebo tlačítkem.</p>
@@ -380,9 +380,9 @@ export function startPokeShadow(context) {
     identity.textContent = "Neznámý Pokémon · stín " + (index + 1) + "/" + rounds.length;
     hints.setAttribute("aria-live", "off");
     typeHint.classList.remove("is-revealed");
-    typeHint.querySelector("b").textContent = "Typ se ukáže za 2 s";
+    typeHint.querySelector("b").textContent = "Typ se ukáže za 5 s";
     sizeHint.classList.remove("is-revealed");
-    sizeHint.querySelector("b").textContent = "Výška a váha za 4 s";
+    sizeHint.querySelector("b").textContent = "Výška a váha za 10 s";
     hints.setAttribute("aria-live", "polite");
     feedback.textContent = "Načítám siluetu pro kolo " + (index + 1) + " z " + rounds.length + ".";
     Array.from(roundDots.children).forEach(function (dot) { dot.classList.remove("is-current"); });

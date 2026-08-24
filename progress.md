@@ -36,9 +36,9 @@ Original prompt: Kompletně implementovat lokální duelovou hru „PokéStín�
 - Výchozí stav: čistý worktree a 22/22 testů prochází.
 - Nejbližší implementační vzor je `printer-exorcist.mjs`; sdílená Pokémon data budou v `duel/games/pokemon/`, obecná aplikace ani `game-core.mjs` změnu nepotřebují.
 - Přidán snapshot 151 druhů z revize PokeAPI `b963af2b78a3` a sprite revize `c10459b9b012`; runtime hra nemá `fetch()` a přednačítá jen osm obrázků vybraného zápasu.
-- Hotový local controller: 8 kol, lineární skóre 1 000–100, nápovědy ve 2/4 s, timeout v 6 s, jeden pokus, reveal, klávesy 1–4, aria-live, focus a úplný cleanup.
+- Hotový local controller: 8 kol, lineární skóre 1 000–100, nápovědy v 5/10 s, timeout v 15 s, jeden pokus, reveal, klávesy 1–4, aria-live, focus a úplný cleanup.
 - Jednotkové a kontraktové testy: 30/30 prošlo.
-- Browser: dokončen celý skutečný practice tok, desktop keyboard, mobile touch i celý duel ve viewportu 480×320; bez horizontálního přetečení, bez konzolových chyb a s 0 requesty na PokeAPI. Záměrně zpožděný sprite potvrdil, že 6s limit začíná až po načtení.
+- Browser původní 6s varianty: dokončen celý skutečný practice tok, desktop keyboard, mobile touch i celý duel ve viewportu 480×320; bez horizontálního přetečení, bez konzolových chyb a s 0 requesty na PokeAPI. Následná drobná změna zpomalila kolo na 15 s s nápovědami v 5/10 s; na výslovný pokyn uživatele nebyl tento timing-only commit znovu testován.
 - Nezávislé review vedlo k loading gate pro sprite, ochraně proti stale vstupu, konzistentnější normalizaci výsledku, klidnějším aria-live oznámením, úplnému cleanupu obrázků a kompaktnímu landscape layoutu. Re-review nenašlo blocker, P1 ani P2.
 - Finální ověření: 30/30 testů, syntax všech `.mjs`, `git diff --check`, celý practice tok a předepsaný Playwright klient bez chyb.
 

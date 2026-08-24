@@ -101,9 +101,9 @@ test("PokéStín má deterministický fallback i bez podobných kandidátů", fu
 
 test("Skóre PokéStínu plynule klesá od 1000 do 100 bodů", function () {
   assert.equal(pokeShadowScore(0), 1000);
-  assert.equal(pokeShadowScore(1000), 850);
-  assert.equal(pokeShadowScore(3000), 550);
-  assert.equal(pokeShadowScore(6000), 100);
+  assert.equal(pokeShadowScore(1000), 940);
+  assert.equal(pokeShadowScore(7500), 550);
+  assert.equal(pokeShadowScore(15000), 100);
   assert.equal(pokeShadowScore(60_000), 100);
   assert.equal(pokeShadowScore(-500), 1000);
   assert.equal(pokeShadowScore(NaN), 0);
@@ -152,7 +152,7 @@ test("PokéStín je registrovaná lokální hra s věrohodným deterministickým
   assert.deepEqual(second, createPracticeResult("poke-shadow", "kolega-bot"));
   assert.ok(second.correct >= 4 && second.correct <= 7);
   assert.ok(second.score >= second.correct * 100 && second.score <= second.correct * 1000);
-  assert.ok(second.average >= 850 && second.average <= 4500);
+  assert.ok(second.average >= 2125 && second.average <= 11250);
   assert.match(formatGameResult("poke-shadow", second), /^\d\/8 Pokémonů poznáno · průměr \d,\d s$/);
 });
 

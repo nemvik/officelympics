@@ -14,6 +14,7 @@ import { officePictionaryGame } from "./office-pictionary.mjs";
 import { paperCurlingGame } from "./paper-curling.mjs";
 import { pokeShadowGame } from "./poke-shadow.mjs";
 import { printerExorcistGame } from "./printer-exorcist.mjs";
+import { safariDraftGame } from "./safari-draft.mjs";
 import { spreadsheetBattleshipGame } from "./spreadsheet-battleship.mjs";
 import { taskStackGame } from "./task-stack.mjs";
 
@@ -36,6 +37,7 @@ export const GAMES = Object.freeze([
   pokeShadowGame,
   oakBingoGame,
   kantoTrumfGame,
+  safariDraftGame,
   officePictionaryGame
 ]);
 

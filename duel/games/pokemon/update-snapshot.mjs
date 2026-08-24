@@ -165,6 +165,7 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
   }).filter(Boolean);
   const color = species && colorById.get(Number(species.color_id));
   const shape = species && shapeById.get(Number(species.shape_id));
+  const captureRate = species && Number(species.capture_rate);
   const hasEvolutionParent = Boolean(species && Number(species.evolves_from_species_id) > 0);
   const hasEvolutionChild = childCountByParentId.has(id);
   const evolutionStage = hasEvolutionParent
@@ -172,6 +173,7 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
     : hasEvolutionChild ? "base" : "single";
 
   if (!record || !species || !name || !types.length || !color || !shape || !stats
+    || !Number.isInteger(captureRate) || captureRate < 1 || captureRate > 255
     || !["hp", "attack", "defense", "speed"].every(function (stat) {
       return Number.isFinite(stats[stat]) && stats[stat] > 0;
     })) {
@@ -189,6 +191,7 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
     speed: stats.speed,
     height: Number(record.height),
     weight: Number(record.weight),
+    captureRate,
     color: color.identifier,
     evolutionStage,
     shape: shape.identifier
@@ -223,6 +226,7 @@ export const POKEMON_SNAPSHOT_META = Object.freeze(${JSON.stringify({
   evolutionEdgeCount: evolutionEdges.length,
   evolutionStageKind: "full_species_chain_position",
   statKind: "base_stat",
+  captureRateKind: "pokemon_species.capture_rate",
   heightUnit: "decimetre",
   weightUnit: "hectogram"
 }, null, 2)});

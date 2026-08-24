@@ -4,7 +4,7 @@ export const POKEMON_SNAPSHOT_META = Object.freeze({
   "sourceRevision": "b963af2b78a33e12fd38e96ccd74a8387bdda574",
   "spriteSource": "https://github.com/PokeAPI/sprites/tree/c10459b9b0129eaca5c5d9b1cac65336debb1d08",
   "spriteRevision": "c10459b9b0129eaca5c5d9b1cac65336debb1d08",
-  "generatedAt": "2026-08-24T13:24:40.642Z",
+  "generatedAt": "2026-08-24T15:49:15.937Z",
   "minimumId": 1,
   "maximumId": 151,
   "count": 151,
@@ -12,6 +12,7 @@ export const POKEMON_SNAPSHOT_META = Object.freeze({
   "evolutionEdgeCount": 72,
   "evolutionStageKind": "full_species_chain_position",
   "statKind": "base_stat",
+  "captureRateKind": "pokemon_species.capture_rate",
   "heightUnit": "decimetre",
   "weightUnit": "hectogram"
 });
@@ -31,6 +32,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 7,
     "weight": 69,
+    "captureRate": 45,
     "color": "green",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -49,6 +51,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 10,
     "weight": 130,
+    "captureRate": 45,
     "color": "green",
     "evolutionStage": "middle",
     "shape": "quadruped"
@@ -67,6 +70,7 @@ const POKEMON_RECORDS = [
     "speed": 80,
     "height": 20,
     "weight": 1000,
+    "captureRate": 45,
     "color": "green",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -84,6 +88,7 @@ const POKEMON_RECORDS = [
     "speed": 65,
     "height": 6,
     "weight": 85,
+    "captureRate": 45,
     "color": "red",
     "evolutionStage": "base",
     "shape": "upright"
@@ -101,6 +106,7 @@ const POKEMON_RECORDS = [
     "speed": 80,
     "height": 11,
     "weight": 190,
+    "captureRate": 45,
     "color": "red",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -119,6 +125,7 @@ const POKEMON_RECORDS = [
     "speed": 100,
     "height": 17,
     "weight": 905,
+    "captureRate": 45,
     "color": "red",
     "evolutionStage": "final",
     "shape": "upright"
@@ -136,6 +143,7 @@ const POKEMON_RECORDS = [
     "speed": 43,
     "height": 5,
     "weight": 90,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "upright"
@@ -153,6 +161,7 @@ const POKEMON_RECORDS = [
     "speed": 58,
     "height": 10,
     "weight": 225,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -170,6 +179,7 @@ const POKEMON_RECORDS = [
     "speed": 78,
     "height": 16,
     "weight": 855,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "upright"
@@ -187,6 +197,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 3,
     "weight": 29,
+    "captureRate": 255,
     "color": "green",
     "evolutionStage": "base",
     "shape": "armor"
@@ -204,6 +215,7 @@ const POKEMON_RECORDS = [
     "speed": 30,
     "height": 7,
     "weight": 99,
+    "captureRate": 120,
     "color": "green",
     "evolutionStage": "middle",
     "shape": "squiggle"
@@ -222,6 +234,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 11,
     "weight": 320,
+    "captureRate": 45,
     "color": "white",
     "evolutionStage": "final",
     "shape": "bug-wings"
@@ -240,6 +253,7 @@ const POKEMON_RECORDS = [
     "speed": 50,
     "height": 3,
     "weight": 32,
+    "captureRate": 255,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "armor"
@@ -258,6 +272,7 @@ const POKEMON_RECORDS = [
     "speed": 35,
     "height": 6,
     "weight": 100,
+    "captureRate": 120,
     "color": "yellow",
     "evolutionStage": "middle",
     "shape": "squiggle"
@@ -276,6 +291,7 @@ const POKEMON_RECORDS = [
     "speed": 75,
     "height": 10,
     "weight": 295,
+    "captureRate": 45,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "bug-wings"
@@ -294,6 +310,7 @@ const POKEMON_RECORDS = [
     "speed": 56,
     "height": 3,
     "weight": 18,
+    "captureRate": 255,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "wings"
@@ -312,6 +329,7 @@ const POKEMON_RECORDS = [
     "speed": 71,
     "height": 11,
     "weight": 300,
+    "captureRate": 120,
     "color": "brown",
     "evolutionStage": "middle",
     "shape": "wings"
@@ -330,6 +348,7 @@ const POKEMON_RECORDS = [
     "speed": 101,
     "height": 15,
     "weight": 395,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "wings"
@@ -347,6 +366,7 @@ const POKEMON_RECORDS = [
     "speed": 72,
     "height": 3,
     "weight": 35,
+    "captureRate": 255,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -364,6 +384,7 @@ const POKEMON_RECORDS = [
     "speed": 97,
     "height": 7,
     "weight": 185,
+    "captureRate": 127,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -382,6 +403,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 3,
     "weight": 20,
+    "captureRate": 255,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "wings"
@@ -400,6 +422,7 @@ const POKEMON_RECORDS = [
     "speed": 100,
     "height": 12,
     "weight": 380,
+    "captureRate": 90,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "wings"
@@ -417,6 +440,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 20,
     "weight": 69,
+    "captureRate": 255,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "squiggle"
@@ -434,6 +458,7 @@ const POKEMON_RECORDS = [
     "speed": 80,
     "height": 35,
     "weight": 650,
+    "captureRate": 90,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "squiggle"
@@ -451,6 +476,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 4,
     "weight": 60,
+    "captureRate": 190,
     "color": "yellow",
     "evolutionStage": "middle",
     "shape": "quadruped"
@@ -468,6 +494,7 @@ const POKEMON_RECORDS = [
     "speed": 110,
     "height": 8,
     "weight": 300,
+    "captureRate": 75,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "upright"
@@ -485,6 +512,7 @@ const POKEMON_RECORDS = [
     "speed": 40,
     "height": 6,
     "weight": 120,
+    "captureRate": 255,
     "color": "yellow",
     "evolutionStage": "base",
     "shape": "upright"
@@ -502,6 +530,7 @@ const POKEMON_RECORDS = [
     "speed": 65,
     "height": 10,
     "weight": 295,
+    "captureRate": 90,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "upright"
@@ -519,6 +548,7 @@ const POKEMON_RECORDS = [
     "speed": 41,
     "height": 4,
     "weight": 70,
+    "captureRate": 235,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -536,6 +566,7 @@ const POKEMON_RECORDS = [
     "speed": 56,
     "height": 8,
     "weight": 200,
+    "captureRate": 120,
     "color": "blue",
     "evolutionStage": "middle",
     "shape": "quadruped"
@@ -554,6 +585,7 @@ const POKEMON_RECORDS = [
     "speed": 76,
     "height": 13,
     "weight": 600,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "upright"
@@ -571,6 +603,7 @@ const POKEMON_RECORDS = [
     "speed": 50,
     "height": 5,
     "weight": 90,
+    "captureRate": 235,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -588,6 +621,7 @@ const POKEMON_RECORDS = [
     "speed": 65,
     "height": 9,
     "weight": 195,
+    "captureRate": 120,
     "color": "purple",
     "evolutionStage": "middle",
     "shape": "quadruped"
@@ -606,6 +640,7 @@ const POKEMON_RECORDS = [
     "speed": 85,
     "height": 14,
     "weight": 620,
+    "captureRate": 45,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "upright"
@@ -623,6 +658,7 @@ const POKEMON_RECORDS = [
     "speed": 35,
     "height": 6,
     "weight": 75,
+    "captureRate": 150,
     "color": "pink",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -640,6 +676,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 13,
     "weight": 400,
+    "captureRate": 25,
     "color": "pink",
     "evolutionStage": "final",
     "shape": "upright"
@@ -657,6 +694,7 @@ const POKEMON_RECORDS = [
     "speed": 65,
     "height": 6,
     "weight": 99,
+    "captureRate": 190,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -674,6 +712,7 @@ const POKEMON_RECORDS = [
     "speed": 100,
     "height": 11,
     "weight": 199,
+    "captureRate": 75,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -692,6 +731,7 @@ const POKEMON_RECORDS = [
     "speed": 20,
     "height": 5,
     "weight": 55,
+    "captureRate": 170,
     "color": "pink",
     "evolutionStage": "middle",
     "shape": "humanoid"
@@ -710,6 +750,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 10,
     "weight": 120,
+    "captureRate": 50,
     "color": "pink",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -728,6 +769,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 8,
     "weight": 75,
+    "captureRate": 255,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "wings"
@@ -746,6 +788,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 16,
     "weight": 550,
+    "captureRate": 90,
     "color": "purple",
     "evolutionStage": "middle",
     "shape": "wings"
@@ -764,6 +807,7 @@ const POKEMON_RECORDS = [
     "speed": 30,
     "height": 5,
     "weight": 54,
+    "captureRate": 255,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "legs"
@@ -782,6 +826,7 @@ const POKEMON_RECORDS = [
     "speed": 40,
     "height": 8,
     "weight": 86,
+    "captureRate": 120,
     "color": "blue",
     "evolutionStage": "middle",
     "shape": "humanoid"
@@ -800,6 +845,7 @@ const POKEMON_RECORDS = [
     "speed": 50,
     "height": 12,
     "weight": 186,
+    "captureRate": 45,
     "color": "red",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -818,6 +864,7 @@ const POKEMON_RECORDS = [
     "speed": 25,
     "height": 3,
     "weight": 54,
+    "captureRate": 190,
     "color": "red",
     "evolutionStage": "base",
     "shape": "armor"
@@ -836,6 +883,7 @@ const POKEMON_RECORDS = [
     "speed": 30,
     "height": 10,
     "weight": 295,
+    "captureRate": 75,
     "color": "red",
     "evolutionStage": "final",
     "shape": "armor"
@@ -854,6 +902,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 10,
     "weight": 300,
+    "captureRate": 190,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "humanoid"
@@ -872,6 +921,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 15,
     "weight": 125,
+    "captureRate": 75,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "bug-wings"
@@ -889,6 +939,7 @@ const POKEMON_RECORDS = [
     "speed": 95,
     "height": 2,
     "weight": 8,
+    "captureRate": 255,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "blob"
@@ -906,6 +957,7 @@ const POKEMON_RECORDS = [
     "speed": 120,
     "height": 7,
     "weight": 333,
+    "captureRate": 50,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "heads"
@@ -923,6 +975,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 4,
     "weight": 42,
+    "captureRate": 255,
     "color": "yellow",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -940,6 +993,7 @@ const POKEMON_RECORDS = [
     "speed": 115,
     "height": 10,
     "weight": 320,
+    "captureRate": 90,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -957,6 +1011,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 8,
     "weight": 196,
+    "captureRate": 190,
     "color": "yellow",
     "evolutionStage": "base",
     "shape": "upright"
@@ -974,6 +1029,7 @@ const POKEMON_RECORDS = [
     "speed": 85,
     "height": 17,
     "weight": 766,
+    "captureRate": 75,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "upright"
@@ -991,6 +1047,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 5,
     "weight": 280,
+    "captureRate": 190,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "upright"
@@ -1008,6 +1065,7 @@ const POKEMON_RECORDS = [
     "speed": 95,
     "height": 10,
     "weight": 320,
+    "captureRate": 75,
     "color": "brown",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -1025,6 +1083,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 7,
     "weight": 190,
+    "captureRate": 190,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -1042,6 +1101,7 @@ const POKEMON_RECORDS = [
     "speed": 95,
     "height": 19,
     "weight": 1550,
+    "captureRate": 75,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -1059,6 +1119,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 6,
     "weight": 124,
+    "captureRate": 255,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "legs"
@@ -1076,6 +1137,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 10,
     "weight": 200,
+    "captureRate": 120,
     "color": "blue",
     "evolutionStage": "middle",
     "shape": "humanoid"
@@ -1094,6 +1156,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 13,
     "weight": 540,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -1111,6 +1174,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 9,
     "weight": 195,
+    "captureRate": 200,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "upright"
@@ -1128,6 +1192,7 @@ const POKEMON_RECORDS = [
     "speed": 105,
     "height": 13,
     "weight": 565,
+    "captureRate": 100,
     "color": "brown",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -1145,6 +1210,7 @@ const POKEMON_RECORDS = [
     "speed": 120,
     "height": 15,
     "weight": 480,
+    "captureRate": 50,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -1162,6 +1228,7 @@ const POKEMON_RECORDS = [
     "speed": 35,
     "height": 8,
     "weight": 195,
+    "captureRate": 180,
     "color": "gray",
     "evolutionStage": "base",
     "shape": "upright"
@@ -1179,6 +1246,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 15,
     "weight": 705,
+    "captureRate": 90,
     "color": "gray",
     "evolutionStage": "middle",
     "shape": "humanoid"
@@ -1196,6 +1264,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 16,
     "weight": 1300,
+    "captureRate": 45,
     "color": "gray",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -1214,6 +1283,7 @@ const POKEMON_RECORDS = [
     "speed": 40,
     "height": 7,
     "weight": 40,
+    "captureRate": 255,
     "color": "green",
     "evolutionStage": "base",
     "shape": "humanoid"
@@ -1232,6 +1302,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 10,
     "weight": 64,
+    "captureRate": 120,
     "color": "green",
     "evolutionStage": "middle",
     "shape": "blob"
@@ -1250,6 +1321,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 17,
     "weight": 155,
+    "captureRate": 45,
     "color": "green",
     "evolutionStage": "final",
     "shape": "blob"
@@ -1268,6 +1340,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 9,
     "weight": 455,
+    "captureRate": 190,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "tentacles"
@@ -1286,6 +1359,7 @@ const POKEMON_RECORDS = [
     "speed": 100,
     "height": 16,
     "weight": 550,
+    "captureRate": 60,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "tentacles"
@@ -1304,6 +1378,7 @@ const POKEMON_RECORDS = [
     "speed": 20,
     "height": 4,
     "weight": 200,
+    "captureRate": 255,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "arms"
@@ -1322,6 +1397,7 @@ const POKEMON_RECORDS = [
     "speed": 35,
     "height": 10,
     "weight": 1050,
+    "captureRate": 120,
     "color": "brown",
     "evolutionStage": "middle",
     "shape": "humanoid"
@@ -1340,6 +1416,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 14,
     "weight": 3000,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -1357,6 +1434,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 10,
     "weight": 300,
+    "captureRate": 190,
     "color": "yellow",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -1374,6 +1452,7 @@ const POKEMON_RECORDS = [
     "speed": 105,
     "height": 17,
     "weight": 950,
+    "captureRate": 60,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -1392,6 +1471,7 @@ const POKEMON_RECORDS = [
     "speed": 15,
     "height": 12,
     "weight": 360,
+    "captureRate": 190,
     "color": "pink",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -1410,6 +1490,7 @@ const POKEMON_RECORDS = [
     "speed": 30,
     "height": 16,
     "weight": 785,
+    "captureRate": 75,
     "color": "pink",
     "evolutionStage": "final",
     "shape": "upright"
@@ -1428,6 +1509,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 3,
     "weight": 60,
+    "captureRate": 190,
     "color": "gray",
     "evolutionStage": "base",
     "shape": "arms"
@@ -1446,6 +1528,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 10,
     "weight": 600,
+    "captureRate": 60,
     "color": "gray",
     "evolutionStage": "middle",
     "shape": "heads"
@@ -1464,6 +1547,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 8,
     "weight": 150,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "wings"
@@ -1482,6 +1566,7 @@ const POKEMON_RECORDS = [
     "speed": 75,
     "height": 14,
     "weight": 392,
+    "captureRate": 190,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "legs"
@@ -1500,6 +1585,7 @@ const POKEMON_RECORDS = [
     "speed": 110,
     "height": 18,
     "weight": 852,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "legs"
@@ -1517,6 +1603,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 11,
     "weight": 900,
+    "captureRate": 190,
     "color": "white",
     "evolutionStage": "base",
     "shape": "fish"
@@ -1535,6 +1622,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 17,
     "weight": 1200,
+    "captureRate": 75,
     "color": "white",
     "evolutionStage": "final",
     "shape": "fish"
@@ -1552,6 +1640,7 @@ const POKEMON_RECORDS = [
     "speed": 25,
     "height": 9,
     "weight": 300,
+    "captureRate": 190,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "arms"
@@ -1569,6 +1658,7 @@ const POKEMON_RECORDS = [
     "speed": 50,
     "height": 12,
     "weight": 300,
+    "captureRate": 75,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "arms"
@@ -1586,6 +1676,7 @@ const POKEMON_RECORDS = [
     "speed": 40,
     "height": 3,
     "weight": 40,
+    "captureRate": 190,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "ball"
@@ -1604,6 +1695,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 15,
     "weight": 1325,
+    "captureRate": 60,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "ball"
@@ -1622,6 +1714,7 @@ const POKEMON_RECORDS = [
     "speed": 80,
     "height": 13,
     "weight": 1,
+    "captureRate": 190,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "ball"
@@ -1640,6 +1733,7 @@ const POKEMON_RECORDS = [
     "speed": 95,
     "height": 16,
     "weight": 1,
+    "captureRate": 90,
     "color": "purple",
     "evolutionStage": "middle",
     "shape": "arms"
@@ -1658,6 +1752,7 @@ const POKEMON_RECORDS = [
     "speed": 110,
     "height": 15,
     "weight": 405,
+    "captureRate": 45,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "upright"
@@ -1676,6 +1771,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 88,
     "weight": 2100,
+    "captureRate": 45,
     "color": "gray",
     "evolutionStage": "base",
     "shape": "squiggle"
@@ -1693,6 +1789,7 @@ const POKEMON_RECORDS = [
     "speed": 42,
     "height": 10,
     "weight": 324,
+    "captureRate": 190,
     "color": "yellow",
     "evolutionStage": "base",
     "shape": "humanoid"
@@ -1710,6 +1807,7 @@ const POKEMON_RECORDS = [
     "speed": 67,
     "height": 16,
     "weight": 756,
+    "captureRate": 75,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -1727,6 +1825,7 @@ const POKEMON_RECORDS = [
     "speed": 50,
     "height": 4,
     "weight": 65,
+    "captureRate": 225,
     "color": "red",
     "evolutionStage": "base",
     "shape": "armor"
@@ -1744,6 +1843,7 @@ const POKEMON_RECORDS = [
     "speed": 75,
     "height": 13,
     "weight": 600,
+    "captureRate": 60,
     "color": "red",
     "evolutionStage": "final",
     "shape": "armor"
@@ -1761,6 +1861,7 @@ const POKEMON_RECORDS = [
     "speed": 100,
     "height": 5,
     "weight": 104,
+    "captureRate": 190,
     "color": "red",
     "evolutionStage": "base",
     "shape": "ball"
@@ -1778,6 +1879,7 @@ const POKEMON_RECORDS = [
     "speed": 150,
     "height": 12,
     "weight": 666,
+    "captureRate": 60,
     "color": "red",
     "evolutionStage": "final",
     "shape": "ball"
@@ -1796,6 +1898,7 @@ const POKEMON_RECORDS = [
     "speed": 40,
     "height": 4,
     "weight": 25,
+    "captureRate": 90,
     "color": "pink",
     "evolutionStage": "base",
     "shape": "heads"
@@ -1814,6 +1917,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 20,
     "weight": 1200,
+    "captureRate": 45,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "legs"
@@ -1831,6 +1935,7 @@ const POKEMON_RECORDS = [
     "speed": 35,
     "height": 4,
     "weight": 65,
+    "captureRate": 190,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "upright"
@@ -1848,6 +1953,7 @@ const POKEMON_RECORDS = [
     "speed": 45,
     "height": 10,
     "weight": 450,
+    "captureRate": 75,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "upright"
@@ -1865,6 +1971,7 @@ const POKEMON_RECORDS = [
     "speed": 87,
     "height": 15,
     "weight": 498,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -1882,6 +1989,7 @@ const POKEMON_RECORDS = [
     "speed": 76,
     "height": 14,
     "weight": 502,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -1899,6 +2007,7 @@ const POKEMON_RECORDS = [
     "speed": 30,
     "height": 12,
     "weight": 655,
+    "captureRate": 45,
     "color": "pink",
     "evolutionStage": "base",
     "shape": "upright"
@@ -1916,6 +2025,7 @@ const POKEMON_RECORDS = [
     "speed": 35,
     "height": 6,
     "weight": 10,
+    "captureRate": 190,
     "color": "purple",
     "evolutionStage": "base",
     "shape": "ball"
@@ -1933,6 +2043,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 12,
     "weight": 95,
+    "captureRate": 60,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "heads"
@@ -1951,6 +2062,7 @@ const POKEMON_RECORDS = [
     "speed": 25,
     "height": 10,
     "weight": 1150,
+    "captureRate": 120,
     "color": "gray",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -1969,6 +2081,7 @@ const POKEMON_RECORDS = [
     "speed": 40,
     "height": 19,
     "weight": 1200,
+    "captureRate": 60,
     "color": "gray",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -1986,6 +2099,7 @@ const POKEMON_RECORDS = [
     "speed": 50,
     "height": 11,
     "weight": 346,
+    "captureRate": 30,
     "color": "pink",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -2003,6 +2117,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 10,
     "weight": 350,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "legs"
@@ -2020,6 +2135,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 22,
     "weight": 800,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "single",
     "shape": "upright"
@@ -2037,6 +2153,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 4,
     "weight": 80,
+    "captureRate": 225,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "blob"
@@ -2054,6 +2171,7 @@ const POKEMON_RECORDS = [
     "speed": 85,
     "height": 12,
     "weight": 250,
+    "captureRate": 75,
     "color": "blue",
     "evolutionStage": "middle",
     "shape": "blob"
@@ -2071,6 +2189,7 @@ const POKEMON_RECORDS = [
     "speed": 63,
     "height": 6,
     "weight": 150,
+    "captureRate": 225,
     "color": "red",
     "evolutionStage": "base",
     "shape": "fish"
@@ -2088,6 +2207,7 @@ const POKEMON_RECORDS = [
     "speed": 68,
     "height": 13,
     "weight": 390,
+    "captureRate": 60,
     "color": "red",
     "evolutionStage": "final",
     "shape": "fish"
@@ -2105,6 +2225,7 @@ const POKEMON_RECORDS = [
     "speed": 85,
     "height": 8,
     "weight": 345,
+    "captureRate": 225,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "blob"
@@ -2123,6 +2244,7 @@ const POKEMON_RECORDS = [
     "speed": 115,
     "height": 11,
     "weight": 800,
+    "captureRate": 60,
     "color": "purple",
     "evolutionStage": "final",
     "shape": "blob"
@@ -2141,6 +2263,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 13,
     "weight": 545,
+    "captureRate": 45,
     "color": "pink",
     "evolutionStage": "middle",
     "shape": "humanoid"
@@ -2159,6 +2282,7 @@ const POKEMON_RECORDS = [
     "speed": 105,
     "height": 15,
     "weight": 560,
+    "captureRate": 45,
     "color": "green",
     "evolutionStage": "base",
     "shape": "bug-wings"
@@ -2177,6 +2301,7 @@ const POKEMON_RECORDS = [
     "speed": 95,
     "height": 14,
     "weight": 406,
+    "captureRate": 45,
     "color": "red",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -2194,6 +2319,7 @@ const POKEMON_RECORDS = [
     "speed": 105,
     "height": 11,
     "weight": 300,
+    "captureRate": 45,
     "color": "yellow",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -2211,6 +2337,7 @@ const POKEMON_RECORDS = [
     "speed": 93,
     "height": 13,
     "weight": 445,
+    "captureRate": 45,
     "color": "red",
     "evolutionStage": "middle",
     "shape": "upright"
@@ -2228,6 +2355,7 @@ const POKEMON_RECORDS = [
     "speed": 85,
     "height": 15,
     "weight": 550,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "single",
     "shape": "humanoid"
@@ -2245,6 +2373,7 @@ const POKEMON_RECORDS = [
     "speed": 110,
     "height": 14,
     "weight": 884,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "single",
     "shape": "quadruped"
@@ -2262,6 +2391,7 @@ const POKEMON_RECORDS = [
     "speed": 80,
     "height": 9,
     "weight": 100,
+    "captureRate": 255,
     "color": "red",
     "evolutionStage": "base",
     "shape": "fish"
@@ -2280,6 +2410,7 @@ const POKEMON_RECORDS = [
     "speed": 81,
     "height": 65,
     "weight": 2350,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "squiggle"
@@ -2298,6 +2429,7 @@ const POKEMON_RECORDS = [
     "speed": 60,
     "height": 25,
     "weight": 2200,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "single",
     "shape": "fish"
@@ -2315,6 +2447,7 @@ const POKEMON_RECORDS = [
     "speed": 48,
     "height": 3,
     "weight": 40,
+    "captureRate": 35,
     "color": "purple",
     "evolutionStage": "single",
     "shape": "ball"
@@ -2332,6 +2465,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 3,
     "weight": 65,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "quadruped"
@@ -2349,6 +2483,7 @@ const POKEMON_RECORDS = [
     "speed": 65,
     "height": 10,
     "weight": 290,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -2366,6 +2501,7 @@ const POKEMON_RECORDS = [
     "speed": 130,
     "height": 8,
     "weight": 245,
+    "captureRate": 45,
     "color": "yellow",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -2383,6 +2519,7 @@ const POKEMON_RECORDS = [
     "speed": 65,
     "height": 9,
     "weight": 250,
+    "captureRate": 45,
     "color": "red",
     "evolutionStage": "final",
     "shape": "quadruped"
@@ -2400,6 +2537,7 @@ const POKEMON_RECORDS = [
     "speed": 40,
     "height": 8,
     "weight": 365,
+    "captureRate": 45,
     "color": "pink",
     "evolutionStage": "base",
     "shape": "legs"
@@ -2418,6 +2556,7 @@ const POKEMON_RECORDS = [
     "speed": 35,
     "height": 4,
     "weight": 75,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "tentacles"
@@ -2436,6 +2575,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 10,
     "weight": 350,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "final",
     "shape": "tentacles"
@@ -2454,6 +2594,7 @@ const POKEMON_RECORDS = [
     "speed": 55,
     "height": 5,
     "weight": 115,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "base",
     "shape": "armor"
@@ -2472,6 +2613,7 @@ const POKEMON_RECORDS = [
     "speed": 80,
     "height": 13,
     "weight": 405,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "upright"
@@ -2490,6 +2632,7 @@ const POKEMON_RECORDS = [
     "speed": 130,
     "height": 18,
     "weight": 590,
+    "captureRate": 45,
     "color": "purple",
     "evolutionStage": "single",
     "shape": "wings"
@@ -2507,6 +2650,7 @@ const POKEMON_RECORDS = [
     "speed": 30,
     "height": 21,
     "weight": 4600,
+    "captureRate": 25,
     "color": "black",
     "evolutionStage": "final",
     "shape": "humanoid"
@@ -2525,6 +2669,7 @@ const POKEMON_RECORDS = [
     "speed": 85,
     "height": 17,
     "weight": 554,
+    "captureRate": 3,
     "color": "blue",
     "evolutionStage": "single",
     "shape": "wings"
@@ -2543,6 +2688,7 @@ const POKEMON_RECORDS = [
     "speed": 100,
     "height": 16,
     "weight": 526,
+    "captureRate": 3,
     "color": "yellow",
     "evolutionStage": "single",
     "shape": "wings"
@@ -2561,6 +2707,7 @@ const POKEMON_RECORDS = [
     "speed": 90,
     "height": 20,
     "weight": 600,
+    "captureRate": 3,
     "color": "yellow",
     "evolutionStage": "single",
     "shape": "wings"
@@ -2578,6 +2725,7 @@ const POKEMON_RECORDS = [
     "speed": 50,
     "height": 18,
     "weight": 33,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "base",
     "shape": "squiggle"
@@ -2595,6 +2743,7 @@ const POKEMON_RECORDS = [
     "speed": 70,
     "height": 40,
     "weight": 165,
+    "captureRate": 45,
     "color": "blue",
     "evolutionStage": "middle",
     "shape": "squiggle"
@@ -2613,6 +2762,7 @@ const POKEMON_RECORDS = [
     "speed": 80,
     "height": 22,
     "weight": 2100,
+    "captureRate": 45,
     "color": "brown",
     "evolutionStage": "final",
     "shape": "upright"
@@ -2630,6 +2780,7 @@ const POKEMON_RECORDS = [
     "speed": 130,
     "height": 20,
     "weight": 1220,
+    "captureRate": 3,
     "color": "purple",
     "evolutionStage": "single",
     "shape": "upright"
@@ -2647,6 +2798,7 @@ const POKEMON_RECORDS = [
     "speed": 100,
     "height": 4,
     "weight": 40,
+    "captureRate": 45,
     "color": "pink",
     "evolutionStage": "single",
     "shape": "upright"

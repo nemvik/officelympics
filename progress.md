@@ -82,3 +82,25 @@ Original prompt: Kompletně implementovat shared duelovou hru „Evoluční pexe
 ## TODO / doporučení
 
 - Pokud repozitář později dostane standardní Playwright dev dependency a CI job, převést současné browser harness scénáře na automaticky spouštěný e2e test; produkční kód kvůli tomu další změnu nepotřebuje.
+
+## Safari Draft — aktuální úkol
+
+Original prompt: Kompletně implementovat sdílenou duelovou hru „Safari Draft“ (`safari-draft`) se šesti deterministickými nabídkami, tajnou volbou Pokémona a míčku přes commit–reveal, desetisekundovým timeoutem, deterministickým chycením, practice botem, přístupným responzivním UI, registrací, testy a úplným ověřením.
+
+- Přečten `duel/games/README.md` a skill `develop-web-game`; fyzický kořenový `AGENTS.md` v pracovním stromu není, použity jsou instrukce vložené v zadání.
+- Výchozí worktree je čistý. Existující snapshot má jména, typy, sprite a staty, ale zatím neobsahuje `captureRate`; generátor snapshotu jej musí doplnit ze stejného verzovaného PokeAPI zdroje.
+- Nejbližší síťový vzor je `kanto-trumf.mjs`; bezpečný SHA-256 commit–reveal postup bude převzat bez refaktoru stávající hry.
+
+## TODO Safari Draft
+
+- Doplněn snapshot/generátor, čistá pravidla, controller, UI/CSS a registrace.
+- Přidáno 19 Safari unit/kontraktových testů a practice/online browser harness; celá Node sada prochází 89/89.
+- Dokončen předepsaný Playwright klient i vlastní celý practice/online/mobile průchod. Practice skončil 7:16, oba online klienti kanonicky 9:7, online timeout vytvořil dvě volby a čtyři správně seřazené zprávy.
+- Vizuálně ověřen výběr se zobrazenými šancemi, reveal, stejný cíl+míček, mobil 390×844 a desktop 1280×720. Opraven globální `footer` margin, který překrýval CTA, a desktop byl zkompaktněn tak, aby potvrzení zůstalo v prvním viewportu.
+- Finální ověření: 89/89 Node testů, syntax všech herních `.mjs`, `git diff --check`, 0 console/page errors, 0 runtime requestů na `pokeapi.co`, 24/24 očekávaných zpráv za online zápas a shodný výsledek na obou klientech.
+
+## Známé limity Safari Draftu
+
+- Commit–reveal chrání tajnost volby pomocí 128bit nonce, ale čisté P2P bez autoritativního serveru nedokáže zabránit úmyslnému odpojení nebo zadržení revealu po commitu.
+- Deterministický hod je záměrně odvoditelný z veřejného seedu; upravený klient si může před volbou dopočítat výsledky všech kombinací. Serverová tajná entropie by tento limit odstranila, ale měnila by požadovaný kontrakt hry.
+- Sprite obrázky používají verzované URL existujícího snapshotu; při nedostupnosti GitHub CDN zůstávají jméno, typy, body i ovládání funkční, ale artwork se nenačte.

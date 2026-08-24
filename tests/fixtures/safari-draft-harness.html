@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Safari Draft browser harness</title>
+  <link rel="stylesheet" href="../../duel/duel.css">
+</head>
+<body>
+  <main style="width:min(1100px, calc(100% - 24px)); margin:12px auto">
+    <div class="match-bar">
+      <div class="match-player local-player"><span><small>Ty</small><strong>Tester</strong></span><b id="local-score">0</b></div>
+      <div class="match-center"><span id="round-label">Safari Draft</span><h2>Practice harness</h2></div>
+      <div class="match-player remote-player"><b id="remote-score">0</b><span><small>Soupeř</small><strong>Kolega-bot</strong></span></div>
+    </div>
+    <div class="game-stage" id="game-stage"></div>
+    <output id="result" aria-live="polite"></output>
+  </main>
+  <script type="module">
+    import { startSafariDraft } from "../../duel/games/safari-draft.mjs";
+
+    const result = document.getElementById("result");
+    const controller = startSafariDraft({
+      stage: document.getElementById("game-stage"),
+      seed: "safari-browser-practice",
+      localRole: 0,
+      mode: "practice",
+      names: ["Tester", "Kolega-bot"],
+      setRoundLabel: function (value) { document.getElementById("round-label").textContent = value; },
+      setScores: function (local, remote) {
+        document.getElementById("local-score").textContent = String(local);
+        document.getElementById("remote-score").textContent = String(remote);
+      },
+      finishShared: function (value) {
+        window.__safariDraftResult = value;
+        result.value = JSON.stringify(value);
+      },
+      send: function () { throw new Error("Practice režim nesmí posílat síťové zprávy."); }
+    });
+    window.__safariDraftController = controller;
+    window.addEventListener("beforeunload", function () { controller.cleanup(); });
+  </script>
+</body>
+</html>

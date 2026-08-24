@@ -1,5 +1,47 @@
-import { PANIC_DURATION_MS, PANIC_EVENTS, buildPanicSchedule, panicClickScore } from "../game-core.mjs";
-import { NOOP } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, NOOP, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+
+export const officePanicGame = defineGame({
+  id: "panic",
+  meta: {
+    icon: "🔥",
+    title: "Office Panic",
+    teaser: "20 sekund inboxového chaosu",
+    difficulty: "rychlost",
+    instruction: "Klikni na užitečné události, pasti ignoruj. Kombo přidává body.",
+    scoreLabel: "bodů"
+  },
+  start: startOfficePanic,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:panic:" + seed);
+  return {
+    score: 48 + Math.floor(random() * 34),
+    hits: 13 + Math.floor(random() * 8),
+    mistakes: Math.floor(random() * 5),
+    misses: 3 + Math.floor(random() * 7)
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result);
+  if (!normalized) return null;
+  normalized.hits = safeSmallInteger(result.hits, 60);
+  normalized.mistakes = safeSmallInteger(result.mistakes, 60);
+  normalized.misses = safeSmallInteger(result.misses, 60);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.hits + " zásahů · " + result.mistakes + " přešlapů";
+}
 
 export function startOfficePanic(context) {
   const schedule = buildPanicSchedule(context.seed);
@@ -152,4 +194,64 @@ export function startOfficePanic(context) {
       window.cancelAnimationFrame(animationFrame);
     }
   };
+}
+
+export const PANIC_DURATION_MS = 20_000;
+
+export const PANIC_EVENTS = Object.freeze([
+  Object.freeze({ emoji: "🔥", label: "Produkce hoří", kind: "good", points: 3 }),
+  Object.freeze({ emoji: "☕", label: "Doplnit kávu", kind: "good", points: 1 }),
+  Object.freeze({ emoji: "💾", label: "Uložit dokument", kind: "good", points: 2 }),
+  Object.freeze({ emoji: "📞", label: "Zvednout klienta", kind: "good", points: 2 }),
+  Object.freeze({ emoji: "✅", label: "Schválit dovolenou", kind: "good", points: 1 }),
+  Object.freeze({ emoji: "📣", label: "Odpovědět všem", kind: "bad", points: -2 }),
+  Object.freeze({ emoji: "🎣", label: "Faktura_FINAL.zip", kind: "bad", points: -3 }),
+  Object.freeze({ emoji: "🗓️", label: "Meeting bez agendy", kind: "bad", points: -2 }),
+  Object.freeze({ emoji: "🔔", label: "Náhodný Slack", kind: "bad", points: -1 })
+]);
+
+export function buildPanicSchedule(seed, durationMs = PANIC_DURATION_MS) {
+  const random = createRng("panic:" + seed);
+  const schedule = [];
+  let at = 450;
+  let previousSlot = -1;
+
+  while (at < durationMs - 650) {
+    const good = random() < 0.68;
+    const poolStart = good ? 0 : 5;
+    const poolLength = good ? 5 : 4;
+    let slot = Math.floor(random() * 9);
+
+    if (slot === previousSlot) slot = (slot + 1 + Math.floor(random() * 7)) % 9;
+    previousSlot = slot;
+
+    schedule.push({
+      id: schedule.length,
+      at: Math.round(at),
+      slot,
+      eventIndex: poolStart + Math.floor(random() * poolLength),
+      lifetime: Math.round(900 + random() * 500),
+      tilt: Math.round((random() * 8 - 4) * 10) / 10
+    });
+
+    at += 470 + random() * 340;
+  }
+
+  return schedule;
+}
+
+export function panicClickScore(currentScore, combo, event) {
+  if (!event || event.kind !== "good") {
+    return {
+      score: Math.max(0, currentScore + (event ? event.points : 0)),
+      combo: 0,
+      delta: event ? event.points : 0
+    };
+  }
+
+  const nextCombo = combo + 1;
+  const bonus = Math.min(3, Math.floor(nextCombo / 3));
+  const delta = event.points + bonus;
+
+  return { score: currentScore + delta, combo: nextCombo, delta };
 }

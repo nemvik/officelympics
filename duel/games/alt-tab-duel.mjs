@@ -1,5 +1,58 @@
-import { ALT_TAB_ROUNDS, altTabReactionScore, buildAltTabRounds } from "../game-core.mjs";
-import { NOOP, pointsWord } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, NOOP, normalizeScoreResult, pointsWord, safeSmallInteger } from "./shared.mjs";
+
+export const altTabDuelGame = defineGame({
+  id: "alttab",
+  meta: {
+    icon: "👔",
+    title: "Alt+Tab Duel",
+    teaser: "Přepni okno dřív, než šéf něco uvidí",
+    difficulty: "reflex",
+    instruction: "Přepni okno jen ve chvíli, kdy se objeví šéf. Falešné poplachy ignoruj.",
+    scoreLabel: "bodů za krytí"
+  },
+  start: startAltTabDuel,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:alttab:" + seed);
+  const reactions = Array.from({ length: 5 }, function () {
+    return Math.round(285 + random() * 520);
+  });
+  const mistakes = random() < 0.45 ? 1 : 0;
+  return {
+    score: reactions.reduce(function (total, reaction) {
+      return total + altTabReactionScore(reaction);
+    }, 3 * 350) - mistakes * 350,
+    reactions,
+    mistakes,
+    missed: random() < 0.22 ? 1 : 0,
+    average: Math.round(reactions.reduce(function (total, value) { return total + value; }, 0) / reactions.length)
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 6000);
+  if (!normalized) return null;
+  normalized.reactions = Array.isArray(result.reactions)
+    ? result.reactions.slice(0, 5).map(function (reaction) { return safeSmallInteger(reaction, 5000); })
+    : [];
+  normalized.mistakes = safeSmallInteger(result.mistakes, 8);
+  normalized.missed = safeSmallInteger(result.missed, 8);
+  normalized.average = safeSmallInteger(result.average, 5000);
+  return normalized;
+}
+
+function formatResult(result) {
+  return (result.average ? "průměr " + result.average + " ms" : "bez reakce")
+    + " · " + result.mistakes + " pastí";
+}
 
 export function startAltTabDuel(context) {
   const rounds = buildAltTabRounds(context.seed);
@@ -188,4 +241,32 @@ export function startAltTabDuel(context) {
       window.removeEventListener("keydown", onKeyDown);
     }
   };
+}
+
+export const ALT_TAB_ROUNDS = 8;
+
+export function buildAltTabRounds(seed) {
+  const random = createRng("alt-tab:" + seed);
+  const kinds = ["boss", "boss", "boss", "boss", "boss", "safe", "safe", "safe"];
+
+  for (let index = kinds.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    const value = kinds[index];
+    kinds[index] = kinds[swapIndex];
+    kinds[swapIndex] = value;
+  }
+
+  return kinds.map(function (kind, index) {
+    return {
+      id: index,
+      kind,
+      wait: Math.round(1050 + random() * 1250),
+      window: kind === "boss" ? 1450 : 1050
+    };
+  });
+}
+
+export function altTabReactionScore(milliseconds) {
+  if (!Number.isFinite(milliseconds) || milliseconds < 0) return 0;
+  return Math.max(100, Math.min(900, Math.round(1100 - milliseconds)));
 }

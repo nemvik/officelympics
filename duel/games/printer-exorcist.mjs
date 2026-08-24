@@ -1,5 +1,50 @@
-import { PRINTER_ACTIONS, PRINTER_ROUNDS, buildPrinterRounds, printerRepairScore } from "../game-core.mjs";
-import { NOOP, pointsWord } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, NOOP, normalizeScoreResult, pointsWord, safeSmallInteger } from "./shared.mjs";
+
+export const printerExorcistGame = defineGame({
+  id: "printer",
+  meta: {
+    icon: "🖨️",
+    title: "Tiskárnový exorcista",
+    teaser: "Zkroť kancelářského démona",
+    difficulty: "diagnostika",
+    instruction: "Přečti závadu a co nejrychleji vyber správný zásah, než si tiskárna vyžádá oběť.",
+    scoreLabel: "bodů za servis"
+  },
+  start: startPrinterExorcist,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:printer:" + seed);
+  const repaired = 7 + Math.floor(random() * 4);
+  const mistakes = Math.floor(random() * 5);
+  const average = 620 + Math.floor(random() * 1250);
+  return {
+    score: repaired * 390 + Math.floor(random() * 650),
+    repaired,
+    mistakes,
+    average
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 5600);
+  if (!normalized) return null;
+  normalized.repaired = safeSmallInteger(result.repaired, 10);
+  normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+  normalized.average = safeSmallInteger(result.average, 10_000);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.repaired + "/10 oprav · průměr " + (result.average || "—") + (result.average ? " ms" : "");
+}
 
 export function startPrinterExorcist(context) {
   const rounds = buildPrinterRounds(context.seed);
@@ -227,4 +272,100 @@ export function startPrinterExorcist(context) {
       window.removeEventListener("keydown", onKeyDown);
     }
   };
+}
+
+export const PRINTER_ROUNDS = 10;
+
+export const PRINTER_ACTIONS = Object.freeze([
+  Object.freeze({ id: "paper", emoji: "📄", label: "Vytáhnout papír" }),
+  Object.freeze({ id: "toner", emoji: "🧂", label: "Protřepat toner" }),
+  Object.freeze({ id: "cable", emoji: "🔌", label: "Zapojit kabel" }),
+  Object.freeze({ id: "queue", emoji: "🗑️", label: "Zrušit frontu" })
+]);
+
+export const PRINTER_ISSUES = Object.freeze([
+  Object.freeze({
+    id: "paper",
+    messages: Object.freeze([
+      "Papír uvízl v zásobníku 2",
+      "Zařízení hlásí PAPER JAM",
+      "List A4 trčí z útrob tiskárny"
+    ])
+  }),
+  Object.freeze({
+    id: "toner",
+    messages: Object.freeze([
+      "Výtisk je bledší než firemní vize",
+      "Dochází černý toner",
+      "Na papíře zůstávají jen duchové písmen"
+    ])
+  }),
+  Object.freeze({
+    id: "cable",
+    messages: Object.freeze([
+      "Tiskárna je záhadně offline",
+      "Zařízení nebylo v síti nalezeno",
+      "Kontrolka sítě odmítá spolupracovat"
+    ])
+  }),
+  Object.freeze({
+    id: "queue",
+    messages: Object.freeze([
+      "Ve frontě čeká 84 kopií reportu",
+      "Dokument FINAL se tiskne pořád dokola",
+      "Fronta tisku přestala odpovídat"
+    ])
+  })
+]);
+
+export function buildPrinterRounds(seed, count = PRINTER_ROUNDS) {
+  const random = createRng("printer:" + seed);
+  const rounds = [];
+  let bag = [];
+  let previousIssue = "";
+
+  function refillBag() {
+    bag = PRINTER_ISSUES.map(function (_, index) { return index; });
+    for (let index = bag.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = bag[index];
+      bag[index] = bag[swapIndex];
+      bag[swapIndex] = value;
+    }
+    if (bag.length > 1 && PRINTER_ISSUES[bag[0]].id === previousIssue) {
+      const value = bag[0];
+      bag[0] = bag[1];
+      bag[1] = value;
+    }
+  }
+
+  for (let roundIndex = 0; roundIndex < Math.max(0, count); roundIndex += 1) {
+    if (!bag.length) refillBag();
+    const issue = PRINTER_ISSUES[bag.shift()];
+    const actions = PRINTER_ACTIONS.map(function (action) { return action.id; });
+
+    for (let index = actions.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = actions[index];
+      actions[index] = actions[swapIndex];
+      actions[swapIndex] = value;
+    }
+
+    rounds.push({
+      id: roundIndex,
+      code: "E-" + String(10 + Math.floor(random() * 90)),
+      issue: issue.id,
+      message: issue.messages[Math.floor(random() * issue.messages.length)],
+      actions
+    });
+    previousIssue = issue.id;
+  }
+
+  return rounds;
+}
+
+export function printerRepairScore(elapsedMs, mistakes = 0) {
+  const safeElapsed = Math.min(3500, Math.max(0, Number(elapsedMs) || 0));
+  const safeMistakes = Math.max(0, Math.floor(Number(mistakes) || 0));
+  return Math.max(100, Math.round(560 - safeElapsed / 7 - safeMistakes * 110));
 }

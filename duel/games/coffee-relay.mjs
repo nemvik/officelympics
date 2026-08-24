@@ -1,5 +1,58 @@
-import { COFFEE_CATEGORIES, COFFEE_ROUNDS, buildCoffeeRounds, coffeeOrderScore } from "../game-core.mjs";
-import { NOOP, pointsWord } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import {
+  czechCount,
+  defineGame,
+  NOOP,
+  normalizeScoreResult,
+  pointsWord,
+  safeSmallInteger
+} from "./shared.mjs";
+
+export const coffeeRelayGame = defineGame({
+  id: "coffee",
+  meta: {
+    icon: "☕",
+    title: "Kávová štafeta",
+    teaser: "Namíchej objednávku zpaměti",
+    difficulty: "paměť",
+    instruction: "Zapamatuj si objednávku a namíchej správnou velikost, základ, mléko i přísadu.",
+    scoreLabel: "bodů za kofein"
+  },
+  start: startCoffeeRelay,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:coffee:" + seed);
+  const served = 3 + Math.floor(random() * 3);
+  const mistakes = Math.floor(random() * 4);
+  const average = 1900 + Math.floor(random() * 2800);
+  return {
+    score: served * 610 + Math.floor(random() * 620),
+    served,
+    mistakes,
+    average
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 4500);
+  if (!normalized) return null;
+  normalized.served = safeSmallInteger(result.served, 5);
+  normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+  normalized.average = safeSmallInteger(result.average, 20_000);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.served + "/5 káv · " + result.mistakes + " "
+    + czechCount(result.mistakes, "reklamace", "reklamace", "reklamací");
+}
 
 export function startCoffeeRelay(context) {
   const rounds = buildCoffeeRounds(context.seed);
@@ -247,4 +300,87 @@ export function startCoffeeRelay(context) {
       serveButton.removeEventListener("click", submitOrder);
     }
   };
+}
+
+export const COFFEE_ROUNDS = 5;
+
+export const COFFEE_CATEGORIES = Object.freeze([
+  Object.freeze({
+    id: "size",
+    label: "Velikost",
+    options: Object.freeze([
+      Object.freeze({ id: "small", emoji: "🤏", label: "Malé" }),
+      Object.freeze({ id: "large", emoji: "🫗", label: "Velké" })
+    ])
+  }),
+  Object.freeze({
+    id: "base",
+    label: "Základ",
+    options: Object.freeze([
+      Object.freeze({ id: "espresso", emoji: "☕", label: "Espresso" }),
+      Object.freeze({ id: "filter", emoji: "🫘", label: "Filtrovaná" }),
+      Object.freeze({ id: "decaf", emoji: "🌙", label: "Bez kofeinu" })
+    ])
+  }),
+  Object.freeze({
+    id: "milk",
+    label: "Mléko",
+    options: Object.freeze([
+      Object.freeze({ id: "none", emoji: "⚫", label: "Bez mléka" }),
+      Object.freeze({ id: "regular", emoji: "🥛", label: "Kravské" }),
+      Object.freeze({ id: "oat", emoji: "🌾", label: "Ovesné" })
+    ])
+  }),
+  Object.freeze({
+    id: "extra",
+    label: "Navíc",
+    options: Object.freeze([
+      Object.freeze({ id: "plain", emoji: "👌", label: "Nic" }),
+      Object.freeze({ id: "sugar", emoji: "🧊", label: "Cukr" }),
+      Object.freeze({ id: "syrup", emoji: "🍯", label: "Sirup" })
+    ])
+  })
+]);
+
+export function buildCoffeeRounds(seed, count = COFFEE_ROUNDS) {
+  const random = createRng("coffee:" + seed);
+  const customers = ["Finance", "Vývoj", "Marketing", "Recepce", "HR", "Obchod", "Provoz"];
+  const usedOrders = new Set();
+  const rounds = [];
+
+  for (let roundIndex = 0; roundIndex < Math.max(0, count); roundIndex += 1) {
+    let order = null;
+    let signature = "";
+
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      order = {};
+      COFFEE_CATEGORIES.forEach(function (category) {
+        const option = category.options[Math.floor(random() * category.options.length)];
+        order[category.id] = option.id;
+      });
+      signature = COFFEE_CATEGORIES.map(function (category) { return order[category.id]; }).join(":");
+      if (!usedOrders.has(signature)) break;
+    }
+
+    usedOrders.add(signature);
+    rounds.push({
+      id: roundIndex,
+      customer: customers[Math.floor(random() * customers.length)],
+      order
+    });
+  }
+
+  return rounds;
+}
+
+export function coffeeOrderScore(expected, selection, elapsedMs, mistakes = 0) {
+  const correct = Boolean(expected && selection) && COFFEE_CATEGORIES.every(function (category) {
+    return expected[category.id] === selection[category.id];
+  });
+
+  if (!correct) return { correct: false, points: 0 };
+  const safeElapsed = Math.min(9000, Math.max(0, Number(elapsedMs) || 0));
+  const safeMistakes = Math.max(0, Math.floor(Number(mistakes) || 0));
+  const points = Math.max(180, Math.round(900 - safeElapsed / 14 - safeMistakes * 130));
+  return { correct: true, points };
 }

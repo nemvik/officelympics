@@ -1,5 +1,50 @@
-import { ESCAPE, buildEscapeCourse, rectanglesOverlap } from "../game-core.mjs";
-import { NOOP } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, NOOP, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+
+export const meetingEscapeGame = defineGame({
+  id: "escape",
+  meta: {
+    icon: "🏃",
+    title: "Meeting Escape",
+    teaser: "Uteč meetingům a sbírej kávu",
+    difficulty: "běh",
+    instruction: "Přeskakuj meetingy, skrč se pod Reply All a cestou sbírej kávu.",
+    scoreLabel: "bodů za útěk"
+  },
+  start: startMeetingEscape,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:escape:" + seed);
+  const crashes = Math.floor(random() * 4);
+  const coffees = 1 + Math.floor(random() * 4);
+  const distance = 2850 + Math.floor(random() * 1050);
+  return {
+    score: Math.max(0, distance + coffees * 150 - crashes * 250),
+    distance,
+    crashes,
+    coffees
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result);
+  if (!normalized) return null;
+  normalized.distance = safeSmallInteger(result.distance, 5000);
+  normalized.crashes = safeSmallInteger(result.crashes, 50);
+  normalized.coffees = safeSmallInteger(result.coffees, 50);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.distance + " m · " + result.coffees + "× káva · " + result.crashes + " kolizí";
+}
 
 export function startMeetingEscape(context) {
   const course = buildEscapeCourse(context.seed);
@@ -322,4 +367,43 @@ export function startMeetingEscape(context) {
       window.removeEventListener("keyup", onKeyUp);
     }
   };
+}
+
+export const ESCAPE = Object.freeze({
+  width: 900,
+  height: 360,
+  groundY: 292,
+  playerX: 132,
+  playerWidth: 42,
+  playerHeight: 58,
+  duckHeight: 31,
+  durationMs: 35_000,
+  scrollSpeed: 0.27
+});
+
+export function buildEscapeCourse(seed, durationMs = ESCAPE.durationMs) {
+  const random = createRng("meeting-escape:" + seed);
+  const course = [];
+  let at = 1700;
+
+  while (at < durationMs - 900) {
+    const roll = random();
+    const type = roll < 0.56 ? "meeting" : roll < 0.84 ? "reply" : "coffee";
+    course.push({
+      id: course.length,
+      at: Math.round(at),
+      type,
+      variant: Math.floor(random() * 3)
+    });
+    at += 920 + random() * 720;
+  }
+
+  return course;
+}
+
+export function rectanglesOverlap(first, second) {
+  return first.x < second.x + second.width
+    && first.x + first.width > second.x
+    && first.y < second.y + second.height
+    && first.y + first.height > second.y;
 }

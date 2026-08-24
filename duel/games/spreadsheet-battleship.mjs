@@ -1,4 +1,37 @@
-import { BATTLESHIP, battleshipShotResult, buildBattleshipFleet, createRng } from "../game-core.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+
+export const spreadsheetBattleshipGame = defineGame({
+  id: "battleship",
+  meta: {
+    icon: "📊",
+    title: "Tabulková námořní bitva",
+    compactTitle: "Námořní bitva",
+    teaser: "Potop meetingy v kolegově kalendáři",
+    difficulty: "strategie",
+    instruction: "Najdi dvě schované řady meetingů v soupeřově kalendáři. Zásah dává další tah.",
+    scoreLabel: "potopených flotil"
+  },
+  start: startSpreadsheetBattleship,
+  result: {
+    mode: "shared",
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 1);
+  if (!normalized) return null;
+  normalized.hits = safeSmallInteger(result.hits, 5);
+  normalized.shots = safeSmallInteger(result.shots, 36);
+  normalized.sunk = safeSmallInteger(result.sunk, 2);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.hits + " zásahů z " + result.shots + " pokusů";
+}
 
 export function startSpreadsheetBattleship(context) {
   const localRole = context.localRole;
@@ -204,5 +237,53 @@ export function startSpreadsheetBattleship(context) {
       finished = true;
       timers.forEach(window.clearTimeout);
     }
+  };
+}
+
+export const BATTLESHIP = Object.freeze({
+  size: 6,
+  fleetLengths: Object.freeze([3, 2]),
+  totalDecks: 5
+});
+
+export function buildBattleshipFleet(seed, owner) {
+  const random = createRng("battleship:" + seed + ":" + owner);
+  const occupied = new Set();
+  const fleet = [];
+
+  BATTLESHIP.fleetLengths.forEach(function (length) {
+    for (let attempt = 0; attempt < 500; attempt += 1) {
+      const horizontal = random() < 0.5;
+      const maxX = horizontal ? BATTLESHIP.size - length : BATTLESHIP.size - 1;
+      const maxY = horizontal ? BATTLESHIP.size - 1 : BATTLESHIP.size - length;
+      const x = Math.floor(random() * (maxX + 1));
+      const y = Math.floor(random() * (maxY + 1));
+      const cells = Array.from({ length }, function (_, offset) {
+        const cellX = horizontal ? x + offset : x;
+        const cellY = horizontal ? y : y + offset;
+        return cellY * BATTLESHIP.size + cellX;
+      });
+
+      if (cells.some(function (cell) { return occupied.has(cell); })) continue;
+      cells.forEach(function (cell) { occupied.add(cell); });
+      fleet.push(cells);
+      return;
+    }
+  });
+
+  return fleet;
+}
+
+export function battleshipShotResult(fleet, shots, cell) {
+  const safeShots = shots instanceof Set ? shots : new Set(Array.isArray(shots) ? shots : []);
+  const shipIndex = fleet.findIndex(function (ship) { return ship.includes(cell); });
+  const hit = shipIndex >= 0;
+  const sunk = hit && fleet[shipIndex].every(function (shipCell) { return safeShots.has(shipCell); });
+  const allCells = fleet.flat();
+
+  return {
+    hit,
+    sunk,
+    fleetSunk: allCells.length > 0 && allCells.every(function (shipCell) { return safeShots.has(shipCell); })
   };
 }

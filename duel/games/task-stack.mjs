@@ -1,4 +1,48 @@
-import { TASK_PIECES, TASK_STACK, addTaskGarbage, buildTaskBag, clearTaskRows, createRng } from "../game-core.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+
+export const taskStackGame = defineGame({
+  id: "taskstack",
+  meta: {
+    icon: "🧱",
+    title: "Task Stack",
+    teaser: "Tetris s urgentními úkoly",
+    difficulty: "arkáda",
+    instruction: "Skládej padající úkoly. Smazané řádky pošlou soupeři urgentní práci.",
+    scoreLabel: "bodů za úkoly"
+  },
+  start: startTaskStack,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:taskstack:" + seed);
+  const lines = 3 + Math.floor(random() * 7);
+  return {
+    score: lines * 115 + Math.floor(random() * 420),
+    lines,
+    sent: Math.max(0, lines - 2),
+    topOut: random() < 0.18
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result);
+  if (!normalized) return null;
+  normalized.lines = safeSmallInteger(result.lines, 100);
+  normalized.sent = safeSmallInteger(result.sent, 100);
+  normalized.topOut = Boolean(result.topOut);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.lines + " řádků · " + result.sent + " odesláno";
+}
 
 export function startTaskStack(context) {
   const columns = TASK_STACK.columns;
@@ -345,4 +389,66 @@ export function startTaskStack(context) {
       shell.removeEventListener("click", onControlClick);
     }
   };
+}
+
+export const TASK_STACK = Object.freeze({
+  columns: 10,
+  rows: 18,
+  durationMs: 40_000
+});
+
+export const TASK_PIECES = Object.freeze({
+  I: Object.freeze([[1, 1, 1, 1]]),
+  O: Object.freeze([[1, 1], [1, 1]]),
+  T: Object.freeze([[0, 1, 0], [1, 1, 1]]),
+  L: Object.freeze([[0, 0, 1], [1, 1, 1]]),
+  J: Object.freeze([[1, 0, 0], [1, 1, 1]]),
+  S: Object.freeze([[0, 1, 1], [1, 1, 0]]),
+  Z: Object.freeze([[1, 1, 0], [0, 1, 1]])
+});
+
+export function buildTaskBag(seed, bagIndex) {
+  const random = createRng("task-bag:" + seed + ":" + bagIndex);
+  const bag = Object.keys(TASK_PIECES);
+
+  for (let index = bag.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    const value = bag[index];
+    bag[index] = bag[swapIndex];
+    bag[swapIndex] = value;
+  }
+
+  return bag;
+}
+
+export function clearTaskRows(board) {
+  const columns = board[0] ? board[0].length : TASK_STACK.columns;
+  const remaining = board.filter(function (row) {
+    return !row.every(Boolean);
+  }).map(function (row) { return row.slice(); });
+  const cleared = board.length - remaining.length;
+
+  while (remaining.length < board.length) {
+    remaining.unshift(Array(columns).fill(0));
+  }
+
+  return { board: remaining, cleared };
+}
+
+export function addTaskGarbage(board, lines, hole) {
+  const next = board.map(function (row) { return row.slice(); });
+  const columns = next[0] ? next[0].length : TASK_STACK.columns;
+  const safeLines = Math.min(4, Math.max(0, Math.floor(Number(lines) || 0)));
+  const safeHole = Math.min(columns - 1, Math.max(0, Math.floor(Number(hole) || 0)));
+  let overflow = false;
+
+  for (let line = 0; line < safeLines; line += 1) {
+    if (next[0] && next[0].some(Boolean)) overflow = true;
+    next.shift();
+    next.push(Array.from({ length: columns }, function (_, column) {
+      return column === safeHole ? 0 : "garbage";
+    }));
+  }
+
+  return { board: next, overflow };
 }

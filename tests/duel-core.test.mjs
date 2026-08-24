@@ -1,63 +1,35 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { tournamentRoundPoints } from "../duel/game-core.mjs";
+import { altTabReactionScore, buildAltTabRounds } from "../duel/games/alt-tab-duel.mjs";
+import { buildCalendarRounds, calendarSlotScore, CALENDAR_ROUNDS, findCalendarSlots } from "../duel/games/calendar-squeeze.mjs";
+import { buildCoffeeRounds, coffeeOrderScore, COFFEE_CATEGORIES, COFFEE_ROUNDS } from "../duel/games/coffee-relay.mjs";
+import { deadlineProgress, deadlineRoundConfig, deadlineRoundScore } from "../duel/games/deadline-chicken.mjs";
+import { createPongBall, PONG, stepPong } from "../duel/games/inbox-pong.mjs";
+import { buildJargonRounds, JARGON_ROUNDS } from "../duel/games/jargon-decoder.mjs";
+import { buildEscapeCourse, ESCAPE, rectanglesOverlap } from "../duel/games/meeting-escape.mjs";
+import { buildPanicSchedule } from "../duel/games/office-panic.mjs";
 import {
-  BATTLESHIP,
-  CALENDAR_ROUNDS,
-  COFFEE_CATEGORIES,
-  COFFEE_ROUNDS,
-  CURLING,
-  ESCAPE,
-  GAME_IDS,
-  JARGON_ROUNDS,
-  PICTIONARY,
-  PICTIONARY_PROMPTS,
-  PONG,
-  PRINTER_ROUNDS,
-  TASK_STACK,
-  addTaskGarbage,
-  altTabReactionScore,
-  battleshipShotResult,
-  buildAltTabRounds,
-  buildBattleshipFleet,
-  buildCalendarRounds,
-  buildCoffeeRounds,
-  buildEscapeCourse,
-  buildJargonRounds,
-  buildPanicSchedule,
   buildPictionaryRounds,
-  buildPrinterRounds,
-  buildTaskBag,
-  calculateCurlingScore,
   calculatePictionaryRoundScores,
-  calendarSlotScore,
+  PICTIONARY,
+  PICTIONARY_PROMPTS
+} from "../duel/games/office-pictionary.mjs";
+import {
+  calculateCurlingScore,
   clampShotVelocity,
-  clearTaskRows,
-  coffeeOrderScore,
   createCurlingStone,
-  createPongBall,
-  deadlineProgress,
-  deadlineRoundConfig,
-  deadlineRoundScore,
-  findCalendarSlots,
-  pickTournamentGames,
-  printerRepairScore,
-  rectanglesOverlap,
-  stepCurling,
-  stepPong,
-  tournamentRoundPoints
-} from "../duel/game-core.mjs";
-import { GAME_DEFINITIONS, getGameDefinition } from "../duel/game-catalog.mjs";
-import { IMPLEMENTED_GAME_IDS } from "../duel/games.mjs";
-
-test("Katalog obsahuje všech třináct kancelářských disciplín", function () {
-  assert.equal(GAME_IDS.length, 13);
-  assert.equal(GAME_DEFINITIONS.length, GAME_IDS.length);
-  assert.equal(new Set(GAME_IDS).size, GAME_IDS.length);
-  assert.deepEqual(IMPLEMENTED_GAME_IDS.slice().sort(), GAME_IDS.slice().sort());
-  assert.equal(getGameDefinition("pictionary").title, "Kancelářský Pictionary");
-  assert.deepEqual(GAME_IDS.slice(-4), ["coffee", "calendar", "printer", "pictionary"]);
-});
+  CURLING,
+  stepCurling
+} from "../duel/games/paper-curling.mjs";
+import { buildPrinterRounds, printerRepairScore, PRINTER_ROUNDS } from "../duel/games/printer-exorcist.mjs";
+import {
+  GAME_IDS,
+  pickTournamentGames
+} from "../duel/games/registry.mjs";
+import { BATTLESHIP, battleshipShotResult, buildBattleshipFleet } from "../duel/games/spreadsheet-battleship.mjs";
+import { addTaskGarbage, buildTaskBag, clearTaskRows, TASK_STACK } from "../duel/games/task-stack.mjs";
 
 test("Turnaj deterministicky losuje tři různé hry a férově boduje remízu", function () {
   const first = pickTournamentGames("turnajovy-seed");

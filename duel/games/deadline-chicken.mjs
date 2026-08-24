@@ -1,8 +1,58 @@
-import { deadlineProgress, deadlineRoundConfig, deadlineRoundScore } from "../game-core.mjs";
-import { NOOP } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, NOOP, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+
+export const deadlineChickenGame = defineGame({
+  id: "deadline",
+  meta: {
+    icon: "⏱️",
+    title: "Deadline Chicken",
+    teaser: "Pusť práci těsně před vyhořením",
+    difficulty: "odhad",
+    instruction: "Drž práci, za hranicí mlhy odhaduj a pusť ji těsně před 100 %.",
+    scoreLabel: "bodů z 500"
+  },
+  start: startDeadlineChicken,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:deadline:" + seed);
+  const rounds = Array.from({ length: DEADLINE_ROUNDS }, function () {
+    const progress = 91 + random() * 12;
+    return { progress, points: deadlineRoundScore(progress) };
+  });
+  return {
+    score: rounds.reduce(function (total, round) { return total + round.points; }, 0),
+    rounds
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 500);
+  if (!normalized) return null;
+  normalized.rounds = Array.isArray(result.rounds)
+    ? result.rounds.slice(0, DEADLINE_ROUNDS).map(function (round) {
+      return {
+        progress: Number.isFinite(round && round.progress) ? Math.min(120, Math.max(0, round.progress)) : 0,
+        points: safeSmallInteger(round && round.points, 100)
+      };
+    })
+    : [];
+  return normalized;
+}
+
+function formatResult(result) {
+  const busts = result.rounds.filter(function (round) { return round.progress > 100; }).length;
+  return busts ? busts + "× vyhoření" : "bez vyhoření";
+}
 
 export function startDeadlineChicken(context) {
-  const totalRounds = 5;
+  const totalRounds = DEADLINE_ROUNDS;
   const rounds = [];
   const timers = [];
   let animationFrame = 0;
@@ -183,4 +233,30 @@ export function startDeadlineChicken(context) {
       window.removeEventListener("blur", releaseHold);
     }
   };
+}
+
+export const DEADLINE_ROUNDS = 5;
+
+export function deadlineRoundConfig(seed, roundIndex) {
+  const random = createRng("deadline:" + seed + ":" + roundIndex);
+
+  return {
+    speed: 27 + random() * 10,
+    wobble: 0.08 + random() * 0.08,
+    frequency: 2.1 + random() * 1.7,
+    phase: random() * Math.PI * 2,
+    fogAt: 69 + random() * 6
+  };
+}
+
+export function deadlineProgress(config, heldMs) {
+  const seconds = Math.max(0, heldMs) / 1000;
+  const wave = Math.sin(seconds * config.frequency + config.phase) - Math.sin(config.phase);
+  const progress = config.speed * seconds + config.speed * config.wobble * wave / config.frequency;
+  return Math.max(0, progress);
+}
+
+export function deadlineRoundScore(progress) {
+  if (!Number.isFinite(progress) || progress > 100) return 0;
+  return Math.max(0, Math.round(100 - Math.abs(100 - progress) * 5));
 }

@@ -1,11 +1,20 @@
-import { GAME_DEFINITIONS, GAME_IDS, getGameDefinition } from "./game-catalog.mjs";
 import {
   createRng,
   makeSeed,
-  pickTournamentGames,
   tournamentRoundPoints
 } from "./game-core.mjs";
-import { createPracticeResult, startGame } from "./games.mjs";
+import {
+  createPracticeResult,
+  formatGameResult,
+  GAME_DEFINITIONS,
+  GAME_IDS,
+  getGame,
+  getGameDefinition,
+  normalizeGameResult,
+  pickTournamentGames,
+  startGame
+} from "./games/registry.mjs";
+import { safeScore } from "./games/shared.mjs";
 
 const APP_VERSION = 2;
 const NAME_STORAGE_KEY = "officelympicsDuelName";
@@ -13,10 +22,6 @@ const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const ROOM_LENGTH = 6;
 const PEER_PREFIX = "officelympics-2026-";
 const MATCH_FORMATS = Object.freeze(["single", "tournament"]);
-
-const GAME_META = Object.freeze(Object.fromEntries(GAME_DEFINITIONS.map(function (game) {
-  return [game.id, game];
-})));
 
 const refs = {};
 const state = {
@@ -131,7 +136,7 @@ function renderGamePickers() {
       const copy = document.createElement("span");
       const title = document.createElement("strong");
       const detail = document.createElement("small");
-      title.textContent = compact && game.id === "battleship" ? "Námořní bitva" : game.title;
+      title.textContent = compact && game.compactTitle ? game.compactTitle : game.title;
       detail.textContent = compact ? game.difficulty : game.teaser;
       copy.append(title, detail);
       button.append(icon, copy);
@@ -770,7 +775,7 @@ function receivePrepare(message) {
     format: message.format,
     tournament
   };
-  refs.lobbyStatus.textContent = "Hostitel spouští " + GAME_META[message.game].title + "…";
+  refs.lobbyStatus.textContent = "Hostitel spouští " + getGameDefinition(message.game).title + "…";
   sendMessage({ type: "prepared", matchId: message.matchId });
 }
 
@@ -875,7 +880,7 @@ function queueMatch(matchData, delay) {
 }
 
 function renderCountdown(delay) {
-  const meta = GAME_META[state.match.game];
+  const meta = getGameDefinition(state.match.game);
   refs.gameStage.innerHTML = `
     <div class="game-intro">
       <div>
@@ -901,6 +906,7 @@ function renderCountdown(delay) {
 function launchCurrentGame() {
   if (!state.match) return;
   const matchId = state.match.id;
+  const game = getGame(state.match.game);
   const rolePlayers = playersByRole();
   const names = [
     rolePlayers[0] ? rolePlayers[0].name : "Růžový hráč",
@@ -930,18 +936,20 @@ function launchCurrentGame() {
       state.match.remoteScore = safeScore(remoteScore);
       renderMatchScores();
     },
-    finish: function (result) { submitLocalResult(matchId, result); },
-    finishShared: function (results) { submitSharedResults(matchId, results); },
+    finish: function (result) {
+      if (game.result.mode !== "local") throw new Error("Hra " + game.id + " musí použít finishShared().");
+      submitLocalResult(matchId, result);
+    },
+    finishShared: function (results) {
+      if (game.result.mode !== "shared") throw new Error("Hra " + game.id + " musí použít finish().");
+      submitSharedResults(matchId, results);
+    },
     send: function (message) { sendMessage({ ...message, matchId }); }
   });
 }
 
-function safeScore(value) {
-  return Math.min(9999, Math.max(0, Math.round(Number(value) || 0)));
-}
-
 function renderMatchHeader() {
-  const meta = GAME_META[state.match.game];
+  const meta = getGameDefinition(state.match.game);
   const localName = state.local.name || "Ty";
   const remoteName = state.remote ? state.remote.name : "Kolega";
   refs.gameTitle.textContent = meta.title;
@@ -989,89 +997,9 @@ function receiveRemoteScore(message) {
   renderMatchScores();
 }
 
-function normalizeResult(game, result) {
-  if (!result || typeof result !== "object" || !Number.isFinite(result.score)) return null;
-  const normalized = { score: safeScore(result.score) };
-
-  if (game === "panic") {
-    normalized.hits = safeSmallInteger(result.hits, 60);
-    normalized.mistakes = safeSmallInteger(result.mistakes, 60);
-    normalized.misses = safeSmallInteger(result.misses, 60);
-  } else if (game === "deadline") {
-    normalized.score = Math.min(500, normalized.score);
-    normalized.rounds = Array.isArray(result.rounds)
-      ? result.rounds.slice(0, 5).map(function (round) {
-        return {
-          progress: Number.isFinite(round && round.progress) ? Math.min(120, Math.max(0, round.progress)) : 0,
-          points: safeSmallInteger(round && round.points, 100)
-        };
-      })
-      : [];
-  } else if (game === "curling") {
-    normalized.score = Math.min(3, normalized.score);
-    normalized.nearest = Number.isFinite(result.nearest) ? Math.min(1000, Math.max(0, result.nearest)) : null;
-  } else if (game === "alttab") {
-    normalized.score = Math.min(6000, normalized.score);
-    normalized.reactions = Array.isArray(result.reactions)
-      ? result.reactions.slice(0, 5).map(function (reaction) { return safeSmallInteger(reaction, 5000); })
-      : [];
-    normalized.mistakes = safeSmallInteger(result.mistakes, 8);
-    normalized.missed = safeSmallInteger(result.missed, 8);
-    normalized.average = safeSmallInteger(result.average, 5000);
-  } else if (game === "battleship") {
-    normalized.score = Math.min(1, normalized.score);
-    normalized.hits = safeSmallInteger(result.hits, 5);
-    normalized.shots = safeSmallInteger(result.shots, 36);
-    normalized.sunk = safeSmallInteger(result.sunk, 2);
-  } else if (game === "taskstack") {
-    normalized.lines = safeSmallInteger(result.lines, 100);
-    normalized.sent = safeSmallInteger(result.sent, 100);
-    normalized.topOut = Boolean(result.topOut);
-  } else if (game === "pong") {
-    normalized.score = Math.min(5, normalized.score);
-    normalized.winner = result.winner === 0 || result.winner === 1 ? result.winner : null;
-    normalized.bestRally = safeSmallInteger(result.bestRally, 999);
-  } else if (game === "escape") {
-    normalized.distance = safeSmallInteger(result.distance, 5000);
-    normalized.crashes = safeSmallInteger(result.crashes, 50);
-    normalized.coffees = safeSmallInteger(result.coffees, 50);
-  } else if (game === "jargon") {
-    normalized.score = Math.min(6000, normalized.score);
-    normalized.solved = safeSmallInteger(result.solved, 6);
-    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
-    normalized.average = safeSmallInteger(result.average, 20_000);
-  } else if (game === "coffee") {
-    normalized.score = Math.min(4500, normalized.score);
-    normalized.served = safeSmallInteger(result.served, 5);
-    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
-    normalized.average = safeSmallInteger(result.average, 20_000);
-  } else if (game === "calendar") {
-    normalized.score = Math.min(5100, normalized.score);
-    normalized.booked = safeSmallInteger(result.booked, 6);
-    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
-    normalized.average = safeSmallInteger(result.average, 20_000);
-  } else if (game === "printer") {
-    normalized.score = Math.min(5600, normalized.score);
-    normalized.repaired = safeSmallInteger(result.repaired, 10);
-    normalized.mistakes = safeSmallInteger(result.mistakes, 50);
-    normalized.average = safeSmallInteger(result.average, 10_000);
-  } else if (game === "pictionary") {
-    normalized.score = Math.min(3000, normalized.score);
-    normalized.guessed = safeSmallInteger(result.guessed, 3);
-    normalized.understood = safeSmallInteger(result.understood, 3);
-    normalized.rounds = safeSmallInteger(result.rounds, 3);
-  }
-
-  return normalized;
-}
-
-function safeSmallInteger(value, maximum) {
-  return Math.min(maximum, Math.max(0, Math.round(Number(value) || 0)));
-}
-
 function submitLocalResult(matchId, result) {
   if (!state.match || state.match.id !== matchId || state.match.localResult) return;
-  const normalized = normalizeResult(state.match.game, result);
+  const normalized = normalizeGameResult(state.match.game, result);
   if (!normalized) return;
   state.match.localResult = normalized;
   state.match.localScore = normalized.score;
@@ -1083,7 +1011,7 @@ function submitLocalResult(matchId, result) {
     window.clearTimeout(state.resultTimer);
     state.resultTimer = window.setTimeout(function () {
       if (!state.match || state.match.id !== matchId) return;
-      state.match.remoteResult = normalizeResult(state.match.game, createPracticeResult(state.match.game, state.match.seed));
+      state.match.remoteResult = createPracticeResult(state.match.game, state.match.seed);
       state.match.remoteScore = state.match.remoteResult.score;
       renderMatchScores();
       maybeShowResult();
@@ -1097,8 +1025,8 @@ function submitLocalResult(matchId, result) {
 function submitSharedResults(matchId, results) {
   if (!state.match || state.match.id !== matchId || !Array.isArray(results) || results.length !== 2) return;
   const game = state.match.game;
-  const localResult = normalizeResult(game, results[state.role]);
-  const remoteResult = normalizeResult(game, results[1 - state.role]);
+  const localResult = normalizeGameResult(game, results[state.role]);
+  const remoteResult = normalizeGameResult(game, results[1 - state.role]);
   if (!localResult || !remoteResult) return;
   state.match.localResult = localResult;
   state.match.remoteResult = remoteResult;
@@ -1111,7 +1039,7 @@ function submitSharedResults(matchId, results) {
 
 function receiveRemoteResult(message) {
   if (!state.match || message.matchId !== state.match.id || message.game !== state.match.game) return;
-  const normalized = normalizeResult(state.match.game, message.result);
+  const normalized = normalizeGameResult(state.match.game, message.result);
   if (!normalized) return;
   state.match.remoteResult = normalized;
   state.match.remoteScore = normalized.score;
@@ -1194,8 +1122,8 @@ function showResult() {
   refs.resultRemoteName.textContent = remoteName;
   refs.resultLocalScore.textContent = String(localScore);
   refs.resultRemoteScore.textContent = String(remoteScore);
-  refs.resultLocalDetail.textContent = resultDetail(match.game, match.localResult);
-  refs.resultRemoteDetail.textContent = resultDetail(match.game, match.remoteResult);
+  refs.resultLocalDetail.textContent = formatGameResult(match.game, match.localResult);
+  refs.resultRemoteDetail.textContent = formatGameResult(match.game, match.remoteResult);
 
   if (tied) {
     refs.resultEmoji.textContent = "🤝";
@@ -1260,58 +1188,6 @@ function showResult() {
 
   showScreen("result");
   if (celebrate) launchConfetti();
-}
-
-function resultDetail(game, result) {
-  if (game === "panic") {
-    return result.hits + " zásahů · " + result.mistakes + " přešlapů";
-  }
-  if (game === "deadline") {
-    const busts = Array.isArray(result.rounds)
-      ? result.rounds.filter(function (round) { return round.progress > 100; }).length
-      : 0;
-    return busts ? busts + "× vyhoření" : "bez vyhoření";
-  }
-  if (game === "curling") {
-    return result.score === 1 ? "1 curlingový bod" : result.score + " curlingové body";
-  }
-  if (game === "alttab") {
-    return (result.average ? "průměr " + result.average + " ms" : "bez reakce") + " · " + result.mistakes + " pastí";
-  }
-  if (game === "battleship") {
-    return result.hits + " zásahů z " + result.shots + " pokusů";
-  }
-  if (game === "taskstack") {
-    return result.lines + " řádků · " + result.sent + " odesláno";
-  }
-  if (game === "pong") {
-    return "nejdelší výměna " + result.bestRally;
-  }
-  if (game === "escape") {
-    return result.distance + " m · " + result.coffees + "× káva · " + result.crashes + " kolizí";
-  }
-  if (game === "jargon") {
-    return result.solved + "/6 vět · průměr " + (result.average || "—") + (result.average ? " ms" : "");
-  }
-  if (game === "coffee") {
-    return result.served + "/5 káv · " + result.mistakes + " "
-      + czechCount(result.mistakes, "reklamace", "reklamace", "reklamací");
-  }
-  if (game === "calendar") {
-    return result.booked + "/6 meetingů · " + result.mistakes + " "
-      + czechCount(result.mistakes, "kolize", "kolize", "kolizí");
-  }
-  if (game === "pictionary") {
-    const rounds = result.rounds || 3;
-    return result.guessed + "/" + rounds + " uhádnuto · " + result.understood + "/" + rounds + " obrázků rozpoznáno";
-  }
-  return result.repaired + "/10 oprav · průměr " + (result.average || "—") + (result.average ? " ms" : "");
-}
-
-function czechCount(value, one, few, many) {
-  if (value === 1) return one;
-  if (value >= 2 && value <= 4) return few;
-  return many;
 }
 
 function launchConfetti() {
@@ -1408,7 +1284,7 @@ function prepareNextTournamentRound() {
   }
 
   state.pendingMatch = pending;
-  refs.resultCopy.textContent = "Oba připraveni. Přesouváme se na " + GAME_META[pending.game].title + ".";
+  refs.resultCopy.textContent = "Oba připraveni. Přesouváme se na " + getGameDefinition(pending.game).title + ".";
   sendMessage({
     type: "prepare",
     matchId: pending.id,

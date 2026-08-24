@@ -1,5 +1,58 @@
-import { CALENDAR_ROUNDS, buildCalendarRounds, calendarSlotScore } from "../game-core.mjs";
-import { NOOP, pointsWord } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import {
+  czechCount,
+  defineGame,
+  NOOP,
+  normalizeScoreResult,
+  pointsWord,
+  safeSmallInteger
+} from "./shared.mjs";
+
+export const calendarSqueezeGame = defineGame({
+  id: "calendar",
+  meta: {
+    icon: "🗓️",
+    title: "Kalendářový squeeze",
+    teaser: "Vmáčkni meeting do plného dne",
+    difficulty: "postřeh",
+    instruction: "Najdi v přeplněném dni souvislé volné okno pro další naprosto nezbytný meeting.",
+    scoreLabel: "bodů za plánování"
+  },
+  start: startCalendarSqueeze,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:calendar:" + seed);
+  const booked = 4 + Math.floor(random() * 3);
+  const mistakes = Math.floor(random() * 4);
+  const average = 1400 + Math.floor(random() * 2600);
+  return {
+    score: booked * 650 + Math.floor(random() * 700),
+    booked,
+    mistakes,
+    average
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 5100);
+  if (!normalized) return null;
+  normalized.booked = safeSmallInteger(result.booked, 6);
+  normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+  normalized.average = safeSmallInteger(result.average, 20_000);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.booked + "/6 meetingů · " + result.mistakes + " "
+    + czechCount(result.mistakes, "kolize", "kolize", "kolizí");
+}
 
 export function startCalendarSqueeze(context) {
   const rounds = buildCalendarRounds(context.seed);
@@ -219,4 +272,59 @@ export function startCalendarSqueeze(context) {
       grid.removeEventListener("click", onGridClick);
     }
   };
+}
+
+export const CALENDAR_ROUNDS = 6;
+export const CALENDAR_SLOTS = 16;
+
+export function findCalendarSlots(occupied, duration) {
+  if (!Array.isArray(occupied)) return [];
+  const safeDuration = Math.max(1, Math.floor(Number(duration) || 0));
+  const starts = [];
+
+  for (let start = 0; start <= occupied.length - safeDuration; start += 1) {
+    let available = true;
+    for (let offset = 0; offset < safeDuration; offset += 1) {
+      if (occupied[start + offset]) {
+        available = false;
+        break;
+      }
+    }
+    if (available) starts.push(start);
+  }
+
+  return starts;
+}
+
+export function buildCalendarRounds(seed, count = CALENDAR_ROUNDS) {
+  const random = createRng("calendar:" + seed);
+  const meetingTitles = ["Stand-up", "Sync", "1:1", "Roadmapa", "Retro", "Budget", "Workshop", "Oběd?"];
+
+  return Array.from({ length: Math.max(0, count) }, function (_, roundIndex) {
+    const duration = roundIndex % 3 + 1;
+    const reservedStart = Math.floor(random() * (CALENDAR_SLOTS - duration + 1));
+    const occupied = Array.from({ length: CALENDAR_SLOTS }, function () { return random() < 0.57; });
+
+    for (let offset = 0; offset < duration; offset += 1) occupied[reservedStart + offset] = false;
+    if (reservedStart > 0) occupied[reservedStart - 1] = true;
+    if (reservedStart + duration < occupied.length) occupied[reservedStart + duration] = true;
+
+    const titles = occupied.map(function (busy) {
+      return busy ? meetingTitles[Math.floor(random() * meetingTitles.length)] : null;
+    });
+
+    return {
+      id: roundIndex,
+      duration,
+      occupied,
+      titles,
+      validStarts: findCalendarSlots(occupied, duration)
+    };
+  });
+}
+
+export function calendarSlotScore(elapsedMs, mistakes = 0) {
+  const safeElapsed = Math.min(8000, Math.max(0, Number(elapsedMs) || 0));
+  const safeMistakes = Math.max(0, Math.floor(Number(mistakes) || 0));
+  return Math.max(150, Math.round(850 - safeElapsed / 12 - safeMistakes * 120));
 }

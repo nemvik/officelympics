@@ -1,4 +1,35 @@
-import { PONG, createPongBall, stepPong } from "../game-core.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+
+export const inboxPongGame = defineGame({
+  id: "pong",
+  meta: {
+    icon: "📧",
+    title: "Inbox Pong",
+    teaser: "Nenech urgentní e-mail propadnout",
+    difficulty: "duel",
+    instruction: "Pohybuj inboxem nahoru a dolů. První, kdo zachrání pět urgentních e-mailů, vítězí.",
+    scoreLabel: "zachráněných e-mailů"
+  },
+  start: startInboxPong,
+  result: {
+    mode: "shared",
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 5);
+  if (!normalized) return null;
+  normalized.winner = result.winner === 0 || result.winner === 1 ? result.winner : null;
+  normalized.bestRally = safeSmallInteger(result.bestRally, 999);
+  return normalized;
+}
+
+function formatResult(result) {
+  return "nejdelší výměna " + result.bestRally;
+}
 
 export function startInboxPong(context) {
   const localRole = context.localRole;
@@ -341,4 +372,76 @@ export function startInboxPong(context) {
       shell.removeEventListener("click", onControls);
     }
   };
+}
+
+export const PONG = Object.freeze({
+  width: 800,
+  height: 450,
+  paddleWidth: 14,
+  paddleHeight: 96,
+  paddleInset: 24,
+  ballRadius: 11,
+  startSpeed: 315,
+  maximumSpeed: 540,
+  winningScore: 5
+});
+
+export function createPongBall(seed, serveNumber = 0) {
+  const random = createRng("pong-serve:" + seed + ":" + serveNumber);
+  const direction = random() < 0.5 ? -1 : 1;
+  const angle = (random() - 0.5) * 0.9;
+
+  return {
+    x: PONG.width / 2,
+    y: PONG.height / 2,
+    vx: Math.cos(angle) * PONG.startSpeed * direction,
+    vy: Math.sin(angle) * PONG.startSpeed
+  };
+}
+
+export function stepPong(state, dt) {
+  if (!state || !state.ball || !Array.isArray(state.paddles) || state.paddles.length !== 2) return null;
+  const safeDt = Math.min(1 / 30, Math.max(0, Number(dt) || 0));
+  const ball = state.ball;
+  ball.x += ball.vx * safeDt;
+  ball.y += ball.vy * safeDt;
+
+  if (ball.y - PONG.ballRadius < 0) {
+    ball.y = PONG.ballRadius;
+    ball.vy = Math.abs(ball.vy);
+  } else if (ball.y + PONG.ballRadius > PONG.height) {
+    ball.y = PONG.height - PONG.ballRadius;
+    ball.vy = -Math.abs(ball.vy);
+  }
+
+  const leftEdge = PONG.paddleInset + PONG.paddleWidth;
+  const rightEdge = PONG.width - PONG.paddleInset - PONG.paddleWidth;
+  const paddleHit = function (owner) {
+    const paddleY = state.paddles[owner];
+    return ball.y + PONG.ballRadius >= paddleY && ball.y - PONG.ballRadius <= paddleY + PONG.paddleHeight;
+  };
+
+  if (ball.vx < 0 && ball.x - PONG.ballRadius <= leftEdge
+    && ball.x > PONG.paddleInset - PONG.ballRadius && paddleHit(0)) {
+    const relative = (ball.y - (state.paddles[0] + PONG.paddleHeight / 2)) / (PONG.paddleHeight / 2);
+    const speed = Math.min(PONG.maximumSpeed, Math.hypot(ball.vx, ball.vy) * 1.045);
+    ball.x = leftEdge + PONG.ballRadius;
+    ball.vx = Math.max(190, speed * Math.cos(relative * 0.85));
+    ball.vy = speed * Math.sin(relative * 0.85);
+    return { hit: 0, scored: null };
+  }
+
+  if (ball.vx > 0 && ball.x + PONG.ballRadius >= rightEdge
+    && ball.x < PONG.width - PONG.paddleInset + PONG.ballRadius && paddleHit(1)) {
+    const relative = (ball.y - (state.paddles[1] + PONG.paddleHeight / 2)) / (PONG.paddleHeight / 2);
+    const speed = Math.min(PONG.maximumSpeed, Math.hypot(ball.vx, ball.vy) * 1.045);
+    ball.x = rightEdge - PONG.ballRadius;
+    ball.vx = -Math.max(190, speed * Math.cos(relative * 0.85));
+    ball.vy = speed * Math.sin(relative * 0.85);
+    return { hit: 1, scored: null };
+  }
+
+  if (ball.x + PONG.ballRadius < 0) return { hit: null, scored: 1 };
+  if (ball.x - PONG.ballRadius > PONG.width) return { hit: null, scored: 0 };
+  return { hit: null, scored: null };
 }

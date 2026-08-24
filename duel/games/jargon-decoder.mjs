@@ -1,5 +1,49 @@
-import { JARGON_ROUNDS, buildJargonRounds } from "../game-core.mjs";
-import { NOOP, pointsWord } from "./shared.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, NOOP, normalizeScoreResult, pointsWord, safeSmallInteger } from "./shared.mjs";
+
+export const jargonDecoderGame = defineGame({
+  id: "jargon",
+  meta: {
+    icon: "🧩",
+    title: "Jargon Decoder",
+    teaser: "Poskládej korporátní moudro",
+    difficulty: "slova",
+    instruction: "Zapamatuj si větu a poskládej rozházená korporátní slova ve správném pořadí.",
+    scoreLabel: "bodů za synergii"
+  },
+  start: startJargonDecoder,
+  result: {
+    mode: "local",
+    createPractice: createPracticeResult,
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function createPracticeResult(seed) {
+  const random = createRng("practice-result:jargon:" + seed);
+  const solved = 3 + Math.floor(random() * 4);
+  const average = 2300 + Math.floor(random() * 3300);
+  return {
+    score: solved * 520 + Math.floor(random() * 850),
+    solved,
+    mistakes: Math.floor(random() * 5),
+    average
+  };
+}
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 6000);
+  if (!normalized) return null;
+  normalized.solved = safeSmallInteger(result.solved, 6);
+  normalized.mistakes = safeSmallInteger(result.mistakes, 50);
+  normalized.average = safeSmallInteger(result.average, 20_000);
+  return normalized;
+}
+
+function formatResult(result) {
+  return result.solved + "/6 vět · průměr " + (result.average || "—") + (result.average ? " ms" : "");
+}
 
 export function startJargonDecoder(context) {
   const rounds = buildJargonRounds(context.seed);
@@ -232,4 +276,48 @@ export function startJargonDecoder(context) {
       window.removeEventListener("keydown", onKeyDown);
     }
   };
+}
+
+export const JARGON_ROUNDS = 6;
+
+export const JARGON_PHRASES = Object.freeze([
+  "Musíme sladit očekávání napříč stakeholdery",
+  "Pojďme zaparkovat detail a řešit kontext",
+  "Potřebujeme škálovat synergii bez dalšího headcountu",
+  "Tenhle quick win otevře nové příležitosti",
+  "Uděláme hlubší ponor do priorit kvartálu",
+  "Zkusme to uchopit více end to end",
+  "Na roadmapě chybí vlastník tohoto akčního bodu",
+  "Přenesme diskusi do menší pracovní skupiny",
+  "Data potřebují trochu kreativnější interpretaci",
+  "Nejdřív si pojďme srovnat společný sever",
+  "Tohle téma potřebuje robustnější governance",
+  "Musíme odemknout potenciál napříč celou organizací"
+]);
+
+export function buildJargonRounds(seed, count = JARGON_ROUNDS) {
+  const random = createRng("jargon:" + seed);
+  const indexes = JARGON_PHRASES.map(function (_, index) { return index; });
+
+  for (let index = indexes.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    const value = indexes[index];
+    indexes[index] = indexes[swapIndex];
+    indexes[swapIndex] = value;
+  }
+
+  return indexes.slice(0, Math.min(count, indexes.length)).map(function (phraseIndex, roundIndex) {
+    const phrase = JARGON_PHRASES[phraseIndex];
+    const answer = phrase.split(" ");
+    const words = answer.slice();
+    for (let index = words.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = words[index];
+      words[index] = words[swapIndex];
+      words[swapIndex] = value;
+    }
+    if (words.every(function (word, index) { return word === answer[index]; })) words.push(words.shift());
+
+    return { id: roundIndex, phrase, answer, words };
+  });
 }

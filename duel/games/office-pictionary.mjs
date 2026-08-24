@@ -1,4 +1,38 @@
-import { PICTIONARY, PICTIONARY_PROMPTS, buildPictionaryRounds, calculatePictionaryRoundScores } from "../game-core.mjs";
+import { createRng } from "../game-core.mjs";
+import { defineGame, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+
+export const officePictionaryGame = defineGame({
+  id: "pictionary",
+  meta: {
+    icon: "🎨",
+    title: "Kancelářský Pictionary",
+    teaser: "Nakresli zadání a poznej soupeřovo dílo",
+    difficulty: "kreslení",
+    instruction: "Nakresli vlastní pojem a potom poznej soupeřův obrázek. Písmena a číslice jsou zakázaná.",
+    scoreLabel: "bodů za umění"
+  },
+  start: startOfficePictionary,
+  result: {
+    mode: "shared",
+    normalize: normalizeResult,
+    format: formatResult
+  }
+});
+
+function normalizeResult(result) {
+  const normalized = normalizeScoreResult(result, 3000);
+  if (!normalized) return null;
+  normalized.guessed = safeSmallInteger(result.guessed, 3);
+  normalized.understood = safeSmallInteger(result.understood, 3);
+  normalized.rounds = safeSmallInteger(result.rounds, 3);
+  return normalized;
+}
+
+function formatResult(result) {
+  const rounds = result.rounds || 3;
+  return result.guessed + "/" + rounds + " uhádnuto · "
+    + result.understood + "/" + rounds + " obrázků rozpoznáno";
+}
 
 export function startOfficePictionary(context) {
   const rounds = buildPictionaryRounds(context.seed);
@@ -490,4 +524,71 @@ function buildBotPictionaryPaths(promptId) {
     deadline: [ellipse(.5, .47, .27, .31), path([.5, .47], [.5, .25]), path([.5, .47], [.67, .56]), path([.34, .13], [.27, .22]), path([.66, .13], [.73, .22]), path([.36, .82], [.3, .89]), path([.64, .82], [.7, .89])]
   };
   return drawings[promptId] || [ellipse(.5, .5, .25, .25), path([.38, .44], [.43, .4]), path([.62, .44], [.57, .4]), path([.38, .62], [.5, .69], [.62, .62])];
+}
+
+export const PICTIONARY_ROUNDS = 3;
+
+export const PICTIONARY = Object.freeze({
+  width: 900,
+  height: 480,
+  drawDurationMs: 35_000,
+  guessDurationMs: 18_000,
+  drawingPoints: 700,
+  guessingPoints: 300
+});
+
+export const PICTIONARY_PROMPTS = Object.freeze([
+  Object.freeze({ id: "coffee", label: "Hrnek kávy" }),
+  Object.freeze({ id: "printer", label: "Tiskárna" }),
+  Object.freeze({ id: "chair", label: "Kancelářská židle" }),
+  Object.freeze({ id: "plane", label: "Papírová vlaštovka" }),
+  Object.freeze({ id: "calendar", label: "Kalendář" }),
+  Object.freeze({ id: "laptop", label: "Notebook" }),
+  Object.freeze({ id: "headphones", label: "Sluchátka" }),
+  Object.freeze({ id: "plant", label: "Květina v kanceláři" }),
+  Object.freeze({ id: "keyboard", label: "Klávesnice" }),
+  Object.freeze({ id: "meeting", label: "Meeting" }),
+  Object.freeze({ id: "email", label: "E-mail" }),
+  Object.freeze({ id: "deadline", label: "Deadline" })
+]);
+
+export function buildPictionaryRounds(seed, count = PICTIONARY_ROUNDS) {
+  const random = createRng("pictionary:" + seed);
+  const promptIds = PICTIONARY_PROMPTS.map(function (prompt) { return prompt.id; });
+
+  function shuffle(values) {
+    const shuffled = values.slice();
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = shuffled[index];
+      shuffled[index] = shuffled[swapIndex];
+      shuffled[swapIndex] = value;
+    }
+    return shuffled;
+  }
+
+  const deck = shuffle(promptIds);
+  const roundCount = Math.min(Math.max(0, count), Math.floor(deck.length / 2));
+
+  return Array.from({ length: roundCount }, function (_, roundIndex) {
+    const prompts = [deck[roundIndex * 2], deck[roundIndex * 2 + 1]];
+    const choices = [0, 1].map(function (guesserRole) {
+      const answer = prompts[1 - guesserRole];
+      const distractors = shuffle(promptIds.filter(function (promptId) {
+        return promptId !== answer && promptId !== prompts[guesserRole];
+      })).slice(0, 3);
+      return shuffle([answer].concat(distractors));
+    });
+
+    return { id: roundIndex, prompts, choices };
+  });
+}
+
+export function calculatePictionaryRoundScores(correctByRole) {
+  const firstCorrect = Boolean(correctByRole && correctByRole[0]);
+  const secondCorrect = Boolean(correctByRole && correctByRole[1]);
+  return [
+    (firstCorrect ? PICTIONARY.guessingPoints : 0) + (secondCorrect ? PICTIONARY.drawingPoints : 0),
+    (secondCorrect ? PICTIONARY.guessingPoints : 0) + (firstCorrect ? PICTIONARY.drawingPoints : 0)
+  ];
 }

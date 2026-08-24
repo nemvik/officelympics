@@ -6,7 +6,9 @@ const DATA_FILES = Object.freeze([
   "pokemon.csv",
   "pokemon_species.csv",
   "pokemon_species_names.csv",
+  "pokemon_stats.csv",
   "pokemon_types.csv",
+  "stats.csv",
   "types.csv",
   "pokemon_colors.csv",
   "pokemon_shapes.csv"
@@ -95,6 +97,7 @@ const tables = new Map(sources);
 
 const pokemonById = mapById(tables.get("pokemon.csv"));
 const speciesById = mapById(tables.get("pokemon_species.csv"));
+const statById = mapById(tables.get("stats.csv"));
 const typeById = mapById(tables.get("types.csv"));
 const colorById = mapById(tables.get("pokemon_colors.csv"));
 const shapeById = mapById(tables.get("pokemon_shapes.csv"));
@@ -102,6 +105,16 @@ const englishNameById = new Map(tables.get("pokemon_species_names.csv")
   .filter(function (row) { return row.local_language_id === "9"; })
   .map(function (row) { return [Number(row.pokemon_species_id), row.name]; }));
 const typesByPokemonId = new Map();
+const statsByPokemonId = new Map();
+
+tables.get("pokemon_stats.csv").forEach(function (row) {
+  const pokemonId = Number(row.pokemon_id);
+  if (pokemonId < 1 || pokemonId > 151) return;
+  const stat = statById.get(Number(row.stat_id));
+  if (!stat || !["hp", "attack", "defense", "speed"].includes(stat.identifier)) return;
+  if (!statsByPokemonId.has(pokemonId)) statsByPokemonId.set(pokemonId, {});
+  statsByPokemonId.get(pokemonId)[stat.identifier] = Number(row.base_stat);
+});
 
 tables.get("pokemon_types.csv").forEach(function (row) {
   const pokemonId = Number(row.pokemon_id);
@@ -117,6 +130,7 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
   const record = pokemonById.get(id);
   const species = speciesById.get(id);
   const name = englishNameById.get(id);
+  const stats = statsByPokemonId.get(id);
   const types = (typesByPokemonId.get(id) || []).sort(function (first, second) {
     return first.slot - second.slot;
   }).map(function (type) {
@@ -126,7 +140,10 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
   const color = species && colorById.get(Number(species.color_id));
   const shape = species && shapeById.get(Number(species.shape_id));
 
-  if (!record || !species || !name || !types.length || !color || !shape) {
+  if (!record || !species || !name || !types.length || !color || !shape || !stats
+    || !["hp", "attack", "defense", "speed"].every(function (stat) {
+      return Number.isFinite(stats[stat]) && stats[stat] > 0;
+    })) {
     throw new Error("Neúplná PokeAPI data pro Pokémon ID " + id + ".");
   }
 
@@ -135,6 +152,10 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
     name,
     sprite: spriteBase + id + ".png",
     types,
+    hp: stats.hp,
+    attack: stats.attack,
+    defense: stats.defense,
+    speed: stats.speed,
     height: Number(record.height),
     weight: Number(record.weight),
     color: color.identifier,
@@ -157,6 +178,7 @@ export const POKEMON_SNAPSHOT_META = Object.freeze(${JSON.stringify({
   minimumId: 1,
   maximumId: 151,
   count: pokemon.length,
+  statKind: "base_stat",
   heightUnit: "decimetre",
   weightUnit: "hectogram"
 }, null, 2)});

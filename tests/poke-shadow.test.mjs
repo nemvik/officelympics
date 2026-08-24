@@ -34,6 +34,10 @@ test("Pokémon snapshot obsahuje právě druhy 1–151 a zobrazovaná jména", f
     assert.ok(pokemon.name);
     assert.ok(/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/[a-f0-9]{40}\//.test(pokemon.sprite));
     assert.ok(Array.isArray(pokemon.types) && pokemon.types.length >= 1);
+    assert.ok(Number.isFinite(pokemon.hp) && pokemon.hp > 0);
+    assert.ok(Number.isFinite(pokemon.attack) && pokemon.attack > 0);
+    assert.ok(Number.isFinite(pokemon.defense) && pokemon.defense > 0);
+    assert.ok(Number.isFinite(pokemon.speed) && pokemon.speed > 0);
     assert.ok(Number.isFinite(pokemon.height) && pokemon.height > 0);
     assert.ok(Number.isFinite(pokemon.weight) && pokemon.weight > 0);
     assert.ok(pokemon.color);

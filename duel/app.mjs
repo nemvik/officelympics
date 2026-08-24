@@ -1039,6 +1039,7 @@ function submitSharedResults(matchId, results) {
 
 function receiveRemoteResult(message) {
   if (!state.match || message.matchId !== state.match.id || message.game !== state.match.game) return;
+  if (getGame(state.match.game).result.mode === "shared") return;
   const normalized = normalizeGameResult(state.match.game, message.result);
   if (!normalized) return;
   state.match.remoteResult = normalized;

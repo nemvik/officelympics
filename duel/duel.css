@@ -3425,6 +3425,525 @@ body:not([data-screen="setup"]) .duel-hero {
   }
 }
 
+/* Kanto Trumf */
+.kanto-trumf-shell {
+  min-height: 570px;
+  padding: 16px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 7% 5%, rgba(255, 213, 31, .34), transparent 18rem),
+    radial-gradient(circle at 94% 12%, rgba(72, 167, 255, .22), transparent 21rem),
+    #f7f5ee;
+}
+
+.kanto-trumf-topline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 116px;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.kanto-trumf-disciplines {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, .8fr);
+  align-items: center;
+  gap: 9px;
+}
+
+.kanto-trumf-discipline {
+  min-width: 0;
+  min-height: 87px;
+  padding: 10px 14px;
+  display: grid;
+  align-content: center;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.kanto-trumf-discipline.is-current {
+  color: var(--navy);
+  background: var(--yellow);
+  box-shadow: 5px 6px 0 var(--pink);
+}
+
+.kanto-trumf-discipline.is-next {
+  border-style: dashed;
+  color: var(--navy);
+  background: #e7f3ff;
+}
+
+.kanto-trumf-discipline span,
+.kanto-trumf-discipline small {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.kanto-trumf-discipline small {
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.kanto-trumf-discipline strong {
+  overflow: hidden;
+  margin: 2px 0;
+  font-size: clamp(23px, 4vw, 38px);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanto-trumf-arrow {
+  color: var(--pink);
+  font-size: 27px;
+  font-weight: 1000;
+}
+
+.kanto-trumf-clock {
+  padding: 9px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-content: center;
+  color: #fff;
+  background: var(--navy);
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 5px 6px 0 var(--blue);
+  transition: background .2s ease;
+}
+
+.kanto-trumf-clock > span {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.kanto-trumf-clock b {
+  font-size: 31px;
+  line-height: 1;
+}
+
+.kanto-trumf-clock small {
+  align-self: end;
+  padding-bottom: 3px;
+  font-weight: 900;
+}
+
+.kanto-trumf-clock > i {
+  height: 6px;
+  margin-top: 6px;
+  grid-column: 1 / -1;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .25);
+  border-radius: 999px;
+}
+
+.kanto-trumf-clock > i span {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform-origin: left;
+  background: var(--yellow);
+}
+
+.kanto-trumf-clock.is-urgent { background: var(--red); }
+.kanto-trumf-clock.is-revealed { background: var(--green); }
+
+.kanto-trumf-locks {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.kanto-trumf-locks > span:not(.kanto-trumf-lock-mark) {
+  min-width: 0;
+  padding: 7px 9px;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .85);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanto-trumf-locks > span.is-locked {
+  border-color: var(--green);
+  color: #045f39;
+  background: #dff8e9;
+}
+
+.kanto-trumf-lock-mark { color: var(--pink); }
+
+.kanto-trumf-hand {
+  min-width: 0;
+  padding: 12px;
+  border: 2px solid rgba(17, 17, 17, .18);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .68);
+}
+
+.kanto-trumf-hand-heading {
+  margin-bottom: 9px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kanto-trumf-hand-heading h3 {
+  margin: 2px 0 0;
+  color: var(--navy);
+  font-size: clamp(20px, 3vw, 27px);
+  line-height: 1;
+}
+
+.kanto-trumf-round-count {
+  flex: none;
+  padding: 6px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  color: var(--navy);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.kanto-trumf-cards {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.kanto-trumf-card {
+  min-width: 0;
+  min-height: 196px;
+  padding: 7px;
+  position: relative;
+  display: grid;
+  grid-template-rows: 78px minmax(28px, auto) auto auto;
+  align-content: start;
+  gap: 5px;
+  border: 3px solid var(--ink);
+  border-radius: 13px;
+  color: var(--navy);
+  background: #fff;
+  box-shadow: 3px 4px 0 var(--blue);
+  text-align: center;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+.kanto-trumf-card:disabled { opacity: .72; }
+
+.kanto-trumf-card:not(:disabled):hover {
+  transform: translateY(-3px) rotate(-.5deg);
+  box-shadow: 4px 7px 0 var(--blue);
+}
+
+.kanto-trumf-card.is-selected {
+  border-color: var(--pink-dark);
+  background: #fff6c8;
+  box-shadow: 4px 6px 0 var(--pink);
+  transform: translateY(-3px);
+}
+
+.kanto-trumf-card.is-locked {
+  border-color: var(--green);
+  background: #e7f9ee;
+  box-shadow: 4px 6px 0 var(--green);
+  opacity: 1;
+}
+
+.kanto-trumf-card.is-spent,
+.kanto-trumf-card.is-spent:disabled {
+  filter: grayscale(1);
+  opacity: .36;
+  box-shadow: none;
+  transform: none;
+}
+
+.kanto-trumf-card img {
+  width: 100%;
+  height: 78px;
+  object-fit: contain;
+  filter: drop-shadow(2px 3px 0 rgba(7, 26, 61, .12));
+}
+
+.kanto-trumf-card > strong {
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+}
+
+.kanto-trumf-shortcut {
+  width: 21px;
+  height: 21px;
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: #fff;
+  background: var(--navy);
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.kanto-trumf-card-stats {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.kanto-trumf-card-stats > span {
+  min-width: 0;
+  padding: 4px 2px;
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #f2f0ea;
+}
+
+.kanto-trumf-card-stats > span.is-current {
+  border-color: #d49c00;
+  background: #fff0a4;
+}
+
+.kanto-trumf-card-stats small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanto-trumf-card-stats b { font-size: 11px; }
+
+.kanto-trumf-card em {
+  color: var(--muted);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.kanto-trumf-card.is-selected em { color: var(--pink-dark); }
+.kanto-trumf-card.is-locked em { color: var(--green); }
+
+.kanto-trumf-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.kanto-trumf-status {
+  min-height: 34px;
+  margin: 0;
+  padding: 8px 11px;
+  display: grid;
+  align-items: center;
+  border-left: 5px solid var(--blue);
+  color: var(--navy);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.kanto-trumf-confirm {
+  min-width: 178px;
+  min-height: 48px;
+  background: var(--pink-dark);
+}
+
+.kanto-trumf-reveal {
+  padding: 10px 13px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 6px 7px 0 var(--yellow);
+}
+
+.kanto-trumf-reveal-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  column-gap: 9px;
+}
+
+.kanto-trumf-reveal-card img {
+  width: 62px;
+  height: 62px;
+  grid-row: 1 / 4;
+  object-fit: contain;
+}
+
+.kanto-trumf-reveal-card small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.kanto-trumf-reveal-card strong {
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanto-trumf-reveal-card b {
+  width: fit-content;
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: var(--navy);
+  background: var(--yellow);
+  font-size: 11px;
+}
+
+.kanto-trumf-reveal-versus {
+  color: var(--pink);
+  font-size: 23px;
+  font-weight: 1000;
+}
+
+.kanto-trumf-reveal > p {
+  margin: 0;
+  grid-column: 1 / -1;
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.game-stage:fullscreen .kanto-trumf-shell {
+  width: min(1200px, 100%);
+  margin: auto;
+}
+
+@media (max-width: 840px) {
+  .kanto-trumf-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .kanto-trumf-shell { padding: 10px 7px 15px; }
+
+  .kanto-trumf-topline { grid-template-columns: 1fr; }
+
+  .kanto-trumf-discipline { min-height: 72px; padding: 8px 10px; }
+  .kanto-trumf-discipline strong { font-size: 23px; }
+
+  .kanto-trumf-clock {
+    grid-template-columns: auto auto auto minmax(60px, 1fr);
+    align-items: center;
+    gap: 5px;
+    padding: 7px 10px;
+  }
+
+  .kanto-trumf-clock > span { grid-column: auto; }
+  .kanto-trumf-clock b { font-size: 23px; }
+  .kanto-trumf-clock small { align-self: center; padding: 0; }
+  .kanto-trumf-clock > i { grid-column: auto; margin: 0; }
+
+  .kanto-trumf-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  .kanto-trumf-card {
+    min-height: 151px;
+    padding: 4px;
+    grid-template-rows: 52px minmax(23px, auto) auto auto;
+    gap: 3px;
+    border-width: 2px;
+  }
+  .kanto-trumf-card img { height: 52px; }
+  .kanto-trumf-card > strong { font-size: 10px; }
+  .kanto-trumf-card-stats { gap: 2px; }
+  .kanto-trumf-card-stats > span { padding: 3px 1px; }
+  .kanto-trumf-card-stats small { font-size: 7px; }
+  .kanto-trumf-card-stats b { font-size: 9px; }
+  .kanto-trumf-card em { font-size: 7px; }
+  .kanto-trumf-shortcut { width: 18px; height: 18px; font-size: 9px; }
+
+  .kanto-trumf-actions { grid-template-columns: 1fr; }
+  .kanto-trumf-confirm { width: 100%; }
+
+  .kanto-trumf-reveal { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); padding: 8px; }
+  .kanto-trumf-reveal-card { grid-template-columns: 48px minmax(0, 1fr); column-gap: 5px; }
+  .kanto-trumf-reveal-card img { width: 48px; height: 48px; }
+  .kanto-trumf-reveal-card strong { font-size: 13px; }
+  .kanto-trumf-reveal-card b { font-size: 9px; }
+}
+
+@media (max-width: 380px) {
+  .kanto-trumf-disciplines { gap: 5px; }
+  .kanto-trumf-arrow { font-size: 18px; }
+  .kanto-trumf-discipline span,
+  .kanto-trumf-discipline small { font-size: 8px; }
+  .kanto-trumf-discipline strong { font-size: 18px; }
+  .kanto-trumf-locks { gap: 4px; font-size: 9px; }
+  .kanto-trumf-hand { padding: 8px; }
+  .kanto-trumf-card > strong { font-size: 12px; }
+}
+
+@media (max-width: 720px) and (max-height: 500px) and (orientation: landscape) {
+  .kanto-trumf-shell { gap: 7px; padding: 7px; }
+  .kanto-trumf-topline { grid-template-columns: minmax(0, 1fr) 92px; gap: 7px; }
+  .kanto-trumf-discipline { min-height: 59px; padding: 5px 8px; }
+  .kanto-trumf-discipline strong { font-size: 19px; }
+  .kanto-trumf-clock { display: grid; grid-template-columns: 1fr auto; padding: 5px; }
+  .kanto-trumf-clock > span { grid-column: 1 / -1; }
+  .kanto-trumf-clock > i { grid-column: 1 / -1; margin-top: 3px; }
+  .kanto-trumf-locks > span:not(.kanto-trumf-lock-mark) { padding: 4px 7px; }
+  .kanto-trumf-hand { padding: 7px; }
+  .kanto-trumf-hand-heading { margin-bottom: 5px; }
+  .kanto-trumf-hand-heading h3 { font-size: 16px; }
+  .kanto-trumf-cards { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .kanto-trumf-card { min-height: 124px; padding: 4px; grid-template-rows: 40px 20px auto auto; border-width: 2px; }
+  .kanto-trumf-card img { height: 40px; }
+  .kanto-trumf-card > strong { font-size: 9px; }
+  .kanto-trumf-card-stats { gap: 2px; }
+  .kanto-trumf-card-stats small { display: none; }
+  .kanto-trumf-card-stats b { font-size: 8px; }
+  .kanto-trumf-card em { font-size: 7px; }
+  .kanto-trumf-shortcut { width: 15px; height: 15px; font-size: 8px; }
+  .kanto-trumf-actions { grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
+  .kanto-trumf-confirm { width: auto; min-width: 145px; min-height: 38px; padding: 7px 10px; }
+  .kanto-trumf-status { min-height: 32px; padding: 5px 8px; font-size: 10px; }
+  .kanto-trumf-reveal { padding: 5px 8px; }
+  .kanto-trumf-reveal-card img { width: 40px; height: 40px; }
+}
+
 /* Kancelářský Pictionary */
 .pictionary-shell {
   min-height: 550px;

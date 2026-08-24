@@ -4,10 +4,11 @@ export const POKEMON_SNAPSHOT_META = Object.freeze({
   "sourceRevision": "b963af2b78a33e12fd38e96ccd74a8387bdda574",
   "spriteSource": "https://github.com/PokeAPI/sprites/tree/c10459b9b0129eaca5c5d9b1cac65336debb1d08",
   "spriteRevision": "c10459b9b0129eaca5c5d9b1cac65336debb1d08",
-  "generatedAt": "2026-08-24T10:33:16.623Z",
+  "generatedAt": "2026-08-24T11:33:28.465Z",
   "minimumId": 1,
   "maximumId": 151,
   "count": 151,
+  "statKind": "base_stat",
   "heightUnit": "decimetre",
   "weightUnit": "hectogram"
 });
@@ -21,6 +22,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 45,
+    "attack": 49,
+    "defense": 49,
+    "speed": 45,
     "height": 7,
     "weight": 69,
     "color": "green",
@@ -34,6 +39,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 60,
+    "attack": 62,
+    "defense": 63,
+    "speed": 60,
     "height": 10,
     "weight": 130,
     "color": "green",
@@ -47,6 +56,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 80,
+    "attack": 82,
+    "defense": 83,
+    "speed": 80,
     "height": 20,
     "weight": 1000,
     "color": "green",
@@ -59,6 +72,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 39,
+    "attack": 52,
+    "defense": 43,
+    "speed": 65,
     "height": 6,
     "weight": 85,
     "color": "red",
@@ -71,6 +88,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 58,
+    "attack": 64,
+    "defense": 58,
+    "speed": 80,
     "height": 11,
     "weight": 190,
     "color": "red",
@@ -84,6 +105,10 @@ const POKEMON_RECORDS = [
       "fire",
       "flying"
     ],
+    "hp": 78,
+    "attack": 84,
+    "defense": 78,
+    "speed": 100,
     "height": 17,
     "weight": 905,
     "color": "red",
@@ -96,6 +121,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 44,
+    "attack": 48,
+    "defense": 65,
+    "speed": 43,
     "height": 5,
     "weight": 90,
     "color": "blue",
@@ -108,6 +137,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 59,
+    "attack": 63,
+    "defense": 80,
+    "speed": 58,
     "height": 10,
     "weight": 225,
     "color": "blue",
@@ -120,6 +153,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 79,
+    "attack": 83,
+    "defense": 100,
+    "speed": 78,
     "height": 16,
     "weight": 855,
     "color": "blue",
@@ -132,6 +169,10 @@ const POKEMON_RECORDS = [
     "types": [
       "bug"
     ],
+    "hp": 45,
+    "attack": 30,
+    "defense": 35,
+    "speed": 45,
     "height": 3,
     "weight": 29,
     "color": "green",
@@ -144,6 +185,10 @@ const POKEMON_RECORDS = [
     "types": [
       "bug"
     ],
+    "hp": 50,
+    "attack": 20,
+    "defense": 55,
+    "speed": 30,
     "height": 7,
     "weight": 99,
     "color": "green",
@@ -157,6 +202,10 @@ const POKEMON_RECORDS = [
       "bug",
       "flying"
     ],
+    "hp": 60,
+    "attack": 45,
+    "defense": 50,
+    "speed": 70,
     "height": 11,
     "weight": 320,
     "color": "white",
@@ -170,6 +219,10 @@ const POKEMON_RECORDS = [
       "bug",
       "poison"
     ],
+    "hp": 40,
+    "attack": 35,
+    "defense": 30,
+    "speed": 50,
     "height": 3,
     "weight": 32,
     "color": "brown",
@@ -183,6 +236,10 @@ const POKEMON_RECORDS = [
       "bug",
       "poison"
     ],
+    "hp": 45,
+    "attack": 25,
+    "defense": 50,
+    "speed": 35,
     "height": 6,
     "weight": 100,
     "color": "yellow",
@@ -196,6 +253,10 @@ const POKEMON_RECORDS = [
       "bug",
       "poison"
     ],
+    "hp": 65,
+    "attack": 90,
+    "defense": 40,
+    "speed": 75,
     "height": 10,
     "weight": 295,
     "color": "yellow",
@@ -209,6 +270,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 40,
+    "attack": 45,
+    "defense": 40,
+    "speed": 56,
     "height": 3,
     "weight": 18,
     "color": "brown",
@@ -222,6 +287,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 63,
+    "attack": 60,
+    "defense": 55,
+    "speed": 71,
     "height": 11,
     "weight": 300,
     "color": "brown",
@@ -235,6 +304,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 83,
+    "attack": 80,
+    "defense": 75,
+    "speed": 101,
     "height": 15,
     "weight": 395,
     "color": "brown",
@@ -247,6 +320,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 30,
+    "attack": 56,
+    "defense": 35,
+    "speed": 72,
     "height": 3,
     "weight": 35,
     "color": "purple",
@@ -259,6 +336,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 55,
+    "attack": 81,
+    "defense": 60,
+    "speed": 97,
     "height": 7,
     "weight": 185,
     "color": "brown",
@@ -272,6 +353,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 40,
+    "attack": 60,
+    "defense": 30,
+    "speed": 70,
     "height": 3,
     "weight": 20,
     "color": "brown",
@@ -285,6 +370,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 65,
+    "attack": 90,
+    "defense": 65,
+    "speed": 100,
     "height": 12,
     "weight": 380,
     "color": "brown",
@@ -297,6 +386,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 35,
+    "attack": 60,
+    "defense": 44,
+    "speed": 55,
     "height": 20,
     "weight": 69,
     "color": "purple",
@@ -309,6 +402,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 60,
+    "attack": 95,
+    "defense": 69,
+    "speed": 80,
     "height": 35,
     "weight": 650,
     "color": "purple",
@@ -321,6 +418,10 @@ const POKEMON_RECORDS = [
     "types": [
       "electric"
     ],
+    "hp": 35,
+    "attack": 55,
+    "defense": 40,
+    "speed": 90,
     "height": 4,
     "weight": 60,
     "color": "yellow",
@@ -333,6 +434,10 @@ const POKEMON_RECORDS = [
     "types": [
       "electric"
     ],
+    "hp": 60,
+    "attack": 90,
+    "defense": 55,
+    "speed": 110,
     "height": 8,
     "weight": 300,
     "color": "yellow",
@@ -345,6 +450,10 @@ const POKEMON_RECORDS = [
     "types": [
       "ground"
     ],
+    "hp": 50,
+    "attack": 75,
+    "defense": 85,
+    "speed": 40,
     "height": 6,
     "weight": 120,
     "color": "yellow",
@@ -357,6 +466,10 @@ const POKEMON_RECORDS = [
     "types": [
       "ground"
     ],
+    "hp": 75,
+    "attack": 100,
+    "defense": 110,
+    "speed": 65,
     "height": 10,
     "weight": 295,
     "color": "yellow",
@@ -369,6 +482,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 55,
+    "attack": 47,
+    "defense": 52,
+    "speed": 41,
     "height": 4,
     "weight": 70,
     "color": "blue",
@@ -381,6 +498,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 70,
+    "attack": 62,
+    "defense": 67,
+    "speed": 56,
     "height": 8,
     "weight": 200,
     "color": "blue",
@@ -394,6 +515,10 @@ const POKEMON_RECORDS = [
       "poison",
       "ground"
     ],
+    "hp": 90,
+    "attack": 92,
+    "defense": 87,
+    "speed": 76,
     "height": 13,
     "weight": 600,
     "color": "blue",
@@ -406,6 +531,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 46,
+    "attack": 57,
+    "defense": 40,
+    "speed": 50,
     "height": 5,
     "weight": 90,
     "color": "purple",
@@ -418,6 +547,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 61,
+    "attack": 72,
+    "defense": 57,
+    "speed": 65,
     "height": 9,
     "weight": 195,
     "color": "purple",
@@ -431,6 +564,10 @@ const POKEMON_RECORDS = [
       "poison",
       "ground"
     ],
+    "hp": 81,
+    "attack": 102,
+    "defense": 77,
+    "speed": 85,
     "height": 14,
     "weight": 620,
     "color": "purple",
@@ -443,6 +580,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fairy"
     ],
+    "hp": 70,
+    "attack": 45,
+    "defense": 48,
+    "speed": 35,
     "height": 6,
     "weight": 75,
     "color": "pink",
@@ -455,6 +596,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fairy"
     ],
+    "hp": 95,
+    "attack": 70,
+    "defense": 73,
+    "speed": 60,
     "height": 13,
     "weight": 400,
     "color": "pink",
@@ -467,6 +612,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 38,
+    "attack": 41,
+    "defense": 40,
+    "speed": 65,
     "height": 6,
     "weight": 99,
     "color": "brown",
@@ -479,6 +628,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 73,
+    "attack": 76,
+    "defense": 75,
+    "speed": 100,
     "height": 11,
     "weight": 199,
     "color": "yellow",
@@ -492,6 +645,10 @@ const POKEMON_RECORDS = [
       "normal",
       "fairy"
     ],
+    "hp": 115,
+    "attack": 45,
+    "defense": 20,
+    "speed": 20,
     "height": 5,
     "weight": 55,
     "color": "pink",
@@ -505,6 +662,10 @@ const POKEMON_RECORDS = [
       "normal",
       "fairy"
     ],
+    "hp": 140,
+    "attack": 70,
+    "defense": 45,
+    "speed": 45,
     "height": 10,
     "weight": 120,
     "color": "pink",
@@ -518,6 +679,10 @@ const POKEMON_RECORDS = [
       "poison",
       "flying"
     ],
+    "hp": 40,
+    "attack": 45,
+    "defense": 35,
+    "speed": 55,
     "height": 8,
     "weight": 75,
     "color": "purple",
@@ -531,6 +696,10 @@ const POKEMON_RECORDS = [
       "poison",
       "flying"
     ],
+    "hp": 75,
+    "attack": 80,
+    "defense": 70,
+    "speed": 90,
     "height": 16,
     "weight": 550,
     "color": "purple",
@@ -544,6 +713,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 45,
+    "attack": 50,
+    "defense": 55,
+    "speed": 30,
     "height": 5,
     "weight": 54,
     "color": "blue",
@@ -557,6 +730,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 60,
+    "attack": 65,
+    "defense": 70,
+    "speed": 40,
     "height": 8,
     "weight": 86,
     "color": "blue",
@@ -570,6 +747,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 75,
+    "attack": 80,
+    "defense": 85,
+    "speed": 50,
     "height": 12,
     "weight": 186,
     "color": "red",
@@ -583,6 +764,10 @@ const POKEMON_RECORDS = [
       "bug",
       "grass"
     ],
+    "hp": 35,
+    "attack": 70,
+    "defense": 55,
+    "speed": 25,
     "height": 3,
     "weight": 54,
     "color": "red",
@@ -596,6 +781,10 @@ const POKEMON_RECORDS = [
       "bug",
       "grass"
     ],
+    "hp": 60,
+    "attack": 95,
+    "defense": 80,
+    "speed": 30,
     "height": 10,
     "weight": 295,
     "color": "red",
@@ -609,6 +798,10 @@ const POKEMON_RECORDS = [
       "bug",
       "poison"
     ],
+    "hp": 60,
+    "attack": 55,
+    "defense": 50,
+    "speed": 45,
     "height": 10,
     "weight": 300,
     "color": "purple",
@@ -622,6 +815,10 @@ const POKEMON_RECORDS = [
       "bug",
       "poison"
     ],
+    "hp": 70,
+    "attack": 65,
+    "defense": 60,
+    "speed": 90,
     "height": 15,
     "weight": 125,
     "color": "purple",
@@ -634,6 +831,10 @@ const POKEMON_RECORDS = [
     "types": [
       "ground"
     ],
+    "hp": 10,
+    "attack": 55,
+    "defense": 25,
+    "speed": 95,
     "height": 2,
     "weight": 8,
     "color": "brown",
@@ -646,6 +847,10 @@ const POKEMON_RECORDS = [
     "types": [
       "ground"
     ],
+    "hp": 35,
+    "attack": 100,
+    "defense": 50,
+    "speed": 120,
     "height": 7,
     "weight": 333,
     "color": "brown",
@@ -658,6 +863,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 40,
+    "attack": 45,
+    "defense": 35,
+    "speed": 90,
     "height": 4,
     "weight": 42,
     "color": "yellow",
@@ -670,6 +879,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 65,
+    "attack": 70,
+    "defense": 60,
+    "speed": 115,
     "height": 10,
     "weight": 320,
     "color": "yellow",
@@ -682,6 +895,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 50,
+    "attack": 52,
+    "defense": 48,
+    "speed": 55,
     "height": 8,
     "weight": 196,
     "color": "yellow",
@@ -694,6 +911,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 80,
+    "attack": 82,
+    "defense": 78,
+    "speed": 85,
     "height": 17,
     "weight": 766,
     "color": "blue",
@@ -706,6 +927,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fighting"
     ],
+    "hp": 40,
+    "attack": 80,
+    "defense": 35,
+    "speed": 70,
     "height": 5,
     "weight": 280,
     "color": "brown",
@@ -718,6 +943,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fighting"
     ],
+    "hp": 65,
+    "attack": 105,
+    "defense": 60,
+    "speed": 95,
     "height": 10,
     "weight": 320,
     "color": "brown",
@@ -730,6 +959,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 55,
+    "attack": 70,
+    "defense": 45,
+    "speed": 60,
     "height": 7,
     "weight": 190,
     "color": "brown",
@@ -742,6 +975,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 90,
+    "attack": 110,
+    "defense": 80,
+    "speed": 95,
     "height": 19,
     "weight": 1550,
     "color": "brown",
@@ -754,6 +991,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 40,
+    "attack": 50,
+    "defense": 40,
+    "speed": 90,
     "height": 6,
     "weight": 124,
     "color": "blue",
@@ -766,6 +1007,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 65,
+    "attack": 65,
+    "defense": 65,
+    "speed": 90,
     "height": 10,
     "weight": 200,
     "color": "blue",
@@ -779,6 +1024,10 @@ const POKEMON_RECORDS = [
       "water",
       "fighting"
     ],
+    "hp": 90,
+    "attack": 95,
+    "defense": 95,
+    "speed": 70,
     "height": 13,
     "weight": 540,
     "color": "blue",
@@ -791,6 +1040,10 @@ const POKEMON_RECORDS = [
     "types": [
       "psychic"
     ],
+    "hp": 25,
+    "attack": 20,
+    "defense": 15,
+    "speed": 90,
     "height": 9,
     "weight": 195,
     "color": "brown",
@@ -803,6 +1056,10 @@ const POKEMON_RECORDS = [
     "types": [
       "psychic"
     ],
+    "hp": 40,
+    "attack": 35,
+    "defense": 30,
+    "speed": 105,
     "height": 13,
     "weight": 565,
     "color": "brown",
@@ -815,6 +1072,10 @@ const POKEMON_RECORDS = [
     "types": [
       "psychic"
     ],
+    "hp": 55,
+    "attack": 50,
+    "defense": 45,
+    "speed": 120,
     "height": 15,
     "weight": 480,
     "color": "brown",
@@ -827,6 +1088,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fighting"
     ],
+    "hp": 70,
+    "attack": 80,
+    "defense": 50,
+    "speed": 35,
     "height": 8,
     "weight": 195,
     "color": "gray",
@@ -839,6 +1104,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fighting"
     ],
+    "hp": 80,
+    "attack": 100,
+    "defense": 70,
+    "speed": 45,
     "height": 15,
     "weight": 705,
     "color": "gray",
@@ -851,6 +1120,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fighting"
     ],
+    "hp": 90,
+    "attack": 130,
+    "defense": 80,
+    "speed": 55,
     "height": 16,
     "weight": 1300,
     "color": "gray",
@@ -864,6 +1137,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 50,
+    "attack": 75,
+    "defense": 35,
+    "speed": 40,
     "height": 7,
     "weight": 40,
     "color": "green",
@@ -877,6 +1154,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 65,
+    "attack": 90,
+    "defense": 50,
+    "speed": 55,
     "height": 10,
     "weight": 64,
     "color": "green",
@@ -890,6 +1171,10 @@ const POKEMON_RECORDS = [
       "grass",
       "poison"
     ],
+    "hp": 80,
+    "attack": 105,
+    "defense": 65,
+    "speed": 70,
     "height": 17,
     "weight": 155,
     "color": "green",
@@ -903,6 +1188,10 @@ const POKEMON_RECORDS = [
       "water",
       "poison"
     ],
+    "hp": 40,
+    "attack": 40,
+    "defense": 35,
+    "speed": 70,
     "height": 9,
     "weight": 455,
     "color": "blue",
@@ -916,6 +1205,10 @@ const POKEMON_RECORDS = [
       "water",
       "poison"
     ],
+    "hp": 80,
+    "attack": 70,
+    "defense": 65,
+    "speed": 100,
     "height": 16,
     "weight": 550,
     "color": "blue",
@@ -929,6 +1222,10 @@ const POKEMON_RECORDS = [
       "rock",
       "ground"
     ],
+    "hp": 40,
+    "attack": 80,
+    "defense": 100,
+    "speed": 20,
     "height": 4,
     "weight": 200,
     "color": "brown",
@@ -942,6 +1239,10 @@ const POKEMON_RECORDS = [
       "rock",
       "ground"
     ],
+    "hp": 55,
+    "attack": 95,
+    "defense": 115,
+    "speed": 35,
     "height": 10,
     "weight": 1050,
     "color": "brown",
@@ -955,6 +1256,10 @@ const POKEMON_RECORDS = [
       "rock",
       "ground"
     ],
+    "hp": 80,
+    "attack": 120,
+    "defense": 130,
+    "speed": 45,
     "height": 14,
     "weight": 3000,
     "color": "brown",
@@ -967,6 +1272,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 50,
+    "attack": 85,
+    "defense": 55,
+    "speed": 90,
     "height": 10,
     "weight": 300,
     "color": "yellow",
@@ -979,6 +1288,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 65,
+    "attack": 100,
+    "defense": 70,
+    "speed": 105,
     "height": 17,
     "weight": 950,
     "color": "yellow",
@@ -992,6 +1305,10 @@ const POKEMON_RECORDS = [
       "water",
       "psychic"
     ],
+    "hp": 90,
+    "attack": 65,
+    "defense": 65,
+    "speed": 15,
     "height": 12,
     "weight": 360,
     "color": "pink",
@@ -1005,6 +1322,10 @@ const POKEMON_RECORDS = [
       "water",
       "psychic"
     ],
+    "hp": 95,
+    "attack": 75,
+    "defense": 110,
+    "speed": 30,
     "height": 16,
     "weight": 785,
     "color": "pink",
@@ -1018,6 +1339,10 @@ const POKEMON_RECORDS = [
       "electric",
       "steel"
     ],
+    "hp": 25,
+    "attack": 35,
+    "defense": 70,
+    "speed": 45,
     "height": 3,
     "weight": 60,
     "color": "gray",
@@ -1031,6 +1356,10 @@ const POKEMON_RECORDS = [
       "electric",
       "steel"
     ],
+    "hp": 50,
+    "attack": 60,
+    "defense": 95,
+    "speed": 70,
     "height": 10,
     "weight": 600,
     "color": "gray",
@@ -1044,6 +1373,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 52,
+    "attack": 90,
+    "defense": 55,
+    "speed": 60,
     "height": 8,
     "weight": 150,
     "color": "brown",
@@ -1057,6 +1390,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 35,
+    "attack": 85,
+    "defense": 45,
+    "speed": 75,
     "height": 14,
     "weight": 392,
     "color": "brown",
@@ -1070,6 +1407,10 @@ const POKEMON_RECORDS = [
       "normal",
       "flying"
     ],
+    "hp": 60,
+    "attack": 110,
+    "defense": 70,
+    "speed": 110,
     "height": 18,
     "weight": 852,
     "color": "brown",
@@ -1082,6 +1423,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 65,
+    "attack": 45,
+    "defense": 55,
+    "speed": 45,
     "height": 11,
     "weight": 900,
     "color": "white",
@@ -1095,6 +1440,10 @@ const POKEMON_RECORDS = [
       "water",
       "ice"
     ],
+    "hp": 90,
+    "attack": 70,
+    "defense": 80,
+    "speed": 70,
     "height": 17,
     "weight": 1200,
     "color": "white",
@@ -1107,6 +1456,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 80,
+    "attack": 80,
+    "defense": 50,
+    "speed": 25,
     "height": 9,
     "weight": 300,
     "color": "purple",
@@ -1119,6 +1472,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 105,
+    "attack": 105,
+    "defense": 75,
+    "speed": 50,
     "height": 12,
     "weight": 300,
     "color": "purple",
@@ -1131,6 +1488,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 30,
+    "attack": 65,
+    "defense": 100,
+    "speed": 40,
     "height": 3,
     "weight": 40,
     "color": "purple",
@@ -1144,6 +1505,10 @@ const POKEMON_RECORDS = [
       "water",
       "ice"
     ],
+    "hp": 50,
+    "attack": 95,
+    "defense": 180,
+    "speed": 70,
     "height": 15,
     "weight": 1325,
     "color": "purple",
@@ -1157,6 +1522,10 @@ const POKEMON_RECORDS = [
       "ghost",
       "poison"
     ],
+    "hp": 30,
+    "attack": 35,
+    "defense": 30,
+    "speed": 80,
     "height": 13,
     "weight": 1,
     "color": "purple",
@@ -1170,6 +1539,10 @@ const POKEMON_RECORDS = [
       "ghost",
       "poison"
     ],
+    "hp": 45,
+    "attack": 50,
+    "defense": 45,
+    "speed": 95,
     "height": 16,
     "weight": 1,
     "color": "purple",
@@ -1183,6 +1556,10 @@ const POKEMON_RECORDS = [
       "ghost",
       "poison"
     ],
+    "hp": 60,
+    "attack": 65,
+    "defense": 60,
+    "speed": 110,
     "height": 15,
     "weight": 405,
     "color": "purple",
@@ -1196,6 +1573,10 @@ const POKEMON_RECORDS = [
       "rock",
       "ground"
     ],
+    "hp": 35,
+    "attack": 45,
+    "defense": 160,
+    "speed": 70,
     "height": 88,
     "weight": 2100,
     "color": "gray",
@@ -1208,6 +1589,10 @@ const POKEMON_RECORDS = [
     "types": [
       "psychic"
     ],
+    "hp": 60,
+    "attack": 48,
+    "defense": 45,
+    "speed": 42,
     "height": 10,
     "weight": 324,
     "color": "yellow",
@@ -1220,6 +1605,10 @@ const POKEMON_RECORDS = [
     "types": [
       "psychic"
     ],
+    "hp": 85,
+    "attack": 73,
+    "defense": 70,
+    "speed": 67,
     "height": 16,
     "weight": 756,
     "color": "yellow",
@@ -1232,6 +1621,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 30,
+    "attack": 105,
+    "defense": 90,
+    "speed": 50,
     "height": 4,
     "weight": 65,
     "color": "red",
@@ -1244,6 +1637,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 55,
+    "attack": 130,
+    "defense": 115,
+    "speed": 75,
     "height": 13,
     "weight": 600,
     "color": "red",
@@ -1256,6 +1653,10 @@ const POKEMON_RECORDS = [
     "types": [
       "electric"
     ],
+    "hp": 40,
+    "attack": 30,
+    "defense": 50,
+    "speed": 100,
     "height": 5,
     "weight": 104,
     "color": "red",
@@ -1268,6 +1669,10 @@ const POKEMON_RECORDS = [
     "types": [
       "electric"
     ],
+    "hp": 60,
+    "attack": 50,
+    "defense": 70,
+    "speed": 150,
     "height": 12,
     "weight": 666,
     "color": "red",
@@ -1281,6 +1686,10 @@ const POKEMON_RECORDS = [
       "grass",
       "psychic"
     ],
+    "hp": 60,
+    "attack": 40,
+    "defense": 80,
+    "speed": 40,
     "height": 4,
     "weight": 25,
     "color": "pink",
@@ -1294,6 +1703,10 @@ const POKEMON_RECORDS = [
       "grass",
       "psychic"
     ],
+    "hp": 95,
+    "attack": 95,
+    "defense": 85,
+    "speed": 55,
     "height": 20,
     "weight": 1200,
     "color": "yellow",
@@ -1306,6 +1719,10 @@ const POKEMON_RECORDS = [
     "types": [
       "ground"
     ],
+    "hp": 50,
+    "attack": 50,
+    "defense": 95,
+    "speed": 35,
     "height": 4,
     "weight": 65,
     "color": "brown",
@@ -1318,6 +1735,10 @@ const POKEMON_RECORDS = [
     "types": [
       "ground"
     ],
+    "hp": 60,
+    "attack": 80,
+    "defense": 110,
+    "speed": 45,
     "height": 10,
     "weight": 450,
     "color": "brown",
@@ -1330,6 +1751,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fighting"
     ],
+    "hp": 50,
+    "attack": 120,
+    "defense": 53,
+    "speed": 87,
     "height": 15,
     "weight": 498,
     "color": "brown",
@@ -1342,6 +1767,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fighting"
     ],
+    "hp": 50,
+    "attack": 105,
+    "defense": 79,
+    "speed": 76,
     "height": 14,
     "weight": 502,
     "color": "brown",
@@ -1354,6 +1783,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 90,
+    "attack": 55,
+    "defense": 75,
+    "speed": 30,
     "height": 12,
     "weight": 655,
     "color": "pink",
@@ -1366,6 +1799,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 40,
+    "attack": 65,
+    "defense": 95,
+    "speed": 35,
     "height": 6,
     "weight": 10,
     "color": "purple",
@@ -1378,6 +1815,10 @@ const POKEMON_RECORDS = [
     "types": [
       "poison"
     ],
+    "hp": 65,
+    "attack": 90,
+    "defense": 120,
+    "speed": 60,
     "height": 12,
     "weight": 95,
     "color": "purple",
@@ -1391,6 +1832,10 @@ const POKEMON_RECORDS = [
       "ground",
       "rock"
     ],
+    "hp": 80,
+    "attack": 85,
+    "defense": 95,
+    "speed": 25,
     "height": 10,
     "weight": 1150,
     "color": "gray",
@@ -1404,6 +1849,10 @@ const POKEMON_RECORDS = [
       "ground",
       "rock"
     ],
+    "hp": 105,
+    "attack": 130,
+    "defense": 120,
+    "speed": 40,
     "height": 19,
     "weight": 1200,
     "color": "gray",
@@ -1416,6 +1865,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 250,
+    "attack": 5,
+    "defense": 5,
+    "speed": 50,
     "height": 11,
     "weight": 346,
     "color": "pink",
@@ -1428,6 +1881,10 @@ const POKEMON_RECORDS = [
     "types": [
       "grass"
     ],
+    "hp": 65,
+    "attack": 55,
+    "defense": 115,
+    "speed": 60,
     "height": 10,
     "weight": 350,
     "color": "blue",
@@ -1440,6 +1897,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 105,
+    "attack": 95,
+    "defense": 80,
+    "speed": 90,
     "height": 22,
     "weight": 800,
     "color": "brown",
@@ -1452,6 +1913,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 30,
+    "attack": 40,
+    "defense": 70,
+    "speed": 60,
     "height": 4,
     "weight": 80,
     "color": "blue",
@@ -1464,6 +1929,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 55,
+    "attack": 65,
+    "defense": 95,
+    "speed": 85,
     "height": 12,
     "weight": 250,
     "color": "blue",
@@ -1476,6 +1945,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 45,
+    "attack": 67,
+    "defense": 60,
+    "speed": 63,
     "height": 6,
     "weight": 150,
     "color": "red",
@@ -1488,6 +1961,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 80,
+    "attack": 92,
+    "defense": 65,
+    "speed": 68,
     "height": 13,
     "weight": 390,
     "color": "red",
@@ -1500,6 +1977,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 30,
+    "attack": 45,
+    "defense": 55,
+    "speed": 85,
     "height": 8,
     "weight": 345,
     "color": "brown",
@@ -1513,6 +1994,10 @@ const POKEMON_RECORDS = [
       "water",
       "psychic"
     ],
+    "hp": 60,
+    "attack": 75,
+    "defense": 85,
+    "speed": 115,
     "height": 11,
     "weight": 800,
     "color": "purple",
@@ -1526,6 +2011,10 @@ const POKEMON_RECORDS = [
       "psychic",
       "fairy"
     ],
+    "hp": 40,
+    "attack": 45,
+    "defense": 65,
+    "speed": 90,
     "height": 13,
     "weight": 545,
     "color": "pink",
@@ -1539,6 +2028,10 @@ const POKEMON_RECORDS = [
       "bug",
       "flying"
     ],
+    "hp": 70,
+    "attack": 110,
+    "defense": 80,
+    "speed": 105,
     "height": 15,
     "weight": 560,
     "color": "green",
@@ -1552,6 +2045,10 @@ const POKEMON_RECORDS = [
       "ice",
       "psychic"
     ],
+    "hp": 65,
+    "attack": 50,
+    "defense": 35,
+    "speed": 95,
     "height": 14,
     "weight": 406,
     "color": "red",
@@ -1564,6 +2061,10 @@ const POKEMON_RECORDS = [
     "types": [
       "electric"
     ],
+    "hp": 65,
+    "attack": 83,
+    "defense": 57,
+    "speed": 105,
     "height": 11,
     "weight": 300,
     "color": "yellow",
@@ -1576,6 +2077,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 65,
+    "attack": 95,
+    "defense": 57,
+    "speed": 93,
     "height": 13,
     "weight": 445,
     "color": "red",
@@ -1588,6 +2093,10 @@ const POKEMON_RECORDS = [
     "types": [
       "bug"
     ],
+    "hp": 65,
+    "attack": 125,
+    "defense": 100,
+    "speed": 85,
     "height": 15,
     "weight": 550,
     "color": "brown",
@@ -1600,6 +2109,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 75,
+    "attack": 100,
+    "defense": 95,
+    "speed": 110,
     "height": 14,
     "weight": 884,
     "color": "brown",
@@ -1612,6 +2125,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 20,
+    "attack": 10,
+    "defense": 55,
+    "speed": 80,
     "height": 9,
     "weight": 100,
     "color": "red",
@@ -1625,6 +2142,10 @@ const POKEMON_RECORDS = [
       "water",
       "flying"
     ],
+    "hp": 95,
+    "attack": 125,
+    "defense": 79,
+    "speed": 81,
     "height": 65,
     "weight": 2350,
     "color": "blue",
@@ -1638,6 +2159,10 @@ const POKEMON_RECORDS = [
       "water",
       "ice"
     ],
+    "hp": 130,
+    "attack": 85,
+    "defense": 80,
+    "speed": 60,
     "height": 25,
     "weight": 2200,
     "color": "blue",
@@ -1650,6 +2175,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 48,
+    "attack": 48,
+    "defense": 48,
+    "speed": 48,
     "height": 3,
     "weight": 40,
     "color": "purple",
@@ -1662,6 +2191,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 55,
+    "attack": 55,
+    "defense": 50,
+    "speed": 55,
     "height": 3,
     "weight": 65,
     "color": "brown",
@@ -1674,6 +2207,10 @@ const POKEMON_RECORDS = [
     "types": [
       "water"
     ],
+    "hp": 130,
+    "attack": 65,
+    "defense": 60,
+    "speed": 65,
     "height": 10,
     "weight": 290,
     "color": "blue",
@@ -1686,6 +2223,10 @@ const POKEMON_RECORDS = [
     "types": [
       "electric"
     ],
+    "hp": 65,
+    "attack": 65,
+    "defense": 60,
+    "speed": 130,
     "height": 8,
     "weight": 245,
     "color": "yellow",
@@ -1698,6 +2239,10 @@ const POKEMON_RECORDS = [
     "types": [
       "fire"
     ],
+    "hp": 65,
+    "attack": 130,
+    "defense": 60,
+    "speed": 65,
     "height": 9,
     "weight": 250,
     "color": "red",
@@ -1710,6 +2255,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 65,
+    "attack": 60,
+    "defense": 70,
+    "speed": 40,
     "height": 8,
     "weight": 365,
     "color": "pink",
@@ -1723,6 +2272,10 @@ const POKEMON_RECORDS = [
       "rock",
       "water"
     ],
+    "hp": 35,
+    "attack": 40,
+    "defense": 100,
+    "speed": 35,
     "height": 4,
     "weight": 75,
     "color": "blue",
@@ -1736,6 +2289,10 @@ const POKEMON_RECORDS = [
       "rock",
       "water"
     ],
+    "hp": 70,
+    "attack": 60,
+    "defense": 125,
+    "speed": 55,
     "height": 10,
     "weight": 350,
     "color": "blue",
@@ -1749,6 +2306,10 @@ const POKEMON_RECORDS = [
       "rock",
       "water"
     ],
+    "hp": 30,
+    "attack": 80,
+    "defense": 90,
+    "speed": 55,
     "height": 5,
     "weight": 115,
     "color": "brown",
@@ -1762,6 +2323,10 @@ const POKEMON_RECORDS = [
       "rock",
       "water"
     ],
+    "hp": 60,
+    "attack": 115,
+    "defense": 105,
+    "speed": 80,
     "height": 13,
     "weight": 405,
     "color": "brown",
@@ -1775,6 +2340,10 @@ const POKEMON_RECORDS = [
       "rock",
       "flying"
     ],
+    "hp": 80,
+    "attack": 105,
+    "defense": 65,
+    "speed": 130,
     "height": 18,
     "weight": 590,
     "color": "purple",
@@ -1787,6 +2356,10 @@ const POKEMON_RECORDS = [
     "types": [
       "normal"
     ],
+    "hp": 160,
+    "attack": 110,
+    "defense": 65,
+    "speed": 30,
     "height": 21,
     "weight": 4600,
     "color": "black",
@@ -1800,6 +2373,10 @@ const POKEMON_RECORDS = [
       "ice",
       "flying"
     ],
+    "hp": 90,
+    "attack": 85,
+    "defense": 100,
+    "speed": 85,
     "height": 17,
     "weight": 554,
     "color": "blue",
@@ -1813,6 +2390,10 @@ const POKEMON_RECORDS = [
       "electric",
       "flying"
     ],
+    "hp": 90,
+    "attack": 90,
+    "defense": 85,
+    "speed": 100,
     "height": 16,
     "weight": 526,
     "color": "yellow",
@@ -1826,6 +2407,10 @@ const POKEMON_RECORDS = [
       "fire",
       "flying"
     ],
+    "hp": 90,
+    "attack": 100,
+    "defense": 90,
+    "speed": 90,
     "height": 20,
     "weight": 600,
     "color": "yellow",
@@ -1838,6 +2423,10 @@ const POKEMON_RECORDS = [
     "types": [
       "dragon"
     ],
+    "hp": 41,
+    "attack": 64,
+    "defense": 45,
+    "speed": 50,
     "height": 18,
     "weight": 33,
     "color": "blue",
@@ -1850,6 +2439,10 @@ const POKEMON_RECORDS = [
     "types": [
       "dragon"
     ],
+    "hp": 61,
+    "attack": 84,
+    "defense": 65,
+    "speed": 70,
     "height": 40,
     "weight": 165,
     "color": "blue",
@@ -1863,6 +2456,10 @@ const POKEMON_RECORDS = [
       "dragon",
       "flying"
     ],
+    "hp": 91,
+    "attack": 134,
+    "defense": 95,
+    "speed": 80,
     "height": 22,
     "weight": 2100,
     "color": "brown",
@@ -1875,6 +2472,10 @@ const POKEMON_RECORDS = [
     "types": [
       "psychic"
     ],
+    "hp": 106,
+    "attack": 110,
+    "defense": 90,
+    "speed": 130,
     "height": 20,
     "weight": 1220,
     "color": "purple",
@@ -1887,6 +2488,10 @@ const POKEMON_RECORDS = [
     "types": [
       "psychic"
     ],
+    "hp": 100,
+    "attack": 100,
+    "defense": 100,
+    "speed": 100,
     "height": 4,
     "weight": 40,
     "color": "pink",

@@ -54,3 +54,15 @@ Original prompt: Kompletně implementovat lokální duelovou hru „PokéStín�
 - Herně specifické konstanty a čistá pravidla jsou u svých her; `game-core.mjs` klesl z 950 na 54 řádků sdílených RNG, seed a turnajových utilit. Staré paralelní registry `game-catalog.mjs` a `games.mjs` byly odstraněny.
 - Přidán `duel/games/README.md` s kontraktem a checklistem nové hry. Kontraktový test automaticky projde všechny registrované hry a neobsahuje natvrdo počet 13.
 - Finální ověření: syntaxe všech modulů, 22/22 jednotkových testů, výběr všech 13 her v browseru, start local/shared hry, turnajový los a celý Office Panic průchod až k výsledku bota; bez konzolových chyb.
+
+## Kanto Trumf — aktuální úkol
+
+Original prompt: Kompletně implementovat sdílenou duelovou hru „Kanto Trumf“ (`kanto-trumf`) se seedovanou rukou sedmi Pokémonů, šesti unikátními disciplínami, tajnou volbou přes commit–reveal, osmivteřinovým timeoutem, practice botem, přístupným responzivním UI, registrací, testy a úplným ověřením.
+
+- Přečten `duel/games/README.md`; kořenový `AGENTS.md` v pracovním stromu není, použity jsou instrukce vložené v zadání.
+- Snapshot `duel/games/pokemon/snapshot.mjs` zůstává jediným runtime zdrojem 151 druhů a nově obsahuje PokeAPI base staty HP, útok, obrana a rychlost; výška a váha používají původní jednotky snapshotu. Produkční hra nemá PokeAPI `fetch()`.
+- Hotový shared controller: stejná seedovaná ruka sedmi karet, šest disciplín právě jednou, aktuální i následující hodnota, osmivteřinová deterministická volba, Ditto/tie/win bodování a role-ordered `finishShared()` s maximem 12 bodů.
+- Online volby používají SHA-256 commit–reveal s 128bit nonce, vazbou na roli a kolo, validací ruky/spotřeby/pořadí a bounded frontami pro zpožděný commit dalšího kola i souběžné reveal ověřování. Practice bot vybírá seedovaně z nejlepších dostupných karet bez síťového protokolu.
+- Bezpečnostní review reprodukovalo podvržení generic shared výsledku a oprava v `duel/app.mjs` nyní vzdálené `result` zprávy u shared her ignoruje; stejný browser PoC po opravě ponechal kanonické skóre beze změny.
+- UI je responzivní a přístupné: skutečná tlačítka, klávesy 1–7 a Enter, aria-live stav, accessible názvy obou disciplín, focus preservation, touch layout a fullscreen. Na 375×812 je CTA celé ve viewportu a nevzniká horizontální overflow.
+- Finální ověření: 45/45 Node testů, syntax změněných modulů a `git diff --check`; celý practice zápas, dva online klienty, oba timeouty, commit-before-reveal, malformed/duplicate zprávy, delayed-reveal race, invalid→valid reveal race, idempotentní cleanup a podvržený finální výsledek byly ověřeny v headless Chromium. Produkční PokeAPI requesty: 0, browser console errors: 0.

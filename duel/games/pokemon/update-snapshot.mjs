@@ -165,6 +165,11 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
   }).filter(Boolean);
   const color = species && colorById.get(Number(species.color_id));
   const shape = species && shapeById.get(Number(species.shape_id));
+  const hasEvolutionParent = Boolean(species && Number(species.evolves_from_species_id) > 0);
+  const hasEvolutionChild = childCountByParentId.has(id);
+  const evolutionStage = hasEvolutionParent
+    ? hasEvolutionChild ? "middle" : "final"
+    : hasEvolutionChild ? "base" : "single";
 
   if (!record || !species || !name || !types.length || !color || !shape || !stats
     || !["hp", "attack", "defense", "speed"].every(function (stat) {
@@ -185,6 +190,7 @@ const pokemon = Array.from({ length: 151 }, function (_, index) {
     height: Number(record.height),
     weight: Number(record.weight),
     color: color.identifier,
+    evolutionStage,
     shape: shape.identifier
   };
 });
@@ -199,6 +205,10 @@ if (!evolutionEdges.length || new Set(evolutionEdges.map(function (edge) {
 }
 
 const generatedAt = new Date().toISOString();
+const compactEvolutionEdges = "[\n" + evolutionEdges.map(function (edge) {
+  return "  { \"parentId\": " + edge.parentId + ", \"childId\": " + edge.childId
+    + ", \"branched\": " + edge.branched + " }";
+}).join(",\n") + "\n]";
 const snapshot = `// Vygenerováno skriptem update-snapshot.mjs; ruční změny budou při příští aktualizaci přepsány.
 export const POKEMON_SNAPSHOT_META = Object.freeze(${JSON.stringify({
   source: "https://github.com/PokeAPI/pokeapi/tree/" + dataRevision + "/data/v2/csv",
@@ -211,6 +221,7 @@ export const POKEMON_SNAPSHOT_META = Object.freeze(${JSON.stringify({
   count: pokemon.length,
   evolutionKind: "direct_species_parent",
   evolutionEdgeCount: evolutionEdges.length,
+  evolutionStageKind: "full_species_chain_position",
   statKind: "base_stat",
   heightUnit: "decimetre",
   weightUnit: "hectogram"
@@ -218,7 +229,7 @@ export const POKEMON_SNAPSHOT_META = Object.freeze(${JSON.stringify({
 
 const POKEMON_RECORDS = ${JSON.stringify(pokemon, null, 2)};
 
-const EVOLUTION_EDGES = ${JSON.stringify(evolutionEdges, null, 2)};
+const EVOLUTION_EDGES = ${compactEvolutionEdges};
 
 export const POKEMON_SNAPSHOT = Object.freeze(POKEMON_RECORDS.map(function (pokemon) {
   return Object.freeze({ ...pokemon, types: Object.freeze(pokemon.types.slice()) });

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oakovo PokéBingo – test harness</title>
+  <link rel="icon" href="../../favicon.svg">
+  <link rel="stylesheet" href="../../duel/duel.css">
+  <style>
+    body { margin: 0; padding: 16px; }
+    main { width: min(1050px, 100%); margin: auto; }
+    #result { min-height: 24px; margin: 8px 0 0; font-weight: 900; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="game-stage" id="stage"></div>
+    <p id="result" role="status"></p>
+  </main>
+  <script type="module">
+    import { startOakBingo } from "../../duel/games/oak-bingo.mjs";
+
+    const result = document.querySelector("#result");
+    window.oakBingoController = startOakBingo({
+      stage: document.querySelector("#stage"),
+      seed: "browser-check",
+      localRole: 0,
+      mode: "practice",
+      names: ["Tester", "OakBot"],
+      setRoundLabel: function () {},
+      publishScore: function (score) { document.body.dataset.score = String(score); },
+      finish: function (value) {
+        window.oakBingoResult = value;
+        result.textContent = "Hotovo: " + value.score + " bodů";
+      }
+    });
+  </script>
+</body>
+</html>

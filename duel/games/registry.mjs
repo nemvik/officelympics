@@ -8,6 +8,7 @@ import { inboxPongGame } from "./inbox-pong.mjs";
 import { jargonDecoderGame } from "./jargon-decoder.mjs";
 import { kantoTrumfGame } from "./kanto-trumf.mjs";
 import { meetingEscapeGame } from "./meeting-escape.mjs";
+import { oakBingoGame } from "./oak-bingo.mjs";
 import { officePanicGame } from "./office-panic.mjs";
 import { officePictionaryGame } from "./office-pictionary.mjs";
 import { paperCurlingGame } from "./paper-curling.mjs";
@@ -33,6 +34,7 @@ export const GAMES = Object.freeze([
   calendarSqueezeGame,
   printerExorcistGame,
   pokeShadowGame,
+  oakBingoGame,
   kantoTrumfGame,
   officePictionaryGame
 ]);

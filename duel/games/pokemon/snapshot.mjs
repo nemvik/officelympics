@@ -4,12 +4,13 @@ export const POKEMON_SNAPSHOT_META = Object.freeze({
   "sourceRevision": "b963af2b78a33e12fd38e96ccd74a8387bdda574",
   "spriteSource": "https://github.com/PokeAPI/sprites/tree/c10459b9b0129eaca5c5d9b1cac65336debb1d08",
   "spriteRevision": "c10459b9b0129eaca5c5d9b1cac65336debb1d08",
-  "generatedAt": "2026-08-24T11:33:28.465Z",
+  "generatedAt": "2026-08-24T13:24:40.642Z",
   "minimumId": 1,
   "maximumId": 151,
   "count": 151,
   "evolutionKind": "direct_species_parent",
   "evolutionEdgeCount": 72,
+  "evolutionStageKind": "full_species_chain_position",
   "statKind": "base_stat",
   "heightUnit": "decimetre",
   "weightUnit": "hectogram"
@@ -31,6 +32,7 @@ const POKEMON_RECORDS = [
     "height": 7,
     "weight": 69,
     "color": "green",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -48,6 +50,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 130,
     "color": "green",
+    "evolutionStage": "middle",
     "shape": "quadruped"
   },
   {
@@ -65,6 +68,7 @@ const POKEMON_RECORDS = [
     "height": 20,
     "weight": 1000,
     "color": "green",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -81,6 +85,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 85,
     "color": "red",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -97,6 +102,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 190,
     "color": "red",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -114,6 +120,7 @@ const POKEMON_RECORDS = [
     "height": 17,
     "weight": 905,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -130,6 +137,7 @@ const POKEMON_RECORDS = [
     "height": 5,
     "weight": 90,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -146,6 +154,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 225,
     "color": "blue",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -162,6 +171,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 855,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -178,6 +188,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 29,
     "color": "green",
+    "evolutionStage": "base",
     "shape": "armor"
   },
   {
@@ -194,6 +205,7 @@ const POKEMON_RECORDS = [
     "height": 7,
     "weight": 99,
     "color": "green",
+    "evolutionStage": "middle",
     "shape": "squiggle"
   },
   {
@@ -211,6 +223,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 320,
     "color": "white",
+    "evolutionStage": "final",
     "shape": "bug-wings"
   },
   {
@@ -228,6 +241,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 32,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "armor"
   },
   {
@@ -245,6 +259,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 100,
     "color": "yellow",
+    "evolutionStage": "middle",
     "shape": "squiggle"
   },
   {
@@ -262,6 +277,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 295,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "bug-wings"
   },
   {
@@ -279,6 +295,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 18,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "wings"
   },
   {
@@ -296,6 +313,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 300,
     "color": "brown",
+    "evolutionStage": "middle",
     "shape": "wings"
   },
   {
@@ -313,6 +331,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 395,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "wings"
   },
   {
@@ -329,6 +348,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 35,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -345,6 +365,7 @@ const POKEMON_RECORDS = [
     "height": 7,
     "weight": 185,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -362,6 +383,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 20,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "wings"
   },
   {
@@ -379,6 +401,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 380,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "wings"
   },
   {
@@ -395,6 +418,7 @@ const POKEMON_RECORDS = [
     "height": 20,
     "weight": 69,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "squiggle"
   },
   {
@@ -411,6 +435,7 @@ const POKEMON_RECORDS = [
     "height": 35,
     "weight": 650,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "squiggle"
   },
   {
@@ -427,6 +452,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 60,
     "color": "yellow",
+    "evolutionStage": "middle",
     "shape": "quadruped"
   },
   {
@@ -443,6 +469,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 300,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -459,6 +486,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 120,
     "color": "yellow",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -475,6 +503,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 295,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -491,6 +520,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 70,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -507,6 +537,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 200,
     "color": "blue",
+    "evolutionStage": "middle",
     "shape": "quadruped"
   },
   {
@@ -524,6 +555,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 600,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -540,6 +572,7 @@ const POKEMON_RECORDS = [
     "height": 5,
     "weight": 90,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -556,6 +589,7 @@ const POKEMON_RECORDS = [
     "height": 9,
     "weight": 195,
     "color": "purple",
+    "evolutionStage": "middle",
     "shape": "quadruped"
   },
   {
@@ -573,6 +607,7 @@ const POKEMON_RECORDS = [
     "height": 14,
     "weight": 620,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -589,6 +624,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 75,
     "color": "pink",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -605,6 +641,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 400,
     "color": "pink",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -621,6 +658,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 99,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -637,6 +675,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 199,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -654,6 +693,7 @@ const POKEMON_RECORDS = [
     "height": 5,
     "weight": 55,
     "color": "pink",
+    "evolutionStage": "middle",
     "shape": "humanoid"
   },
   {
@@ -671,6 +711,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 120,
     "color": "pink",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -688,6 +729,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 75,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "wings"
   },
   {
@@ -705,6 +747,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 550,
     "color": "purple",
+    "evolutionStage": "middle",
     "shape": "wings"
   },
   {
@@ -722,6 +765,7 @@ const POKEMON_RECORDS = [
     "height": 5,
     "weight": 54,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "legs"
   },
   {
@@ -739,6 +783,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 86,
     "color": "blue",
+    "evolutionStage": "middle",
     "shape": "humanoid"
   },
   {
@@ -756,6 +801,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 186,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -773,6 +819,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 54,
     "color": "red",
+    "evolutionStage": "base",
     "shape": "armor"
   },
   {
@@ -790,6 +837,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 295,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "armor"
   },
   {
@@ -807,6 +855,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 300,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "humanoid"
   },
   {
@@ -824,6 +873,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 125,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "bug-wings"
   },
   {
@@ -840,6 +890,7 @@ const POKEMON_RECORDS = [
     "height": 2,
     "weight": 8,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "blob"
   },
   {
@@ -856,6 +907,7 @@ const POKEMON_RECORDS = [
     "height": 7,
     "weight": 333,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "heads"
   },
   {
@@ -872,6 +924,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 42,
     "color": "yellow",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -888,6 +941,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 320,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -904,6 +958,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 196,
     "color": "yellow",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -920,6 +975,7 @@ const POKEMON_RECORDS = [
     "height": 17,
     "weight": 766,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -936,6 +992,7 @@ const POKEMON_RECORDS = [
     "height": 5,
     "weight": 280,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -952,6 +1009,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 320,
     "color": "brown",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -968,6 +1026,7 @@ const POKEMON_RECORDS = [
     "height": 7,
     "weight": 190,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -984,6 +1043,7 @@ const POKEMON_RECORDS = [
     "height": 19,
     "weight": 1550,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -1000,6 +1060,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 124,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "legs"
   },
   {
@@ -1016,6 +1077,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 200,
     "color": "blue",
+    "evolutionStage": "middle",
     "shape": "humanoid"
   },
   {
@@ -1033,6 +1095,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 540,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -1049,6 +1112,7 @@ const POKEMON_RECORDS = [
     "height": 9,
     "weight": 195,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -1065,6 +1129,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 565,
     "color": "brown",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -1081,6 +1146,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 480,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -1097,6 +1163,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 195,
     "color": "gray",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -1113,6 +1180,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 705,
     "color": "gray",
+    "evolutionStage": "middle",
     "shape": "humanoid"
   },
   {
@@ -1129,6 +1197,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 1300,
     "color": "gray",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -1146,6 +1215,7 @@ const POKEMON_RECORDS = [
     "height": 7,
     "weight": 40,
     "color": "green",
+    "evolutionStage": "base",
     "shape": "humanoid"
   },
   {
@@ -1163,6 +1233,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 64,
     "color": "green",
+    "evolutionStage": "middle",
     "shape": "blob"
   },
   {
@@ -1180,6 +1251,7 @@ const POKEMON_RECORDS = [
     "height": 17,
     "weight": 155,
     "color": "green",
+    "evolutionStage": "final",
     "shape": "blob"
   },
   {
@@ -1197,6 +1269,7 @@ const POKEMON_RECORDS = [
     "height": 9,
     "weight": 455,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "tentacles"
   },
   {
@@ -1214,6 +1287,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 550,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "tentacles"
   },
   {
@@ -1231,6 +1305,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 200,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "arms"
   },
   {
@@ -1248,6 +1323,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 1050,
     "color": "brown",
+    "evolutionStage": "middle",
     "shape": "humanoid"
   },
   {
@@ -1265,6 +1341,7 @@ const POKEMON_RECORDS = [
     "height": 14,
     "weight": 3000,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -1281,6 +1358,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 300,
     "color": "yellow",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -1297,6 +1375,7 @@ const POKEMON_RECORDS = [
     "height": 17,
     "weight": 950,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -1314,6 +1393,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 360,
     "color": "pink",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -1331,6 +1411,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 785,
     "color": "pink",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -1348,6 +1429,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 60,
     "color": "gray",
+    "evolutionStage": "base",
     "shape": "arms"
   },
   {
@@ -1365,6 +1447,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 600,
     "color": "gray",
+    "evolutionStage": "middle",
     "shape": "heads"
   },
   {
@@ -1382,6 +1465,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 150,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "wings"
   },
   {
@@ -1399,6 +1483,7 @@ const POKEMON_RECORDS = [
     "height": 14,
     "weight": 392,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "legs"
   },
   {
@@ -1416,6 +1501,7 @@ const POKEMON_RECORDS = [
     "height": 18,
     "weight": 852,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "legs"
   },
   {
@@ -1432,6 +1518,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 900,
     "color": "white",
+    "evolutionStage": "base",
     "shape": "fish"
   },
   {
@@ -1449,6 +1536,7 @@ const POKEMON_RECORDS = [
     "height": 17,
     "weight": 1200,
     "color": "white",
+    "evolutionStage": "final",
     "shape": "fish"
   },
   {
@@ -1465,6 +1553,7 @@ const POKEMON_RECORDS = [
     "height": 9,
     "weight": 300,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "arms"
   },
   {
@@ -1481,6 +1570,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 300,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "arms"
   },
   {
@@ -1497,6 +1587,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 40,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "ball"
   },
   {
@@ -1514,6 +1605,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 1325,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "ball"
   },
   {
@@ -1531,6 +1623,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 1,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "ball"
   },
   {
@@ -1548,6 +1641,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 1,
     "color": "purple",
+    "evolutionStage": "middle",
     "shape": "arms"
   },
   {
@@ -1565,6 +1659,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 405,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -1582,6 +1677,7 @@ const POKEMON_RECORDS = [
     "height": 88,
     "weight": 2100,
     "color": "gray",
+    "evolutionStage": "base",
     "shape": "squiggle"
   },
   {
@@ -1598,6 +1694,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 324,
     "color": "yellow",
+    "evolutionStage": "base",
     "shape": "humanoid"
   },
   {
@@ -1614,6 +1711,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 756,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -1630,6 +1728,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 65,
     "color": "red",
+    "evolutionStage": "base",
     "shape": "armor"
   },
   {
@@ -1646,6 +1745,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 600,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "armor"
   },
   {
@@ -1662,6 +1762,7 @@ const POKEMON_RECORDS = [
     "height": 5,
     "weight": 104,
     "color": "red",
+    "evolutionStage": "base",
     "shape": "ball"
   },
   {
@@ -1678,6 +1779,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 666,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "ball"
   },
   {
@@ -1695,6 +1797,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 25,
     "color": "pink",
+    "evolutionStage": "base",
     "shape": "heads"
   },
   {
@@ -1712,6 +1815,7 @@ const POKEMON_RECORDS = [
     "height": 20,
     "weight": 1200,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "legs"
   },
   {
@@ -1728,6 +1832,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 65,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -1744,6 +1849,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 450,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -1760,6 +1866,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 498,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -1776,6 +1883,7 @@ const POKEMON_RECORDS = [
     "height": 14,
     "weight": 502,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -1792,6 +1900,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 655,
     "color": "pink",
+    "evolutionStage": "base",
     "shape": "upright"
   },
   {
@@ -1808,6 +1917,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 10,
     "color": "purple",
+    "evolutionStage": "base",
     "shape": "ball"
   },
   {
@@ -1824,6 +1934,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 95,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "heads"
   },
   {
@@ -1841,6 +1952,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 1150,
     "color": "gray",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -1858,6 +1970,7 @@ const POKEMON_RECORDS = [
     "height": 19,
     "weight": 1200,
     "color": "gray",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -1874,6 +1987,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 346,
     "color": "pink",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -1890,6 +2004,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 350,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "legs"
   },
   {
@@ -1906,6 +2021,7 @@ const POKEMON_RECORDS = [
     "height": 22,
     "weight": 800,
     "color": "brown",
+    "evolutionStage": "single",
     "shape": "upright"
   },
   {
@@ -1922,6 +2038,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 80,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "blob"
   },
   {
@@ -1938,6 +2055,7 @@ const POKEMON_RECORDS = [
     "height": 12,
     "weight": 250,
     "color": "blue",
+    "evolutionStage": "middle",
     "shape": "blob"
   },
   {
@@ -1954,6 +2072,7 @@ const POKEMON_RECORDS = [
     "height": 6,
     "weight": 150,
     "color": "red",
+    "evolutionStage": "base",
     "shape": "fish"
   },
   {
@@ -1970,6 +2089,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 390,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "fish"
   },
   {
@@ -1986,6 +2106,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 345,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "blob"
   },
   {
@@ -2003,6 +2124,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 800,
     "color": "purple",
+    "evolutionStage": "final",
     "shape": "blob"
   },
   {
@@ -2020,6 +2142,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 545,
     "color": "pink",
+    "evolutionStage": "middle",
     "shape": "humanoid"
   },
   {
@@ -2037,6 +2160,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 560,
     "color": "green",
+    "evolutionStage": "base",
     "shape": "bug-wings"
   },
   {
@@ -2054,6 +2178,7 @@ const POKEMON_RECORDS = [
     "height": 14,
     "weight": 406,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -2070,6 +2195,7 @@ const POKEMON_RECORDS = [
     "height": 11,
     "weight": 300,
     "color": "yellow",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -2086,6 +2212,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 445,
     "color": "red",
+    "evolutionStage": "middle",
     "shape": "upright"
   },
   {
@@ -2102,6 +2229,7 @@ const POKEMON_RECORDS = [
     "height": 15,
     "weight": 550,
     "color": "brown",
+    "evolutionStage": "single",
     "shape": "humanoid"
   },
   {
@@ -2118,6 +2246,7 @@ const POKEMON_RECORDS = [
     "height": 14,
     "weight": 884,
     "color": "brown",
+    "evolutionStage": "single",
     "shape": "quadruped"
   },
   {
@@ -2134,6 +2263,7 @@ const POKEMON_RECORDS = [
     "height": 9,
     "weight": 100,
     "color": "red",
+    "evolutionStage": "base",
     "shape": "fish"
   },
   {
@@ -2151,6 +2281,7 @@ const POKEMON_RECORDS = [
     "height": 65,
     "weight": 2350,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "squiggle"
   },
   {
@@ -2168,6 +2299,7 @@ const POKEMON_RECORDS = [
     "height": 25,
     "weight": 2200,
     "color": "blue",
+    "evolutionStage": "single",
     "shape": "fish"
   },
   {
@@ -2184,6 +2316,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 40,
     "color": "purple",
+    "evolutionStage": "single",
     "shape": "ball"
   },
   {
@@ -2200,6 +2333,7 @@ const POKEMON_RECORDS = [
     "height": 3,
     "weight": 65,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "quadruped"
   },
   {
@@ -2216,6 +2350,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 290,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -2232,6 +2367,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 245,
     "color": "yellow",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -2248,6 +2384,7 @@ const POKEMON_RECORDS = [
     "height": 9,
     "weight": 250,
     "color": "red",
+    "evolutionStage": "final",
     "shape": "quadruped"
   },
   {
@@ -2264,6 +2401,7 @@ const POKEMON_RECORDS = [
     "height": 8,
     "weight": 365,
     "color": "pink",
+    "evolutionStage": "base",
     "shape": "legs"
   },
   {
@@ -2281,6 +2419,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 75,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "tentacles"
   },
   {
@@ -2298,6 +2437,7 @@ const POKEMON_RECORDS = [
     "height": 10,
     "weight": 350,
     "color": "blue",
+    "evolutionStage": "final",
     "shape": "tentacles"
   },
   {
@@ -2315,6 +2455,7 @@ const POKEMON_RECORDS = [
     "height": 5,
     "weight": 115,
     "color": "brown",
+    "evolutionStage": "base",
     "shape": "armor"
   },
   {
@@ -2332,6 +2473,7 @@ const POKEMON_RECORDS = [
     "height": 13,
     "weight": 405,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -2349,6 +2491,7 @@ const POKEMON_RECORDS = [
     "height": 18,
     "weight": 590,
     "color": "purple",
+    "evolutionStage": "single",
     "shape": "wings"
   },
   {
@@ -2365,6 +2508,7 @@ const POKEMON_RECORDS = [
     "height": 21,
     "weight": 4600,
     "color": "black",
+    "evolutionStage": "final",
     "shape": "humanoid"
   },
   {
@@ -2382,6 +2526,7 @@ const POKEMON_RECORDS = [
     "height": 17,
     "weight": 554,
     "color": "blue",
+    "evolutionStage": "single",
     "shape": "wings"
   },
   {
@@ -2399,6 +2544,7 @@ const POKEMON_RECORDS = [
     "height": 16,
     "weight": 526,
     "color": "yellow",
+    "evolutionStage": "single",
     "shape": "wings"
   },
   {
@@ -2416,6 +2562,7 @@ const POKEMON_RECORDS = [
     "height": 20,
     "weight": 600,
     "color": "yellow",
+    "evolutionStage": "single",
     "shape": "wings"
   },
   {
@@ -2432,6 +2579,7 @@ const POKEMON_RECORDS = [
     "height": 18,
     "weight": 33,
     "color": "blue",
+    "evolutionStage": "base",
     "shape": "squiggle"
   },
   {
@@ -2448,6 +2596,7 @@ const POKEMON_RECORDS = [
     "height": 40,
     "weight": 165,
     "color": "blue",
+    "evolutionStage": "middle",
     "shape": "squiggle"
   },
   {
@@ -2465,6 +2614,7 @@ const POKEMON_RECORDS = [
     "height": 22,
     "weight": 2100,
     "color": "brown",
+    "evolutionStage": "final",
     "shape": "upright"
   },
   {
@@ -2481,6 +2631,7 @@ const POKEMON_RECORDS = [
     "height": 20,
     "weight": 1220,
     "color": "purple",
+    "evolutionStage": "single",
     "shape": "upright"
   },
   {
@@ -2497,6 +2648,7 @@ const POKEMON_RECORDS = [
     "height": 4,
     "weight": 40,
     "color": "pink",
+    "evolutionStage": "single",
     "shape": "upright"
   }
 ];

@@ -223,6 +223,22 @@ section {
   display: none;
 }
 
+.poster-update {
+  max-width: calc(100% - 28px);
+  padding: 8px 11px;
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  color: var(--ink);
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 4px 5px 0 var(--pink);
+  font-size: 13px;
+  font-weight: 1000;
+  line-height: 1.15;
+  transform: rotate(-1.5deg);
+}
+
 .hero-copy {
   min-width: 0;
 }

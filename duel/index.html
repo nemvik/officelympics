@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Office Duel — Officelympics 2026</title>
-  <meta name="description" content="Vyzvi kolegu na dvanáct rychlých kancelářských her. Stačí odkaz a kód místnosti.">
+  <meta name="description" content="Vyzvi kolegu na třináct rychlých kancelářských her. Stačí odkaz a kód místnosti.">
   <meta name="theme-color" content="#ff0f7b">
 
   <meta property="og:type" content="website">
   <meta property="og:locale" content="cs_CZ">
   <meta property="og:title" content="Office Duel — Officelympics 2026">
-  <meta property="og:description" content="Dvanáct her. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.">
+  <meta property="og:description" content="Třináct her. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.">
   <meta property="og:image" content="../2026.png">
 
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -33,7 +33,7 @@
       <div>
         <span class="kicker">Neoficiální digitální disciplíny</span>
         <div class="hero-title" aria-hidden="true"><span>Office</span> Duel</div>
-        <p>Dvanáct her. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.</p>
+        <p>Třináct her. Dva kolegové. Jedna nenávratně poškozená pracovní morálka.</p>
       </div>
       <div class="hero-stamp" aria-hidden="true">HR TO<br>NEHRAJE</div>
     </header>
@@ -43,72 +43,27 @@
     <section class="screen" id="setup-screen" aria-labelledby="setup-title">
       <div class="section-heading">
         <span class="eyebrow">Krok 1</span>
-        <h2 id="setup-title">Vyber disciplínu</h2>
-        <p>Hostitel ji může změnit ještě v čekárně.</p>
+        <h2 id="setup-title">Vyber formát</h2>
+        <p>Jeden rychlý duel, nebo turnaj ze tří náhodně vylosovaných her.</p>
       </div>
 
-      <div class="game-picker" id="setup-game-picker" role="group" aria-label="Výběr hry">
-        <button class="game-card is-selected" type="button" data-game-choice="panic" aria-pressed="true">
-          <span class="game-icon" aria-hidden="true">🔥</span>
-          <span><strong>Office Panic</strong><small>20 sekund inboxového chaosu</small></span>
-          <span class="difficulty">rychlost</span>
+      <div class="match-format-picker" id="setup-format-picker" role="group" aria-label="Výběr formátu">
+        <button class="format-card is-selected" type="button" data-format-choice="single" aria-pressed="true">
+          <span aria-hidden="true">⚡</span>
+          <span><strong>Jedna hra</strong><small>Vyberete si konkrétní disciplínu.</small></span>
         </button>
-        <button class="game-card" type="button" data-game-choice="deadline" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">⏱️</span>
-          <span><strong>Deadline Chicken</strong><small>Pusť práci těsně před vyhořením</small></span>
-          <span class="difficulty">odhad</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="curling" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">🗑️</span>
-          <span><strong>Papírový curling</strong><small>Tři koule, jeden kancelářský koš</small></span>
-          <span class="difficulty">taktika</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="alttab" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">👔</span>
-          <span><strong>Alt+Tab Duel</strong><small>Přepni okno dřív, než šéf něco uvidí</small></span>
-          <span class="difficulty">reflex</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="battleship" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">📊</span>
-          <span><strong>Tabulková námořní bitva</strong><small>Potop meetingy v kolegově kalendáři</small></span>
-          <span class="difficulty">strategie</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="taskstack" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">🧱</span>
-          <span><strong>Task Stack</strong><small>Tetris s urgentními úkoly</small></span>
-          <span class="difficulty">arkáda</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="pong" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">📧</span>
-          <span><strong>Inbox Pong</strong><small>Nenech urgentní e-mail propadnout</small></span>
-          <span class="difficulty">duel</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="escape" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">🏃</span>
-          <span><strong>Meeting Escape</strong><small>Uteč meetingům a sbírej kávu</small></span>
-          <span class="difficulty">běh</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="jargon" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">🧩</span>
-          <span><strong>Jargon Decoder</strong><small>Poskládej korporátní moudro</small></span>
-          <span class="difficulty">slova</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="coffee" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">☕</span>
-          <span><strong>Kávová štafeta</strong><small>Namíchej objednávku zpaměti</small></span>
-          <span class="difficulty">paměť</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="calendar" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">🗓️</span>
-          <span><strong>Kalendářový squeeze</strong><small>Vmáčkni meeting do plného dne</small></span>
-          <span class="difficulty">postřeh</span>
-        </button>
-        <button class="game-card" type="button" data-game-choice="printer" aria-pressed="false">
-          <span class="game-icon" aria-hidden="true">🖨️</span>
-          <span><strong>Tiskárnový exorcista</strong><small>Zkroť kancelářského démona</small></span>
-          <span class="difficulty">diagnostika</span>
+        <button class="format-card" type="button" data-format-choice="tournament" aria-pressed="false">
+          <span aria-hidden="true">🏆</span>
+          <span><strong>Turnaj</strong><small>3 náhodné hry, každá za jeden bod.</small></span>
         </button>
       </div>
+
+      <div class="tournament-note" id="setup-tournament-note" hidden>
+        <span aria-hidden="true">🎲</span>
+        <div><strong>Los proběhne až při startu</strong><p>Tři různé hry uvidí oba kolegové ve stejném pořadí. Remíza ve hře dává každému půl bodu.</p></div>
+      </div>
+
+      <div class="game-picker" id="setup-game-picker" role="group" aria-label="Výběr hry"></div>
 
       <div class="setup-grid">
         <section class="panel online-panel" aria-labelledby="online-title">
@@ -138,7 +93,7 @@
         <aside class="panel practice-panel" aria-labelledby="practice-title">
           <span class="eyebrow">Sólo trénink</span>
           <h2 id="practice-title">Nejdřív bez svědků?</h2>
-          <p>Vybranou hru spustíme proti přiměřeně neschopnému kolegovi-botovi.</p>
+          <p>Vybraný formát spustíme proti přiměřeně neschopnému kolegovi-botovi.</p>
           <button class="secondary-button" id="practice-button" type="button">🕶️ Spustit trénink</button>
           <div class="practice-note">Výsledky se nikam neposílají. HR se nic nedozví.</div>
         </aside>
@@ -179,48 +134,25 @@
 
       <div class="panel lobby-game-panel">
         <div class="section-heading compact">
-          <span class="eyebrow">Disciplína</span>
-          <h2>Co se bude hrát?</h2>
+          <span class="eyebrow">Formát zápasu</span>
+          <h2>Jak moc se zdržíte?</h2>
           <p id="selection-help">Hostitel vybírá, demokracie začne až po pracovní době.</p>
         </div>
 
-        <div class="game-picker compact-picker" id="lobby-game-picker" role="group" aria-label="Výběr hry v čekárně">
-          <button class="game-card is-selected" type="button" data-game-choice="panic" aria-pressed="true">
-            <span class="game-icon" aria-hidden="true">🔥</span><span><strong>Office Panic</strong><small>rychlost</small></span>
+        <div class="match-format-picker compact-formats" id="lobby-format-picker" role="group" aria-label="Výběr formátu v čekárně">
+          <button class="format-card is-selected" type="button" data-format-choice="single" aria-pressed="true">
+            <span aria-hidden="true">⚡</span><span><strong>Jedna hra</strong><small>Rychlý duel</small></span>
           </button>
-          <button class="game-card" type="button" data-game-choice="deadline" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">⏱️</span><span><strong>Deadline Chicken</strong><small>odhad</small></span>
+          <button class="format-card" type="button" data-format-choice="tournament" aria-pressed="false">
+            <span aria-hidden="true">🏆</span><span><strong>Turnaj</strong><small>3 náhodné hry</small></span>
           </button>
-          <button class="game-card" type="button" data-game-choice="curling" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">🗑️</span><span><strong>Papírový curling</strong><small>taktika</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="alttab" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">👔</span><span><strong>Alt+Tab Duel</strong><small>reflex</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="battleship" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">📊</span><span><strong>Námořní bitva</strong><small>strategie</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="taskstack" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">🧱</span><span><strong>Task Stack</strong><small>arkáda</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="pong" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">📧</span><span><strong>Inbox Pong</strong><small>duel</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="escape" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">🏃</span><span><strong>Meeting Escape</strong><small>běh</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="jargon" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">🧩</span><span><strong>Jargon Decoder</strong><small>slova</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="coffee" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">☕</span><span><strong>Kávová štafeta</strong><small>paměť</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="calendar" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">🗓️</span><span><strong>Kalendářový squeeze</strong><small>postřeh</small></span>
-          </button>
-          <button class="game-card" type="button" data-game-choice="printer" aria-pressed="false">
-            <span class="game-icon" aria-hidden="true">🖨️</span><span><strong>Tiskárnový exorcista</strong><small>diagnostika</small></span>
-          </button>
+        </div>
+
+        <div class="game-picker compact-picker" id="lobby-game-picker" role="group" aria-label="Výběr hry v čekárně"></div>
+
+        <div class="tournament-note lobby-tournament-note" id="lobby-tournament-note" hidden>
+          <span aria-hidden="true">🎲</span>
+          <div><strong>Tři hry určí náhoda</strong><p>Po každém kole oba potvrdíte pokračování. Vyhrává více turnajových bodů.</p></div>
         </div>
       </div>
 
@@ -242,6 +174,7 @@
         <div class="match-center">
           <span id="game-round-label">Duel</span>
           <h2 id="game-title">Office Panic</h2>
+          <div class="tournament-track" id="tournament-track" aria-label="Průběh turnaje" hidden></div>
         </div>
         <div class="match-player remote-player">
           <b id="match-remote-score">0</b>
@@ -274,6 +207,8 @@
             <span id="result-remote-detail">bodů</span>
           </article>
         </div>
+
+        <div class="tournament-result" id="tournament-result" hidden></div>
 
         <div class="result-actions">
           <button class="primary-button" id="rematch-button" type="button">🔁 Odveta</button>

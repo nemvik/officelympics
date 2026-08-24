@@ -10,6 +10,8 @@ import {
   ESCAPE,
   GAME_IDS,
   JARGON_ROUNDS,
+  PICTIONARY,
+  PICTIONARY_PROMPTS,
   PONG,
   PRINTER_ROUNDS,
   TASK_STACK,
@@ -23,9 +25,11 @@ import {
   buildEscapeCourse,
   buildJargonRounds,
   buildPanicSchedule,
+  buildPictionaryRounds,
   buildPrinterRounds,
   buildTaskBag,
   calculateCurlingScore,
+  calculatePictionaryRoundScores,
   calendarSlotScore,
   clampShotVelocity,
   clearTaskRows,
@@ -36,15 +40,58 @@ import {
   deadlineRoundConfig,
   deadlineRoundScore,
   findCalendarSlots,
+  pickTournamentGames,
   printerRepairScore,
   rectanglesOverlap,
   stepCurling,
-  stepPong
+  stepPong,
+  tournamentRoundPoints
 } from "../duel/game-core.mjs";
+import { GAME_DEFINITIONS, getGameDefinition } from "../duel/game-catalog.mjs";
+import { IMPLEMENTED_GAME_IDS } from "../duel/games.mjs";
 
-test("Katalog obsahuje všech dvanáct kancelářských disciplín", function () {
-  assert.equal(GAME_IDS.length, 12);
-  assert.deepEqual(GAME_IDS.slice(-3), ["coffee", "calendar", "printer"]);
+test("Katalog obsahuje všech třináct kancelářských disciplín", function () {
+  assert.equal(GAME_IDS.length, 13);
+  assert.equal(GAME_DEFINITIONS.length, GAME_IDS.length);
+  assert.equal(new Set(GAME_IDS).size, GAME_IDS.length);
+  assert.deepEqual(IMPLEMENTED_GAME_IDS.slice().sort(), GAME_IDS.slice().sort());
+  assert.equal(getGameDefinition("pictionary").title, "Kancelářský Pictionary");
+  assert.deepEqual(GAME_IDS.slice(-4), ["coffee", "calendar", "printer", "pictionary"]);
+});
+
+test("Turnaj deterministicky losuje tři různé hry a férově boduje remízu", function () {
+  const first = pickTournamentGames("turnajovy-seed");
+  const second = pickTournamentGames("turnajovy-seed");
+  assert.deepEqual(first, second);
+  assert.equal(first.length, 3);
+  assert.equal(new Set(first).size, 3);
+  assert.ok(first.every(function (game) { return GAME_IDS.includes(game); }));
+  assert.deepEqual(tournamentRoundPoints(120, 80), [1, 0]);
+  assert.deepEqual(tournamentRoundPoints(80, 120), [0, 1]);
+  assert.deepEqual(tournamentRoundPoints(80, 80), [0.5, 0.5]);
+});
+
+test("Pictionary připraví tři férová kola a správně rozdělí body", function () {
+  const first = buildPictionaryRounds("picture-seed");
+  const second = buildPictionaryRounds("picture-seed");
+  assert.deepEqual(first, second);
+  assert.equal(first.length, 3);
+  assert.equal(new Set(first.flatMap(function (round) { return round.prompts; })).size, 6);
+  first.forEach(function (round) {
+    assert.equal(round.prompts.length, 2);
+    assert.equal(round.choices.length, 2);
+    round.choices.forEach(function (choices, role) {
+      assert.equal(choices.length, 4);
+      assert.equal(new Set(choices).size, 4);
+      assert.ok(choices.includes(round.prompts[1 - role]));
+      assert.ok(!choices.includes(round.prompts[role]));
+      assert.ok(choices.every(function (promptId) {
+        return PICTIONARY_PROMPTS.some(function (prompt) { return prompt.id === promptId; });
+      }));
+    });
+  });
+  assert.deepEqual(calculatePictionaryRoundScores([true, false]), [PICTIONARY.guessingPoints, PICTIONARY.drawingPoints]);
+  assert.deepEqual(calculatePictionaryRoundScores([true, true]), [1000, 1000]);
 });
 
 test("Coffee Relay tvoří pět unikátních objednávek a odměňuje přesnost", function () {

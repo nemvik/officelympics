@@ -1,7 +1,7 @@
 "use strict";
 
 const DEFAULT_PARTICIPANT_COUNT = 8;
-const STATE_VERSION = 3;
+const STATE_VERSION = 4;
 const STORAGE_KEY = "officelympicsScoreboardV2";
 const LEGACY_STORAGE_KEY = "officelympicsScoreboard";
 const POINTS = Object.freeze({ 1: 10, 2: 8, 3: 6, 4: 5, 5: 4, 6: 3, 7: 2, 8: 1 });
@@ -59,6 +59,26 @@ const DISCIPLINES = Object.freeze([
     min: 0,
     max: 12,
     hint: "Zadej součet zásahů. Povolený výsledek je 0 až 12 bodů."
+  },
+  {
+    id: "tower",
+    short: "Věž",
+    name: "Kancelářská věž",
+    unit: "cm",
+    step: 0.1,
+    min: 0,
+    max: null,
+    hint: "Zadej výšku věže, která bez opory vydržela stát alespoň 10 sekund."
+  },
+  {
+    id: "copier",
+    short: "Kopírka",
+    name: "Tichá kopírka",
+    unit: "bodů",
+    step: 1,
+    min: 0,
+    max: 36,
+    hint: "Zadej součet správně umístěných barevných lepíků ze tří kol (0 až 36 bodů)."
   }
 ]);
 
@@ -1125,7 +1145,7 @@ function buildLeaderRow(item) {
     makeElement(
       "span",
       "leader-meta",
-      item.stat.completedCount + "/5 disciplín · " + item.stat.firsts + "× 1. · " + item.stat.seconds + "× 2."
+      item.stat.completedCount + "/" + DISCIPLINES.length + " disciplín · " + item.stat.firsts + "× 1. · " + item.stat.seconds + "× 2."
     )
   );
 
@@ -1267,7 +1287,7 @@ function winnerAnnouncementIssue() {
   });
 
   if (incomplete.length) {
-    return "Nejdřív uzavři všech pět disciplín a jejich rozstřely.";
+    return "Nejdřív uzavři všech " + DISCIPLINES.length + " disciplín a jejich rozstřely.";
   }
 
   if (latestRanking.finalGroups.some(function (group) { return !group.resolved; })) {

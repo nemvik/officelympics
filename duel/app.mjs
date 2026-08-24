@@ -1,74 +1,22 @@
-import { GAME_IDS, createRng, makeSeed } from "./game-core.mjs";
+import { GAME_DEFINITIONS, GAME_IDS, getGameDefinition } from "./game-catalog.mjs";
+import {
+  createRng,
+  makeSeed,
+  pickTournamentGames,
+  tournamentRoundPoints
+} from "./game-core.mjs";
 import { createPracticeResult, startGame } from "./games.mjs";
 
-const APP_VERSION = 1;
+const APP_VERSION = 2;
 const NAME_STORAGE_KEY = "officelympicsDuelName";
 const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const ROOM_LENGTH = 6;
 const PEER_PREFIX = "officelympics-2026-";
+const MATCH_FORMATS = Object.freeze(["single", "tournament"]);
 
-const GAME_META = Object.freeze({
-  panic: Object.freeze({
-    title: "Office Panic",
-    instruction: "Klikni na užitečné události, pasti ignoruj. Kombo přidává body.",
-    scoreLabel: "bodů"
-  }),
-  deadline: Object.freeze({
-    title: "Deadline Chicken",
-    instruction: "Drž práci, za hranicí mlhy odhaduj a pusť ji těsně před 100 %.",
-    scoreLabel: "bodů z 500"
-  }),
-  curling: Object.freeze({
-    title: "Papírový curling",
-    instruction: "Střídejte se po jednom hodu. Bodují koule nejblíž středu kancelářského koše.",
-    scoreLabel: "curlingových bodů"
-  }),
-  alttab: Object.freeze({
-    title: "Alt+Tab Duel",
-    instruction: "Přepni okno jen ve chvíli, kdy se objeví šéf. Falešné poplachy ignoruj.",
-    scoreLabel: "bodů za krytí"
-  }),
-  battleship: Object.freeze({
-    title: "Tabulková námořní bitva",
-    instruction: "Najdi dvě schované řady meetingů v soupeřově kalendáři. Zásah dává další tah.",
-    scoreLabel: "potopených flotil"
-  }),
-  taskstack: Object.freeze({
-    title: "Task Stack",
-    instruction: "Skládej padající úkoly. Smazané řádky pošlou soupeři urgentní práci.",
-    scoreLabel: "bodů za úkoly"
-  }),
-  pong: Object.freeze({
-    title: "Inbox Pong",
-    instruction: "Pohybuj inboxem nahoru a dolů. První, kdo zachrání pět urgentních e-mailů, vítězí.",
-    scoreLabel: "zachráněných e-mailů"
-  }),
-  escape: Object.freeze({
-    title: "Meeting Escape",
-    instruction: "Přeskakuj meetingy, skrč se pod Reply All a cestou sbírej kávu.",
-    scoreLabel: "bodů za útěk"
-  }),
-  jargon: Object.freeze({
-    title: "Jargon Decoder",
-    instruction: "Zapamatuj si větu a poskládej rozházená korporátní slova ve správném pořadí.",
-    scoreLabel: "bodů za synergii"
-  }),
-  coffee: Object.freeze({
-    title: "Kávová štafeta",
-    instruction: "Zapamatuj si objednávku a namíchej správnou velikost, základ, mléko i přísadu.",
-    scoreLabel: "bodů za kofein"
-  }),
-  calendar: Object.freeze({
-    title: "Kalendářový squeeze",
-    instruction: "Najdi v přeplněném dni souvislé volné okno pro další naprosto nezbytný meeting.",
-    scoreLabel: "bodů za plánování"
-  }),
-  printer: Object.freeze({
-    title: "Tiskárnový exorcista",
-    instruction: "Přečti závadu a co nejrychleji vyber správný zásah, než si tiskárna vyžádá oběť.",
-    scoreLabel: "bodů za servis"
-  })
-});
+const GAME_META = Object.freeze(Object.fromEntries(GAME_DEFINITIONS.map(function (game) {
+  return [game.id, game];
+})));
 
 const refs = {};
 const state = {
@@ -78,11 +26,13 @@ const state = {
   connection: null,
   suppressConnectionClose: false,
   roomCode: "",
+  selectedFormat: "single",
   selectedGame: "panic",
   local: { name: "", ready: false },
   remote: null,
   pendingMatch: null,
   match: null,
+  tournament: null,
   controller: null,
   countdownTimers: [],
   prepareTimer: 0,
@@ -91,18 +41,22 @@ const state = {
 };
 
 document.addEventListener("DOMContentLoaded", init);
+window.render_game_to_text = renderGameToText;
 
 function init() {
   [
     "connection-pill", "notice-banner", "setup-screen", "lobby-screen", "game-screen", "result-screen",
-    "player-name", "create-room", "join-form", "room-code", "practice-button", "lobby-copy",
+    "setup-game-picker", "lobby-game-picker", "setup-format-picker", "lobby-format-picker",
+    "setup-tournament-note", "lobby-tournament-note", "player-name", "create-room", "join-form",
+    "room-code", "practice-button", "lobby-copy",
     "lobby-room-code", "copy-link", "copy-code", "player-one-name", "player-two-name",
     "player-one-ready", "player-two-ready", "selection-help", "leave-room", "ready-button",
     "start-button", "lobby-status", "match-local-name", "match-remote-name", "match-local-score",
     "match-remote-score", "game-round-label", "game-title", "game-stage", "exit-game",
     "result-emoji", "result-kicker", "result-title", "result-copy", "result-local-name",
     "result-remote-name", "result-local-score", "result-remote-score", "result-local-detail",
-    "result-remote-detail", "rematch-button", "lobby-button", "home-button", "confetti"
+    "result-remote-detail", "tournament-track", "tournament-result", "rematch-button", "lobby-button",
+    "home-button", "confetti"
   ].forEach(function (id) {
     refs[toCamel(id)] = document.getElementById(id);
   });
@@ -116,6 +70,7 @@ function init() {
     state.local.name = "";
   }
   refs.playerName.value = state.local.name;
+  renderGamePickers();
 
   const requestedRoom = normalizeRoomCode(new URLSearchParams(window.location.search).get("room") || "");
   if (requestedRoom) {
@@ -126,6 +81,12 @@ function init() {
   document.querySelectorAll("[data-game-choice]").forEach(function (button) {
     button.addEventListener("click", function () {
       chooseGame(button.dataset.gameChoice, true);
+    });
+  });
+
+  document.querySelectorAll("[data-format-choice]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      chooseFormat(button.dataset.formatChoice, true);
     });
   });
 
@@ -145,11 +106,73 @@ function init() {
   window.addEventListener("beforeunload", destroyPeer);
 
   chooseGame("panic", false);
+  chooseFormat("single", false);
   showScreen("setup");
+}
+
+function renderGamePickers() {
+  [
+    { container: refs.setupGamePicker, compact: false },
+    { container: refs.lobbyGamePicker, compact: true }
+  ].forEach(function ({ container, compact }) {
+    const fragment = document.createDocumentFragment();
+    GAME_DEFINITIONS.forEach(function (game, index) {
+      const button = document.createElement("button");
+      button.className = "game-card" + (index === 0 ? " is-selected" : "");
+      button.type = "button";
+      button.dataset.gameChoice = game.id;
+      button.setAttribute("aria-pressed", String(index === 0));
+
+      const icon = document.createElement("span");
+      icon.className = "game-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = game.icon;
+
+      const copy = document.createElement("span");
+      const title = document.createElement("strong");
+      const detail = document.createElement("small");
+      title.textContent = compact && game.id === "battleship" ? "Námořní bitva" : game.title;
+      detail.textContent = compact ? game.difficulty : game.teaser;
+      copy.append(title, detail);
+      button.append(icon, copy);
+
+      if (!compact) {
+        const difficulty = document.createElement("span");
+        difficulty.className = "difficulty";
+        difficulty.textContent = game.difficulty;
+        button.append(difficulty);
+      }
+      fragment.append(button);
+    });
+    container.replaceChildren(fragment);
+  });
 }
 
 function toCamel(value) {
   return value.replace(/-([a-z])/g, function (_, letter) { return letter.toUpperCase(); });
+}
+
+function renderGameToText() {
+  return JSON.stringify({
+    screen: document.body ? document.body.dataset.screen || "loading" : "loading",
+    mode: state.mode,
+    format: state.selectedFormat,
+    selectedGame: state.selectedGame,
+    match: state.match ? {
+      game: state.match.game,
+      localScore: state.match.localScore,
+      remoteScore: state.match.remoteScore,
+      finished: Boolean(state.match.shown)
+    } : null,
+    tournament: state.tournament ? {
+      games: state.tournament.games,
+      currentGame: state.tournament.currentIndex + 1,
+      localPoints: state.tournament.localPoints,
+      remotePoints: state.tournament.remotePoints,
+      completedGames: state.tournament.rounds.length
+    } : null,
+    controls: "Rozhraní používá DOM tlačítka; souřadnicový herní svět poskytují jen canvasové disciplíny."
+  });
 }
 
 function sanitizeName(value) {
@@ -237,12 +260,38 @@ function chooseGame(gameId, broadcast) {
   });
 
   if (broadcast && state.mode === "online" && state.role === 0) {
-    state.local.ready = false;
-    if (state.remote) state.remote.ready = false;
-    sendMessage({ type: "selection", game: gameId });
-    sendLobbySnapshot();
-    renderLobby();
+    broadcastSelection();
   }
+}
+
+function chooseFormat(format, broadcast) {
+  if (!MATCH_FORMATS.includes(format)) return;
+  if (broadcast && state.mode === "online" && state.role === 1 && !refs.lobbyScreen.hidden) return;
+
+  state.selectedFormat = format;
+  document.querySelectorAll("[data-format-choice]").forEach(function (button) {
+    const selected = button.dataset.formatChoice === format;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+
+  const tournament = format === "tournament";
+  refs.setupGamePicker.hidden = tournament;
+  refs.lobbyGamePicker.hidden = tournament;
+  refs.setupTournamentNote.hidden = !tournament;
+  refs.lobbyTournamentNote.hidden = !tournament;
+  refs.practiceButton.textContent = tournament ? "🏆 Spustit turnaj s botem" : "🕶️ Spustit trénink";
+
+  if (broadcast && state.mode === "online" && state.role === 0) broadcastSelection();
+  if (!refs.lobbyScreen.hidden) renderLobby();
+}
+
+function broadcastSelection() {
+  state.local.ready = false;
+  if (state.remote) state.remote.ready = false;
+  sendMessage({ type: "selection", game: state.selectedGame, format: state.selectedFormat });
+  sendLobbySnapshot();
+  renderLobby();
 }
 
 function createPeer(peerId) {
@@ -468,11 +517,14 @@ function receiveMessage(message) {
     return;
   }
 
-  if (message.type === "selection" && state.role === 1 && GAME_IDS.includes(message.game)) {
+  if (message.type === "selection" && state.role === 1 && GAME_IDS.includes(message.game)
+    && MATCH_FORMATS.includes(message.format)) {
     state.selectedGame = message.game;
+    state.selectedFormat = message.format;
     state.local.ready = false;
     if (state.remote) state.remote.ready = false;
     chooseGame(message.game, false);
+    chooseFormat(message.format, false);
     sendMessage({ type: "ready", ready: false });
     renderLobby();
     return;
@@ -511,6 +563,11 @@ function receiveMessage(message) {
     return;
   }
 
+  if (message.type === "tournament-ready") {
+    receiveTournamentReady(message);
+    return;
+  }
+
   if ((message.type === "curling-shot" || message.type === "curling-settle" || message.type.startsWith("game:"))
     && state.match && message.matchId === state.match.id) {
     if (state.controller) state.controller.receiveNetwork(message);
@@ -527,6 +584,7 @@ function sendLobbySnapshot() {
   sendMessage({
     type: "lobby",
     game: state.selectedGame,
+    format: state.selectedFormat,
     players: [
       { name: state.local.name, ready: state.local.ready },
       state.remote ? { name: state.remote.name, ready: state.remote.ready } : null
@@ -535,6 +593,10 @@ function sendLobbySnapshot() {
 }
 
 function receiveLobbySnapshot(message) {
+  if (MATCH_FORMATS.includes(message.format)) {
+    state.selectedFormat = message.format;
+    chooseFormat(message.format, false);
+  }
   if (GAME_IDS.includes(message.game)) {
     state.selectedGame = message.game;
     chooseGame(message.game, false);
@@ -576,11 +638,15 @@ function renderLobby() {
   refs.readyButton.textContent = state.local.ready ? "✓ Jsem připraven" : "Jsem připraven";
   refs.startButton.hidden = state.role !== 0;
   refs.startButton.disabled = !(connected && state.local.ready && state.remote && state.remote.ready) || Boolean(state.pendingMatch);
+  refs.startButton.textContent = state.selectedFormat === "tournament" ? "🏆 Rozlosovat turnaj" : "🚀 Spustit duel";
   refs.selectionHelp.textContent = state.role === 0
-    ? "Hostitel vybírá, demokracie začne až po pracovní době."
-    : "Disciplínu vybírá hostitel. Protest lze podat po skončení.";
+    ? "Hostitel vybírá formát, demokracie začne až po pracovní době."
+    : "Formát vybírá hostitel. Protest lze podat po skončení.";
 
   document.querySelectorAll("#lobby-game-picker [data-game-choice]").forEach(function (button) {
+    button.disabled = state.role === 1;
+  });
+  document.querySelectorAll("#lobby-format-picker [data-format-choice]").forEach(function (button) {
     button.disabled = state.role === 1;
   });
 }
@@ -605,17 +671,82 @@ function toggleReady() {
   renderLobby();
 }
 
+function createTournament(id, games, index) {
+  return {
+    id,
+    games: games.slice(),
+    currentIndex: index,
+    rounds: [],
+    localPoints: 0,
+    remotePoints: 0,
+    localReady: false,
+    remoteReady: false
+  };
+}
+
+function tournamentEnvelope(tournament) {
+  if (!tournament) return null;
+  return {
+    id: tournament.id,
+    games: tournament.games.slice(),
+    index: tournament.currentIndex
+  };
+}
+
+function normalizeTournamentEnvelope(value) {
+  if (!value || typeof value !== "object" || typeof value.id !== "string"
+    || value.id.length < 1 || value.id.length > 40) return null;
+  if (!Array.isArray(value.games) || value.games.length !== 3 || new Set(value.games).size !== 3) return null;
+  if (!value.games.every(function (game) { return GAME_IDS.includes(game); })) return null;
+  if (!Number.isInteger(value.index) || value.index < 0 || value.index >= value.games.length) return null;
+  return { id: value.id, games: value.games.slice(), index: value.index };
+}
+
+function applyTournamentEnvelope(envelope) {
+  if (!envelope) return false;
+  const sameTournament = state.tournament
+    && state.tournament.id === envelope.id
+    && state.tournament.games.join(":") === envelope.games.join(":");
+  if (!sameTournament) state.tournament = createTournament(envelope.id, envelope.games, envelope.index);
+  state.tournament.currentIndex = envelope.index;
+  state.tournament.localReady = false;
+  state.tournament.remoteReady = false;
+  return true;
+}
+
 function prepareOnlineMatch() {
   if (state.role !== 0 || !state.connection || !state.connection.open || !state.local.ready || !state.remote || !state.remote.ready) return;
+  let game = state.selectedGame;
+  let tournament = null;
+  if (state.selectedFormat === "tournament") {
+    const tournamentId = makeSeed();
+    const games = pickTournamentGames(tournamentId);
+    state.tournament = createTournament(tournamentId, games, 0);
+    game = games[0];
+    tournament = tournamentEnvelope(state.tournament);
+  } else {
+    state.tournament = null;
+  }
   const pending = {
     id: makeSeed(),
-    game: state.selectedGame,
-    seed: makeSeed()
+    game,
+    seed: makeSeed(),
+    format: state.selectedFormat,
+    tournament
   };
   state.pendingMatch = pending;
-  refs.lobbyStatus.textContent = "Oba připraveni. Kontroluji, zda HR opravdu nekouká…";
+  refs.lobbyStatus.textContent = state.selectedFormat === "tournament"
+    ? "Losuji tři disciplíny a kontroluji, zda HR opravdu nekouká…"
+    : "Oba připraveni. Kontroluji, zda HR opravdu nekouká…";
   renderLobby();
-  sendMessage({ type: "prepare", matchId: pending.id, game: pending.game, seed: pending.seed });
+  sendMessage({
+    type: "prepare",
+    matchId: pending.id,
+    game: pending.game,
+    seed: pending.seed,
+    format: pending.format,
+    tournament: pending.tournament
+  });
   window.clearTimeout(state.prepareTimer);
   state.prepareTimer = window.setTimeout(function () {
     if (!state.pendingMatch || state.pendingMatch.id !== pending.id) return;
@@ -627,7 +758,18 @@ function prepareOnlineMatch() {
 
 function receivePrepare(message) {
   if (!validMatchEnvelope(message)) return;
-  state.pendingMatch = { id: message.matchId, game: message.game, seed: message.seed };
+  const tournament = normalizeTournamentEnvelope(message.tournament);
+  if (message.format === "tournament") applyTournamentEnvelope(tournament);
+  else state.tournament = null;
+  state.selectedFormat = message.format;
+  chooseFormat(message.format, false);
+  state.pendingMatch = {
+    id: message.matchId,
+    game: message.game,
+    seed: message.seed,
+    format: message.format,
+    tournament
+  };
   refs.lobbyStatus.textContent = "Hostitel spouští " + GAME_META[message.game].title + "…";
   sendMessage({ type: "prepared", matchId: message.matchId });
 }
@@ -642,6 +784,8 @@ function dispatchOnlineStart() {
     matchId: pending.id,
     game: pending.game,
     seed: pending.seed,
+    format: pending.format,
+    tournament: pending.tournament,
     delay
   });
   queueMatch(pending, delay);
@@ -650,14 +794,27 @@ function dispatchOnlineStart() {
 function receiveStart(message) {
   if (!validMatchEnvelope(message)) return;
   const delay = Number.isFinite(message.delay) ? Math.min(4000, Math.max(1600, message.delay)) : 2800;
-  const pending = { id: message.matchId, game: message.game, seed: message.seed };
+  const tournament = normalizeTournamentEnvelope(message.tournament);
+  if (message.format === "tournament") applyTournamentEnvelope(tournament);
+  const pending = {
+    id: message.matchId,
+    game: message.game,
+    seed: message.seed,
+    format: message.format,
+    tournament
+  };
   queueMatch(pending, delay);
 }
 
 function validMatchEnvelope(message) {
-  return typeof message.matchId === "string" && message.matchId.length <= 40
+  const baseValid = typeof message.matchId === "string" && message.matchId.length >= 1 && message.matchId.length <= 40
     && GAME_IDS.includes(message.game)
-    && typeof message.seed === "string" && message.seed.length <= 40;
+    && typeof message.seed === "string" && message.seed.length >= 1 && message.seed.length <= 40
+    && MATCH_FORMATS.includes(message.format);
+  if (!baseValid) return false;
+  if (message.format === "single") return message.tournament === null || message.tournament === undefined;
+  const tournament = normalizeTournamentEnvelope(message.tournament);
+  return Boolean(tournament && tournament.games[tournament.index] === message.game);
 }
 
 function startPractice() {
@@ -669,7 +826,21 @@ function startPractice() {
   state.local = { name, ready: true };
   state.remote = { name: "Kolega-bot", ready: true };
   setConnectionStatus("offline", "● Trénink");
-  queueMatch({ id: makeSeed(), game: state.selectedGame, seed: makeSeed() }, 2200);
+  if (state.selectedFormat === "tournament") {
+    const tournamentId = makeSeed();
+    const games = pickTournamentGames(tournamentId);
+    state.tournament = createTournament(tournamentId, games, 0);
+    queueMatch({
+      id: makeSeed(),
+      game: games[0],
+      seed: makeSeed(),
+      format: "tournament",
+      tournament: tournamentEnvelope(state.tournament)
+    }, 2200);
+  } else {
+    state.tournament = null;
+    queueMatch({ id: makeSeed(), game: state.selectedGame, seed: makeSeed(), format: "single", tournament: null }, 2200);
+  }
 }
 
 function queueMatch(matchData, delay) {
@@ -678,11 +849,15 @@ function queueMatch(matchData, delay) {
   state.pendingMatch = null;
   state.local.ready = false;
   if (state.remote) state.remote.ready = false;
+  state.selectedFormat = matchData.format;
   state.selectedGame = matchData.game;
+  if (matchData.format === "tournament") applyTournamentEnvelope(matchData.tournament);
   state.match = {
     id: matchData.id,
     game: matchData.game,
     seed: matchData.seed,
+    format: matchData.format,
+    tournamentIndex: state.tournament ? state.tournament.currentIndex : null,
     localScore: 0,
     remoteScore: 0,
     localResult: null,
@@ -738,7 +913,11 @@ function launchCurrentGame() {
     localRole: state.role,
     mode: state.mode,
     names,
-    setRoundLabel: function (label) { refs.gameRoundLabel.textContent = label; },
+    setRoundLabel: function (label) {
+      refs.gameRoundLabel.textContent = state.tournament
+        ? "Turnaj " + (state.tournament.currentIndex + 1) + "/3 · " + label
+        : label;
+    },
     publishScore: function (score) {
       if (!state.match || state.match.id !== matchId) return;
       state.match.localScore = safeScore(score);
@@ -766,12 +945,37 @@ function renderMatchHeader() {
   const localName = state.local.name || "Ty";
   const remoteName = state.remote ? state.remote.name : "Kolega";
   refs.gameTitle.textContent = meta.title;
-  refs.gameRoundLabel.textContent = "Duel";
+  refs.gameRoundLabel.textContent = state.tournament
+    ? "Turnaj · hra " + (state.tournament.currentIndex + 1) + "/3"
+    : "Duel";
   refs.matchLocalName.textContent = localName;
   refs.matchRemoteName.textContent = remoteName;
   refs.localColorDot.className = "color-dot " + (state.role === 1 ? "blue" : "pink");
   refs.remoteColorDot.className = "color-dot " + (state.role === 1 ? "pink" : "blue");
+  renderTournamentTracker();
   renderMatchScores();
+}
+
+function renderTournamentTracker() {
+  refs.tournamentTrack.replaceChildren();
+  refs.tournamentTrack.hidden = !state.tournament;
+  if (!state.tournament) return;
+
+  state.tournament.games.forEach(function (gameId, index) {
+    const game = getGameDefinition(gameId);
+    const chip = document.createElement("span");
+    chip.className = "tournament-game";
+    if (index === state.tournament.currentIndex) chip.classList.add("is-current");
+    const round = state.tournament.rounds[index];
+    if (round) {
+      chip.classList.add(round.localPoints === round.remotePoints
+        ? "is-draw"
+        : round.localPoints > round.remotePoints ? "is-won" : "is-lost");
+    }
+    chip.textContent = (game ? game.icon : "🎮") + " " + (index + 1);
+    chip.title = game ? game.title : gameId;
+    refs.tournamentTrack.append(chip);
+  });
 }
 
 function renderMatchScores() {
@@ -851,6 +1055,11 @@ function normalizeResult(game, result) {
     normalized.repaired = safeSmallInteger(result.repaired, 10);
     normalized.mistakes = safeSmallInteger(result.mistakes, 50);
     normalized.average = safeSmallInteger(result.average, 10_000);
+  } else if (game === "pictionary") {
+    normalized.score = Math.min(3000, normalized.score);
+    normalized.guessed = safeSmallInteger(result.guessed, 3);
+    normalized.understood = safeSmallInteger(result.understood, 3);
+    normalized.rounds = safeSmallInteger(result.rounds, 3);
   }
 
   return normalized;
@@ -917,6 +1126,59 @@ function maybeShowResult() {
   state.resultTimer = window.setTimeout(showResult, 650);
 }
 
+function recordTournamentRound(match) {
+  if (!state.tournament || match.tournamentIndex === null || state.tournament.rounds[match.tournamentIndex]) return;
+  const points = tournamentRoundPoints(match.localResult.score, match.remoteResult.score);
+  state.tournament.rounds[match.tournamentIndex] = {
+    game: match.game,
+    localScore: match.localResult.score,
+    remoteScore: match.remoteResult.score,
+    localPoints: points[0],
+    remotePoints: points[1]
+  };
+  state.tournament.localPoints += points[0];
+  state.tournament.remotePoints += points[1];
+}
+
+function formatTournamentPoints(value) {
+  return Number.isInteger(value) ? String(value) : String(value).replace(".", ",");
+}
+
+function renderTournamentResult() {
+  refs.tournamentResult.replaceChildren();
+  refs.tournamentResult.hidden = !state.tournament;
+  if (!state.tournament) return;
+
+  const score = document.createElement("div");
+  score.className = "tournament-scoreline";
+  const local = document.createElement("strong");
+  const label = document.createElement("span");
+  const remote = document.createElement("strong");
+  local.textContent = formatTournamentPoints(state.tournament.localPoints);
+  label.textContent = "stav turnaje";
+  remote.textContent = formatTournamentPoints(state.tournament.remotePoints);
+  score.append(local, label, remote);
+
+  const games = document.createElement("div");
+  games.className = "tournament-result-games";
+  state.tournament.games.forEach(function (gameId, index) {
+    const meta = getGameDefinition(gameId);
+    const round = state.tournament.rounds[index];
+    const item = document.createElement("span");
+    item.className = "tournament-result-game";
+    if (round) {
+      item.classList.add(round.localPoints === round.remotePoints
+        ? "is-draw"
+        : round.localPoints > round.remotePoints ? "is-won" : "is-lost");
+    } else if (index === state.tournament.currentIndex + 1) {
+      item.classList.add("is-next");
+    }
+    item.textContent = (meta ? meta.icon : "🎮") + " " + (meta ? meta.title : gameId);
+    games.append(item);
+  });
+  refs.tournamentResult.append(score, games);
+}
+
 function showResult() {
   if (!state.match || !state.match.localResult || !state.match.remoteResult) return;
   const match = state.match;
@@ -927,6 +1189,7 @@ function showResult() {
   const remoteName = state.remote ? state.remote.name : "Kolega";
 
   cleanupController();
+  recordTournamentRound(match);
   refs.resultLocalName.textContent = state.local.name || "Ty";
   refs.resultRemoteName.textContent = remoteName;
   refs.resultLocalScore.textContent = String(localScore);
@@ -951,9 +1214,52 @@ function showResult() {
     refs.resultCopy.textContent = "Tentokrát. Odveta je společensky přijatelnější než hledání výmluv.";
   }
 
-  refs.lobbyButton.textContent = state.mode === "practice" ? "Vybrat jinou hru" : "Vybrat jinou hru";
+  refs.rematchButton.disabled = false;
+  refs.rematchButton.textContent = "🔁 Odveta";
+  refs.lobbyButton.textContent = "Vybrat jinou hru";
+  refs.tournamentResult.hidden = true;
+  let celebrate = localWon || tied;
+
+  if (state.tournament) {
+    const tournamentFinished = state.tournament.currentIndex === state.tournament.games.length - 1;
+    renderTournamentResult();
+    refs.lobbyButton.textContent = tournamentFinished ? "Vybrat jiný formát" : "Ukončit turnaj";
+
+    if (!tournamentFinished) {
+      const nextGame = getGameDefinition(state.tournament.games[state.tournament.currentIndex + 1]);
+      refs.resultKicker.textContent = "Turnaj · hra " + (state.tournament.currentIndex + 1) + "/3";
+      refs.resultTitle.textContent = tied ? "Tahle hra nerozhodla" : localWon ? "Bod pro tebe!" : "Bod pro soupeře";
+      refs.resultCopy.textContent = "Další disciplína: " + (nextGame ? nextGame.title : "překvapení") + ". Pokračujete, až oba potvrdíte připravenost.";
+      refs.rematchButton.textContent = "Další hra →";
+    } else {
+      const localTournamentWon = state.tournament.localPoints > state.tournament.remotePoints;
+      const tournamentTied = state.tournament.localPoints === state.tournament.remotePoints;
+      refs.resultLocalScore.textContent = formatTournamentPoints(state.tournament.localPoints);
+      refs.resultRemoteScore.textContent = formatTournamentPoints(state.tournament.remotePoints);
+      refs.resultLocalDetail.textContent = "turnajových bodů";
+      refs.resultRemoteDetail.textContent = "turnajových bodů";
+      refs.resultKicker.textContent = "Turnaj dokončen";
+      refs.rematchButton.textContent = "🏆 Nový turnaj";
+      celebrate = localTournamentWon || tournamentTied;
+
+      if (tournamentTied) {
+        refs.resultEmoji.textContent = "🤝";
+        refs.resultTitle.textContent = "Turnaj končí remízou";
+        refs.resultCopy.textContent = "Tři hry nestačily. HR doporučuje rozstřel, nebo společný oběd.";
+      } else if (localTournamentWon) {
+        refs.resultEmoji.textContent = "🏆";
+        refs.resultTitle.textContent = "Vyhráváš turnaj!";
+        refs.resultCopy.textContent = "Tři disciplíny, jedna kancelářská legenda. Produktivita se zotaví později.";
+      } else {
+        refs.resultEmoji.textContent = "🫠";
+        refs.resultTitle.textContent = "Turnaj vyhrává " + remoteName;
+        refs.resultCopy.textContent = "Kolega bere pohár i právo připomínat výsledek na každém stand-upu.";
+      }
+    }
+  }
+
   showScreen("result");
-  if (localWon || tied) launchConfetti();
+  if (celebrate) launchConfetti();
 }
 
 function resultDetail(game, result) {
@@ -995,6 +1301,10 @@ function resultDetail(game, result) {
     return result.booked + "/6 meetingů · " + result.mistakes + " "
       + czechCount(result.mistakes, "kolize", "kolize", "kolizí");
   }
+  if (game === "pictionary") {
+    const rounds = result.rounds || 3;
+    return result.guessed + "/" + rounds + " uhádnuto · " + result.understood + "/" + rounds + " obrázků rozpoznáno";
+  }
   return result.repaired + "/10 oprav · průměr " + (result.average || "—") + (result.average ? " ms" : "");
 }
 
@@ -1027,11 +1337,115 @@ function launchConfetti() {
 
 function requestRematch() {
   if (!state.match) return;
-  const game = state.match.game;
-  if (state.mode === "practice") {
-    queueMatch({ id: makeSeed(), game, seed: makeSeed() }, 2200);
+  if (state.tournament) {
+    if (state.tournament.currentIndex < state.tournament.games.length - 1) {
+      requestTournamentNext();
+      return;
+    }
+    startNewTournament();
     return;
   }
+  const game = state.match.game;
+  if (state.mode === "practice") {
+    queueMatch({ id: makeSeed(), game, seed: makeSeed(), format: "single", tournament: null }, 2200);
+    return;
+  }
+  backToOnlineLobby(true, true);
+}
+
+function requestTournamentNext() {
+  if (!state.tournament || state.tournament.localReady) return;
+  state.tournament.localReady = true;
+  refs.rematchButton.disabled = true;
+  refs.rematchButton.textContent = state.mode === "practice" ? "Losuji další hru…" : "Čekám na kolegu…";
+
+  if (state.mode === "practice") {
+    state.tournament.remoteReady = true;
+    state.resultTimer = window.setTimeout(prepareNextTournamentRound, 650);
+    return;
+  }
+
+  sendMessage({
+    type: "tournament-ready",
+    tournamentId: state.tournament.id,
+    index: state.tournament.currentIndex
+  });
+  maybePrepareNextTournamentRound();
+}
+
+function receiveTournamentReady(message) {
+  if (!state.tournament || typeof message.tournamentId !== "string"
+    || message.tournamentId !== state.tournament.id || message.index !== state.tournament.currentIndex) return;
+  state.tournament.remoteReady = true;
+  if (!state.tournament.localReady && !refs.resultScreen.hidden) {
+    refs.resultCopy.textContent = "Soupeř je připravený. Další hra čeká už jen na tebe.";
+  }
+  maybePrepareNextTournamentRound();
+}
+
+function maybePrepareNextTournamentRound() {
+  if (state.mode !== "online" || state.role !== 0 || !state.tournament
+    || !state.tournament.localReady || !state.tournament.remoteReady || state.pendingMatch) return;
+  prepareNextTournamentRound();
+}
+
+function prepareNextTournamentRound() {
+  if (!state.tournament || state.tournament.currentIndex >= state.tournament.games.length - 1) return;
+  state.tournament.currentIndex += 1;
+  state.tournament.localReady = false;
+  state.tournament.remoteReady = false;
+  const pending = {
+    id: makeSeed(),
+    game: state.tournament.games[state.tournament.currentIndex],
+    seed: makeSeed(),
+    format: "tournament",
+    tournament: tournamentEnvelope(state.tournament)
+  };
+
+  if (state.mode === "practice") {
+    queueMatch(pending, 1800);
+    return;
+  }
+
+  state.pendingMatch = pending;
+  refs.resultCopy.textContent = "Oba připraveni. Přesouváme se na " + GAME_META[pending.game].title + ".";
+  sendMessage({
+    type: "prepare",
+    matchId: pending.id,
+    game: pending.game,
+    seed: pending.seed,
+    format: pending.format,
+    tournament: pending.tournament
+  });
+  window.clearTimeout(state.prepareTimer);
+  state.prepareTimer = window.setTimeout(function () {
+    if (!state.pendingMatch || state.pendingMatch.id !== pending.id) return;
+    state.pendingMatch = null;
+    state.tournament.currentIndex -= 1;
+    state.tournament.localReady = false;
+    state.tournament.remoteReady = false;
+    refs.rematchButton.disabled = false;
+    refs.rematchButton.textContent = "Zkusit další hru znovu";
+    refs.resultCopy.textContent = "Soupeř nepotvrdil další hru. Zkuste pokračování znovu.";
+  }, 7000);
+}
+
+function startNewTournament() {
+  if (state.mode === "practice") {
+    const tournamentId = makeSeed();
+    const games = pickTournamentGames(tournamentId);
+    state.tournament = createTournament(tournamentId, games, 0);
+    queueMatch({
+      id: makeSeed(),
+      game: games[0],
+      seed: makeSeed(),
+      format: "tournament",
+      tournament: tournamentEnvelope(state.tournament)
+    }, 2200);
+    return;
+  }
+  state.tournament = null;
+  state.selectedFormat = "tournament";
   backToOnlineLobby(true, true);
 }
 
@@ -1040,6 +1454,7 @@ function returnToGamePicker() {
     cleanupController();
     clearMatchTimers();
     state.match = null;
+    state.tournament = null;
     state.mode = null;
     state.role = null;
     state.remote = null;
@@ -1060,16 +1475,19 @@ function returnToLobbyFromGame() {
 
 function backToOnlineLobby(ready, notify) {
   const game = state.match ? state.match.game : state.selectedGame;
+  const format = state.selectedFormat;
   cleanupController();
   clearMatchTimers();
   state.match = null;
   state.pendingMatch = null;
+  state.tournament = null;
   state.local.ready = Boolean(ready);
   if (state.remote) state.remote.ready = false;
   chooseGame(game, false);
+  chooseFormat(format, false);
   showScreen("lobby");
   renderLobby();
-  if (notify) sendMessage({ type: "return-lobby", game, ready: Boolean(ready) });
+  if (notify) sendMessage({ type: "return-lobby", game, format, ready: Boolean(ready) });
   sendMessage({ type: "ready", ready: state.local.ready });
   if (state.role === 0) sendLobbySnapshot();
   refs.lobbyStatus.textContent = ready ? "Odveta vyžádána. Čekám, až soupeř najde odvahu." : "Vyberte disciplínu a připravte se znovu.";
@@ -1077,15 +1495,19 @@ function backToOnlineLobby(ready, notify) {
 
 function receiveReturnToLobby(message) {
   const game = GAME_IDS.includes(message.game) ? message.game : state.selectedGame;
+  const format = MATCH_FORMATS.includes(message.format) ? message.format : state.selectedFormat;
   cleanupController();
   clearMatchTimers();
   state.match = null;
   state.pendingMatch = null;
+  state.tournament = null;
   state.selectedGame = game;
+  state.selectedFormat = format;
   state.local.ready = false;
   if (!state.remote) state.remote = { name: "Kolega", ready: false };
   state.remote.ready = Boolean(message.ready);
   chooseGame(game, false);
+  chooseFormat(format, false);
   showScreen("lobby");
   renderLobby();
   refs.lobbyStatus.textContent = message.ready
@@ -1175,6 +1597,7 @@ function resetSession(destroyConnection) {
   state.remote = null;
   state.pendingMatch = null;
   state.match = null;
+  state.tournament = null;
 }
 
 function destroyPeer() {

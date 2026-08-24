@@ -331,6 +331,98 @@ body:not([data-screen="setup"]) .duel-hero {
   font-size: 27px;
 }
 
+.match-format-picker {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.format-card {
+  min-height: 84px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 4px 5px 0 var(--line);
+  text-align: left;
+  white-space: normal;
+}
+
+.format-card > span:first-child {
+  font-size: 31px;
+}
+
+.format-card strong,
+.format-card small {
+  display: block;
+}
+
+.format-card strong {
+  font-size: 18px;
+}
+
+.format-card small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.format-card:hover:not(:disabled) {
+  box-shadow: 6px 7px 0 var(--yellow);
+}
+
+.format-card.is-selected {
+  background: #fff3f9;
+  box-shadow: 6px 7px 0 var(--pink);
+}
+
+.format-card:disabled {
+  opacity: .68;
+}
+
+.tournament-note {
+  min-height: 132px;
+  margin-top: 22px;
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 3px dashed var(--ink);
+  border-radius: 17px;
+  background: linear-gradient(135deg, rgba(255, 213, 31, .22), rgba(255, 15, 123, .09));
+}
+
+.tournament-note[hidden],
+.game-picker[hidden],
+.tournament-track[hidden],
+.tournament-result[hidden] {
+  display: none;
+}
+
+.tournament-note > span {
+  font-size: 47px;
+}
+
+.tournament-note strong {
+  color: var(--navy);
+  font-size: 18px;
+}
+
+.tournament-note p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
 .game-picker {
   margin-top: 22px;
   display: grid;
@@ -689,8 +781,25 @@ body:not([data-screen="setup"]) .duel-hero {
 }
 
 .compact-picker {
+  grid-column: 2;
   margin: 0;
   gap: 9px;
+}
+
+.compact-formats {
+  margin: 0;
+}
+
+.compact-formats .format-card {
+  min-height: 72px;
+  padding: 10px 12px;
+}
+
+.lobby-tournament-note {
+  min-height: 96px;
+  grid-column: 2;
+  margin: 0;
+  padding: 16px;
 }
 
 .compact-picker .game-card {
@@ -832,6 +941,48 @@ body:not([data-screen="setup"]) .duel-hero {
   color: var(--navy);
   font-size: 21px;
   line-height: 1;
+}
+
+.tournament-track {
+  margin-top: 7px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.tournament-game {
+  min-width: 42px;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--paper-2);
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.tournament-game.is-current {
+  color: var(--navy);
+  border-color: var(--navy);
+  background: var(--yellow);
+}
+
+.tournament-game.is-won {
+  color: #fff;
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.tournament-game.is-lost {
+  color: #fff;
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.tournament-game.is-draw {
+  color: var(--navy);
+  border-color: var(--blue);
+  background: rgba(72, 167, 255, .25);
 }
 
 .game-stage {
@@ -2816,6 +2967,159 @@ body:not([data-screen="setup"]) .duel-hero {
   65% { transform: translateX(6px) rotate(.25deg); }
 }
 
+/* Kancelářský Pictionary */
+.pictionary-shell {
+  min-height: 550px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 88% 6%, rgba(255, 90, 165, .16), transparent 18rem),
+    #f7f5ee;
+}
+
+.pictionary-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.pictionary-rounds {
+  display: flex;
+  gap: 7px;
+}
+
+.pictionary-rounds i {
+  width: 34px;
+  height: 8px;
+  background: #d6d2c9;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+}
+
+.pictionary-rounds i.is-current { background: var(--yellow); }
+.pictionary-rounds i.is-done { background: #55e895; }
+
+.pictionary-timer {
+  min-width: 74px;
+  padding: 6px 10px;
+  color: var(--navy);
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 1000;
+  text-align: center;
+}
+
+.pictionary-timer.is-urgent {
+  color: #fff;
+  background: var(--red);
+}
+
+.pictionary-brief {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 2px 20px;
+  margin: 10px 0;
+}
+
+.pictionary-brief .eyebrow { grid-column: 1 / -1; }
+
+.pictionary-brief h3 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(24px, 4vw, 38px);
+  line-height: 1;
+}
+
+.pictionary-brief p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.pictionary-board-wrap {
+  overflow: hidden;
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 6px 7px 0 var(--pink);
+}
+
+.pictionary-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 15 / 8;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.pictionary-canvas.is-readonly { cursor: default; }
+
+.pictionary-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 11px;
+}
+
+.pictionary-toolbar button {
+  min-width: 122px;
+  padding: 9px 14px;
+}
+
+.pictionary-clear {
+  color: var(--navy);
+  background: #fff;
+  box-shadow: none;
+}
+
+.pictionary-done { background: #55e895; }
+
+.pictionary-choices {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.pictionary-choices:not([hidden]) { display: grid; }
+
+.pictionary-choices button {
+  min-height: 52px;
+  padding: 10px;
+  color: var(--navy);
+  background: #fff;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 4px 0 var(--blue);
+}
+
+.pictionary-choices button.is-correct { background: #a7f3c2; }
+.pictionary-choices button.is-wrong { color: #fff; background: var(--red); }
+
+.pictionary-feedback {
+  min-height: 22px;
+  margin: 11px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.game-stage:fullscreen {
+  display: grid;
+  align-items: center;
+  padding: 20px;
+  background: var(--paper-2);
+}
+
+.game-stage:fullscreen .pictionary-shell {
+  width: min(1200px, 100%);
+  margin: auto;
+}
+
 /* Result */
 .result-screen {
   overflow: hidden;
@@ -2906,6 +3210,75 @@ body:not([data-screen="setup"]) .duel-hero {
   font-weight: 1000;
 }
 
+.tournament-result {
+  max-width: 760px;
+  margin: -10px auto 24px;
+  padding: 15px;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .82);
+}
+
+.tournament-scoreline {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.tournament-scoreline strong {
+  color: var(--navy);
+  font-size: 31px;
+}
+
+.tournament-scoreline span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.tournament-result-games {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.tournament-result-game {
+  padding: 8px;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tournament-result-game.is-won {
+  border-color: var(--green);
+  background: rgba(85, 232, 149, .17);
+}
+
+.tournament-result-game.is-lost {
+  border-color: var(--red);
+  background: rgba(255, 91, 77, .12);
+}
+
+.tournament-result-game.is-draw {
+  border-color: var(--blue);
+  background: rgba(72, 167, 255, .13);
+}
+
+.tournament-result-game.is-next {
+  border-color: var(--pink);
+  box-shadow: inset 0 0 0 1px var(--pink);
+}
+
 .result-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2984,6 +3357,11 @@ noscript {
   .lobby-game-panel,
   .curling-shell {
     grid-template-columns: 1fr;
+  }
+
+  .compact-picker,
+  .lobby-tournament-note {
+    grid-column: 1;
   }
 
   .practice-panel .secondary-button {
@@ -3116,6 +3494,14 @@ noscript {
     grid-template-columns: 1fr;
   }
 
+  .match-format-picker {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-formats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   #setup-game-picker .game-card {
     min-height: 118px;
     padding-right: 18px;
@@ -3220,7 +3606,8 @@ noscript {
   .jargon-shell,
   .coffee-shell,
   .calendar-shell,
-  .printer-shell {
+  .printer-shell,
+  .pictionary-shell {
     min-height: 510px;
   }
 
@@ -3547,6 +3934,36 @@ noscript {
 
   .printer-actions button {
     min-height: 58px;
+  }
+
+  .pictionary-shell {
+    padding: 12px 7px 16px;
+  }
+
+  .pictionary-brief {
+    grid-template-columns: 1fr;
+  }
+
+  .pictionary-brief p {
+    margin-top: 5px;
+    text-align: left;
+  }
+
+  .pictionary-board-wrap {
+    box-shadow: 4px 5px 0 var(--pink);
+  }
+
+  .pictionary-canvas {
+    min-height: 260px;
+  }
+
+  .pictionary-toolbar button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pictionary-choices {
+    grid-template-columns: 1fr;
   }
 
   .result-scores {

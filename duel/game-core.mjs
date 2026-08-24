@@ -1,17 +1,6 @@
-export const GAME_IDS = Object.freeze([
-  "panic",
-  "deadline",
-  "curling",
-  "alttab",
-  "battleship",
-  "taskstack",
-  "pong",
-  "escape",
-  "jargon",
-  "coffee",
-  "calendar",
-  "printer"
-]);
+import { GAME_IDS } from "./game-catalog.mjs";
+
+export { GAME_IDS };
 
 export const ALT_TAB_ROUNDS = 8;
 
@@ -62,6 +51,17 @@ export const ESCAPE = Object.freeze({
 });
 
 export const JARGON_ROUNDS = 6;
+
+export const PICTIONARY_ROUNDS = 3;
+
+export const PICTIONARY = Object.freeze({
+  width: 900,
+  height: 480,
+  drawDurationMs: 35_000,
+  guessDurationMs: 18_000,
+  drawingPoints: 700,
+  guessingPoints: 300
+});
 
 export const COFFEE_ROUNDS = 5;
 
@@ -165,6 +165,21 @@ export const JARGON_PHRASES = Object.freeze([
   "Musíme odemknout potenciál napříč celou organizací"
 ]);
 
+export const PICTIONARY_PROMPTS = Object.freeze([
+  Object.freeze({ id: "coffee", label: "Hrnek kávy" }),
+  Object.freeze({ id: "printer", label: "Tiskárna" }),
+  Object.freeze({ id: "chair", label: "Kancelářská židle" }),
+  Object.freeze({ id: "plane", label: "Papírová vlaštovka" }),
+  Object.freeze({ id: "calendar", label: "Kalendář" }),
+  Object.freeze({ id: "laptop", label: "Notebook" }),
+  Object.freeze({ id: "headphones", label: "Sluchátka" }),
+  Object.freeze({ id: "plant", label: "Květina v kanceláři" }),
+  Object.freeze({ id: "keyboard", label: "Klávesnice" }),
+  Object.freeze({ id: "meeting", label: "Meeting" }),
+  Object.freeze({ id: "email", label: "E-mail" }),
+  Object.freeze({ id: "deadline", label: "Deadline" })
+]);
+
 export const PANIC_DURATION_MS = 20_000;
 
 export const PANIC_EVENTS = Object.freeze([
@@ -219,6 +234,26 @@ export function createRng(seed) {
     mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), mixed | 61);
     return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+export function pickTournamentGames(seed, count = 3) {
+  const tournamentSize = Math.min(GAME_IDS.length, Math.max(1, Math.floor(Number(count) || 3)));
+  const random = createRng("tournament:" + seed);
+  const games = GAME_IDS.slice();
+
+  for (let index = games.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(random() * (index + 1));
+    [games[index], games[target]] = [games[target], games[index]];
+  }
+
+  return games.slice(0, tournamentSize);
+}
+
+export function tournamentRoundPoints(firstScore, secondScore) {
+  const first = Number(firstScore) || 0;
+  const second = Number(secondScore) || 0;
+  if (first === second) return [0.5, 0.5];
+  return first > second ? [1, 0] : [0, 1];
 }
 
 export function makeSeed() {
@@ -455,6 +490,47 @@ export function buildJargonRounds(seed, count = JARGON_ROUNDS) {
 
     return { id: roundIndex, phrase, answer, words };
   });
+}
+
+export function buildPictionaryRounds(seed, count = PICTIONARY_ROUNDS) {
+  const random = createRng("pictionary:" + seed);
+  const promptIds = PICTIONARY_PROMPTS.map(function (prompt) { return prompt.id; });
+
+  function shuffle(values) {
+    const shuffled = values.slice();
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      const value = shuffled[index];
+      shuffled[index] = shuffled[swapIndex];
+      shuffled[swapIndex] = value;
+    }
+    return shuffled;
+  }
+
+  const deck = shuffle(promptIds);
+  const roundCount = Math.min(Math.max(0, count), Math.floor(deck.length / 2));
+
+  return Array.from({ length: roundCount }, function (_, roundIndex) {
+    const prompts = [deck[roundIndex * 2], deck[roundIndex * 2 + 1]];
+    const choices = [0, 1].map(function (guesserRole) {
+      const answer = prompts[1 - guesserRole];
+      const distractors = shuffle(promptIds.filter(function (promptId) {
+        return promptId !== answer && promptId !== prompts[guesserRole];
+      })).slice(0, 3);
+      return shuffle([answer].concat(distractors));
+    });
+
+    return { id: roundIndex, prompts, choices };
+  });
+}
+
+export function calculatePictionaryRoundScores(correctByRole) {
+  const firstCorrect = Boolean(correctByRole && correctByRole[0]);
+  const secondCorrect = Boolean(correctByRole && correctByRole[1]);
+  return [
+    (firstCorrect ? PICTIONARY.guessingPoints : 0) + (secondCorrect ? PICTIONARY.drawingPoints : 0),
+    (secondCorrect ? PICTIONARY.guessingPoints : 0) + (firstCorrect ? PICTIONARY.drawingPoints : 0)
+  ];
 }
 
 export function buildCoffeeRounds(seed, count = COFFEE_ROUNDS) {

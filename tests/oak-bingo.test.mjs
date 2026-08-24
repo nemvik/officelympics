@@ -164,9 +164,9 @@ test("Neplatné ani obsazené políčko kartu neumístí a platné umístění j
 
 test("Časový bonus klesá lineárně a úplná perfektní mřížka dává přesně 3 800 bodů", function () {
   assert.equal(oakBingoPlacementScore(0), 200);
-  assert.equal(oakBingoPlacementScore(1250), 175);
-  assert.equal(oakBingoPlacementScore(2500), 150);
-  assert.equal(oakBingoPlacementScore(5000), 100);
+  assert.equal(oakBingoPlacementScore(2500), 175);
+  assert.equal(oakBingoPlacementScore(5000), 150);
+  assert.equal(oakBingoPlacementScore(10_000), 100);
   assert.equal(oakBingoPlacementScore(50_000), 100);
   assert.equal(oakBingoPlacementScore(-10), 200);
   assert.equal(oakBingoPlacementScore(NaN), 100);

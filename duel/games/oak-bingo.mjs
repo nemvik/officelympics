@@ -6,7 +6,7 @@ export const OAK_BINGO = Object.freeze({
   cellCount: 9,
   sequenceLength: 12,
   discardLimit: 3,
-  cardDurationMs: 5000,
+  cardDurationMs: 10_000,
   placementBasePoints: 100,
   timeBonusPoints: 100,
   linePoints: 250,
@@ -133,7 +133,7 @@ export const oakBingoGame = defineGame({
     title: "Oakovo PokéBingo",
     teaser: "Třiď Pokémony do profesorovy mřížky",
     difficulty: "postřeh a strategie",
-    instruction: "Umísti dvanáct Pokémonů do devíti podmínek. Na každou kartu máš pět sekund a tři zahození.",
+    instruction: "Umísti dvanáct Pokémonů do devíti podmínek. Na každou kartu máš deset sekund a tři zahození.",
     scoreLabel: "bodů z 3 800"
   },
   start: startOakBingo,
@@ -523,14 +523,14 @@ export function startOakBingo(context) {
   const previousRenderGameToText = window.render_game_to_text;
   const previousAdvanceTime = window.advanceTime;
 
-  context.setRoundLabel("12 karet · 5 sekund");
+  context.setRoundLabel("12 karet · 10 sekund");
   context.stage.innerHTML = `
     <div class="oak-bingo-shell">
       <header class="oak-bingo-topline">
         <div class="oak-bingo-progress"><small>KARTA</small><strong data-oak-progress>1 / 12</strong></div>
         <div class="oak-bingo-clock" role="timer" aria-label="Čas na aktuálního Pokémona">
-          <span><small>ZBÝVÁ</small><b data-oak-time>5,0 s</b></span>
-          <i role="progressbar" aria-label="Zbývající čas" aria-valuemin="0" aria-valuemax="5000" aria-valuenow="5000"><span></span></i>
+          <span><small>ZBÝVÁ</small><b data-oak-time>10,0 s</b></span>
+          <i role="progressbar" aria-label="Zbývající čas" aria-valuemin="0" aria-valuemax="10000" aria-valuenow="10000"><span></span></i>
         </div>
         <div class="oak-bingo-score"><small>SKÓRE</small><strong data-oak-score>0</strong></div>
         <div class="oak-bingo-discards"><small>ZAHOZENÍ</small><strong data-oak-discards>● ● ●</strong></div>

@@ -49,6 +49,10 @@ test("Safari Draft generuje deterministických šest čtyřčlenných nabídek",
   }));
 });
 
+test("Safari Draft nechává dvacet sekund na volbu", function () {
+  assert.equal(SAFARI_DRAFT.choiceDurationMs, 20_000);
+});
+
 test("Všech 24 nabízených Pokémonů je unikátních, lokálních a z Kanta", function () {
   const offers = buildSafariDraftOffers("unikátní-safari");
   const ids = offers.flat();

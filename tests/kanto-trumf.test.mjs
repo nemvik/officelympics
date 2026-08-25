@@ -45,6 +45,10 @@ test("Kanto Trumf dává oběma klientům pro stejný seed stejnou ruku a pořad
   }));
 });
 
+test("Kanto Trumf nechává patnáct sekund na volbu", function () {
+  assert.equal(KANTO_TRUMF.choiceDurationMs, 15_000);
+});
+
 test("Kanto Trumf použije všech šest disciplín právě jednou", function () {
   const expected = KANTO_TRUMF_DISCIPLINES.map(function (discipline) { return discipline.id; }).sort();
   ["disciplíny-a", "disciplíny-b", "disciplíny-c"].forEach(function (seed) {

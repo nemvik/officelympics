@@ -66,6 +66,11 @@ test("Pictionary připraví tři férová kola a správně rozdělí body", func
   assert.deepEqual(calculatePictionaryRoundScores([true, true]), [1000, 1000]);
 });
 
+test("Pictionary nechává minutu na kreslení a půl minuty na hádání", function () {
+  assert.equal(PICTIONARY.drawDurationMs, 60_000);
+  assert.equal(PICTIONARY.guessDurationMs, 30_000);
+});
+
 test("Coffee Relay tvoří pět unikátních objednávek a odměňuje přesnost", function () {
   const first = buildCoffeeRounds("coffee-seed");
   const second = buildCoffeeRounds("coffee-seed");

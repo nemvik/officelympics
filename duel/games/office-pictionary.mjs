@@ -60,7 +60,7 @@ export function startOfficePictionary(context) {
     <div class="pictionary-shell">
       <div class="pictionary-topline">
         <div class="pictionary-rounds" aria-label="Průběh kol"></div>
-        <div class="pictionary-timer" aria-label="Zbývající čas"><span>35</span> s</div>
+        <div class="pictionary-timer" aria-label="Zbývající čas"><span>${Math.ceil(PICTIONARY.drawDurationMs / 1000)}</span> s</div>
       </div>
       <div class="pictionary-brief">
         <span class="eyebrow">Tvoje zadání</span>
@@ -531,8 +531,8 @@ export const PICTIONARY_ROUNDS = 3;
 export const PICTIONARY = Object.freeze({
   width: 900,
   height: 480,
-  drawDurationMs: 35_000,
-  guessDurationMs: 18_000,
+  drawDurationMs: 60_000,
+  guessDurationMs: 30_000,
   drawingPoints: 700,
   guessingPoints: 300
 });

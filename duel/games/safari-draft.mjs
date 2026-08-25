@@ -5,7 +5,7 @@ import { defineGame, normalizeScoreResult } from "./shared.mjs";
 export const SAFARI_DRAFT = Object.freeze({
   rounds: 6,
   offerSize: 4,
-  choiceDurationMs: 10_000,
+  choiceDurationMs: 20_000,
   revealDurationMs: 3200,
   maximumScore: 36,
   nonceBytes: 16
@@ -442,8 +442,8 @@ export function startSafariDraft(context) {
           <h3>Vyber cíl a míček</h3>
           <p>Vzácnější Pokémon = více bodů. Míček se spotřebuje vždy.</p>
         </div>
-        <div class="safari-draft-clock" aria-label="Zbývá deset sekund na volbu">
-          <span>Zbývá</span><b>10,0</b><small>s</small><i aria-hidden="true"><span></span></i>
+        <div class="safari-draft-clock" aria-label="Zbývající čas na volbu">
+          <span>Zbývá</span><b>${(SAFARI_DRAFT.choiceDurationMs / 1000).toFixed(1).replace(".", ",")}</b><small>s</small><i aria-hidden="true"><span></span></i>
         </div>
       </header>
 

@@ -5,7 +5,7 @@ import { defineGame, normalizeScoreResult } from "./shared.mjs";
 export const KANTO_TRUMF = Object.freeze({
   rounds: 6,
   handSize: 7,
-  choiceDurationMs: 8000,
+  choiceDurationMs: 15_000,
   revealDurationMs: 2200,
   maximumScore: 12,
   nonceBytes: 16
@@ -300,8 +300,8 @@ export function startKantoTrumf(context) {
             <span>Následuje</span><strong class="kanto-trumf-next"></strong><small class="kanto-trumf-next-note"></small>
           </section>
         </div>
-        <div class="kanto-trumf-clock" aria-label="Zbývá osm sekund na volbu">
-          <span>Zbývá</span><b>8,0</b><small>s</small><i aria-hidden="true"><span></span></i>
+        <div class="kanto-trumf-clock" aria-label="Zbývající čas na volbu">
+          <span>Zbývá</span><b>${formatDecimal(KANTO_TRUMF.choiceDurationMs / 1000)}</b><small>s</small><i aria-hidden="true"><span></span></i>
         </div>
       </div>
 

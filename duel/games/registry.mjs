@@ -2,17 +2,22 @@ import { pickTournamentGameIds } from "../game-core.mjs";
 import { altTabDuelGame } from "./alt-tab-duel.mjs";
 import { calendarSqueezeGame } from "./calendar-squeeze.mjs";
 import { coffeeRelayGame } from "./coffee-relay.mjs";
+import { cursorMazeGame } from "./cursor-maze.mjs";
 import { deadlineChickenGame } from "./deadline-chicken.mjs";
 import { evolutionMemoryGame } from "./evolution-memory.mjs";
+import { inboxZeroGame } from "./inbox-zero.mjs";
 import { inboxPongGame } from "./inbox-pong.mjs";
 import { jargonDecoderGame } from "./jargon-decoder.mjs";
 import { kantoTrumfGame } from "./kanto-trumf.mjs";
 import { meetingEscapeGame } from "./meeting-escape.mjs";
+import { meetingTetrisGame } from "./meeting-tetris.mjs";
 import { oakBingoGame } from "./oak-bingo.mjs";
 import { officePanicGame } from "./office-panic.mjs";
 import { officePictionaryGame } from "./office-pictionary.mjs";
+import { paperShredderGame } from "./paper-shredder.mjs";
 import { paperCurlingGame } from "./paper-curling.mjs";
 import { pokeShadowGame } from "./poke-shadow.mjs";
+import { postitSprintGame } from "./postit-sprint.mjs";
 import { printerExorcistGame } from "./printer-exorcist.mjs";
 import { safariDraftGame } from "./safari-draft.mjs";
 import { spreadsheetBattleshipGame } from "./spreadsheet-battleship.mjs";
@@ -22,6 +27,11 @@ import { taskStackGame } from "./task-stack.mjs";
 // Povinný kontrakt a checklist jsou v ./README.md.
 export const GAMES = Object.freeze([
   officePanicGame,
+  postitSprintGame,
+  inboxZeroGame,
+  cursorMazeGame,
+  paperShredderGame,
+  meetingTetrisGame,
   deadlineChickenGame,
   evolutionMemoryGame,
   paperCurlingGame,

@@ -104,3 +104,13 @@ Original prompt: Kompletně implementovat sdílenou duelovou hru „Safari Draft
 - Commit–reveal chrání tajnost volby pomocí 128bit nonce, ale čisté P2P bez autoritativního serveru nedokáže zabránit úmyslnému odpojení nebo zadržení revealu po commitu.
 - Deterministický hod je záměrně odvoditelný z veřejného seedu; upravený klient si může před volbou dopočítat výsledky všech kombinací. Serverová tajná entropie by tento limit odstranila, ale měnila by požadovaný kontrakt hry.
 - Sprite obrázky používají verzované URL existujícího snapshotu; při nedostupnosti GitHub CDN zůstávají jméno, typy, body i ovládání funkční, ale artwork se nenačte.
+
+## Pět nových Office Duel her — aktuální úkol
+
+Original prompt: Implementovat Post-it Sprint, Inbox Zero, Kurzorový labyrint, Papírovou skartovačku a Meeting Tetris.
+
+- Přidáno pět samostatných lokálních herních descriptorů s deterministickým obsahem ze seedu, omezenými výsledky, formátováním a věrohodným practice botem.
+- Post-it Sprint má tři nástěnky po dvanácti lepících; Inbox Zero deset vyvážených e-mailových rozhodnutí; Kurzorový labyrint dvě perfektní DFS bludiště s kontrolou celé trajektorie; skartovačka 24sekundovou čtyřdráhovou linku; Meeting Tetris čtyři řešitelné kalendářové skládačky.
+- Všechny hry mají touch i klávesnicové ovládání podle mechaniky, aria-live zpětnou vazbu, focus stav, responzivní desktop/mobile layout a úplný cleanup časovačů, animací i listenerů.
+- Registr obsahuje 23 her a stejný počet uvádí hero i metadata Duelu. Každá nová hra má vlastní testovací soubor; celá sada 109 testů prochází.
+- Browser ověření proběhlo na 1280×720 a 390×844: všech pět her se spustilo, klíčové interakce fungují, Post-it dokončil skutečný bodovaný zápas, nevzniká horizontální overflow, konzole i page errors jsou prázdné a axe audit herní plochy hlásí 0 porušení.

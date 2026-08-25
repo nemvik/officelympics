@@ -1,6 +1,9 @@
 import {
   createRng,
   makeSeed,
+  nextGameChooserRole,
+  normalizeTournamentGameIds,
+  toggleTournamentGameId,
   tournamentRoundPoints
 } from "./game-core.mjs";
 import {
@@ -16,12 +19,14 @@ import {
 } from "./games/registry.mjs";
 import { safeScore } from "./games/shared.mjs";
 
-const APP_VERSION = 2;
+const APP_VERSION = 3;
 const NAME_STORAGE_KEY = "officelympicsDuelName";
 const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const ROOM_LENGTH = 6;
 const PEER_PREFIX = "officelympics-2026-";
 const MATCH_FORMATS = Object.freeze(["single", "tournament"]);
+const TOURNAMENT_MODES = Object.freeze(["random", "custom"]);
+const TOURNAMENT_GAME_COUNT = 3;
 
 const refs = {};
 const state = {
@@ -33,6 +38,9 @@ const state = {
   roomCode: "",
   selectedFormat: "single",
   selectedGame: "panic",
+  selectedTournamentMode: "random",
+  customTournamentGames: [],
+  gameChooserRole: 0,
   local: { name: "", ready: false },
   remote: null,
   pendingMatch: null,
@@ -52,7 +60,9 @@ function init() {
   [
     "connection-pill", "notice-banner", "setup-screen", "lobby-screen", "game-screen", "result-screen",
     "setup-game-picker", "lobby-game-picker", "setup-format-picker", "lobby-format-picker",
-    "setup-tournament-note", "lobby-tournament-note", "player-name", "create-room", "join-form",
+    "setup-tournament-note", "lobby-tournament-note", "setup-tournament-title", "lobby-tournament-title",
+    "setup-tournament-copy", "lobby-tournament-copy", "setup-tournament-status", "lobby-tournament-status",
+    "player-name", "create-room", "join-form",
     "room-code", "practice-button", "lobby-copy",
     "lobby-room-code", "copy-link", "copy-code", "player-one-name", "player-two-name",
     "player-one-ready", "player-two-ready", "selection-help", "leave-room", "ready-button",
@@ -85,13 +95,19 @@ function init() {
 
   document.querySelectorAll("[data-game-choice]").forEach(function (button) {
     button.addEventListener("click", function () {
-      chooseGame(button.dataset.gameChoice, true);
+      handleGameCardChoice(button.dataset.gameChoice);
     });
   });
 
   document.querySelectorAll("[data-format-choice]").forEach(function (button) {
     button.addEventListener("click", function () {
       chooseFormat(button.dataset.formatChoice, true);
+    });
+  });
+
+  document.querySelectorAll("[data-tournament-mode-choice]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      chooseTournamentMode(button.dataset.tournamentModeChoice, true);
     });
   });
 
@@ -121,12 +137,12 @@ function renderGamePickers() {
     { container: refs.lobbyGamePicker, compact: true }
   ].forEach(function ({ container, compact }) {
     const fragment = document.createDocumentFragment();
-    GAME_DEFINITIONS.forEach(function (game, index) {
+    GAME_DEFINITIONS.forEach(function (game) {
       const button = document.createElement("button");
-      button.className = "game-card" + (index === 0 ? " is-selected" : "");
+      button.className = "game-card" + (game.id === state.selectedGame ? " is-selected" : "");
       button.type = "button";
       button.dataset.gameChoice = game.id;
-      button.setAttribute("aria-pressed", String(index === 0));
+      button.setAttribute("aria-pressed", String(game.id === state.selectedGame));
 
       const icon = document.createElement("span");
       icon.className = "game-icon";
@@ -134,11 +150,16 @@ function renderGamePickers() {
       icon.textContent = game.icon;
 
       const copy = document.createElement("span");
+      copy.className = "game-card-copy";
       const title = document.createElement("strong");
       const detail = document.createElement("small");
+      const instruction = document.createElement("small");
       title.textContent = compact && game.compactTitle ? game.compactTitle : game.title;
-      detail.textContent = compact ? game.difficulty : game.teaser;
-      copy.append(title, detail);
+      detail.className = "game-teaser";
+      detail.textContent = game.teaser;
+      instruction.className = "game-instruction";
+      instruction.textContent = game.instruction;
+      copy.append(title, detail, instruction);
       button.append(icon, copy);
 
       if (!compact) {
@@ -163,6 +184,9 @@ function renderGameToText() {
     mode: state.mode,
     format: state.selectedFormat,
     selectedGame: state.selectedGame,
+    tournamentMode: state.selectedTournamentMode,
+    customTournamentGames: state.customTournamentGames.slice(),
+    gameChooserRole: state.gameChooserRole,
     match: state.match ? {
       game: state.match.game,
       localScore: state.match.localScore,
@@ -253,19 +277,30 @@ function showScreen(name) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function handleGameCardChoice(gameId) {
+  if (state.selectedFormat === "tournament" && state.selectedTournamentMode === "custom") {
+    toggleCustomTournamentGame(gameId, true);
+    return;
+  }
+  chooseGame(gameId, true);
+}
+
 function chooseGame(gameId, broadcast) {
   if (!GAME_IDS.includes(gameId)) return;
-  if (broadcast && state.mode === "online" && state.role === 1 && !refs.lobbyScreen.hidden) return;
+  if (broadcast && state.mode === "online" && !refs.lobbyScreen.hidden
+    && state.role !== state.gameChooserRole) return;
 
   state.selectedGame = gameId;
-  document.querySelectorAll("[data-game-choice]").forEach(function (button) {
-    const selected = button.dataset.gameChoice === gameId;
-    button.classList.toggle("is-selected", selected);
-    button.setAttribute("aria-pressed", String(selected));
-  });
+  syncGamePickerSelection();
 
-  if (broadcast && state.mode === "online" && state.role === 0) {
+  if (!broadcast || state.mode !== "online") return;
+  resetLobbyReadiness();
+  if (state.role === 0) {
     broadcastSelection();
+  } else {
+    sendMessage({ type: "game-choice", game: state.selectedGame, chooserRole: state.gameChooserRole });
+    sendMessage({ type: "ready", ready: false });
+    renderLobby();
   }
 }
 
@@ -279,22 +314,132 @@ function chooseFormat(format, broadcast) {
     button.classList.toggle("is-selected", selected);
     button.setAttribute("aria-pressed", String(selected));
   });
-
-  const tournament = format === "tournament";
-  refs.setupGamePicker.hidden = tournament;
-  refs.lobbyGamePicker.hidden = tournament;
-  refs.setupTournamentNote.hidden = !tournament;
-  refs.lobbyTournamentNote.hidden = !tournament;
-  refs.practiceButton.textContent = tournament ? "🏆 Spustit turnaj s botem" : "🕶️ Spustit trénink";
+  renderSelectionInterface();
 
   if (broadcast && state.mode === "online" && state.role === 0) broadcastSelection();
   if (!refs.lobbyScreen.hidden) renderLobby();
 }
 
-function broadcastSelection() {
+function chooseTournamentMode(mode, broadcast) {
+  if (!TOURNAMENT_MODES.includes(mode)) return;
+  if (broadcast && state.mode === "online" && state.role === 1 && !refs.lobbyScreen.hidden) return;
+  state.selectedTournamentMode = mode;
+  renderSelectionInterface();
+  if (broadcast && state.mode === "online" && state.role === 0) broadcastSelection();
+  if (!refs.lobbyScreen.hidden) renderLobby();
+}
+
+function toggleCustomTournamentGame(gameId, broadcast) {
+  if (!GAME_IDS.includes(gameId)) return;
+  const nextGames = toggleTournamentGameId(
+    state.customTournamentGames,
+    gameId,
+    GAME_IDS,
+    TOURNAMENT_GAME_COUNT
+  );
+  if (!nextGames) {
+    showNotice("Turnaj má přesně tři hry. Nejdřív jednu odškrtni.", "info");
+    return;
+  }
+
+  state.customTournamentGames = nextGames;
+  renderSelectionInterface();
+  if (!broadcast || state.mode !== "online") return;
+  resetLobbyReadiness();
+  if (state.role === 0) {
+    broadcastSelection();
+  } else {
+    sendMessage({
+      type: "tournament-game-toggle",
+      game: gameId,
+      selected: nextGames.includes(gameId)
+    });
+    sendMessage({ type: "ready", ready: false });
+    renderLobby();
+  }
+}
+
+function resetLobbyReadiness() {
   state.local.ready = false;
   if (state.remote) state.remote.ready = false;
-  sendMessage({ type: "selection", game: state.selectedGame, format: state.selectedFormat });
+}
+
+function tournamentSelectionComplete() {
+  return state.selectedFormat !== "tournament"
+    || state.selectedTournamentMode === "random"
+    || state.customTournamentGames.length === TOURNAMENT_GAME_COUNT;
+}
+
+function syncGamePickerSelection() {
+  const customTournament = state.selectedFormat === "tournament" && state.selectedTournamentMode === "custom";
+  [refs.setupGamePicker, refs.lobbyGamePicker].forEach(function (picker) {
+    picker.classList.toggle("is-custom-tournament", customTournament);
+  });
+  document.querySelectorAll("[data-game-choice]").forEach(function (button) {
+    const order = state.customTournamentGames.indexOf(button.dataset.gameChoice);
+    const selected = customTournament ? order >= 0 : button.dataset.gameChoice === state.selectedGame;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+    if (customTournament && order >= 0) button.dataset.selectionOrder = String(order + 1);
+    else delete button.dataset.selectionOrder;
+  });
+}
+
+function renderSelectionInterface() {
+  const tournament = state.selectedFormat === "tournament";
+  const customTournament = tournament && state.selectedTournamentMode === "custom";
+  refs.setupGamePicker.hidden = tournament && !customTournament;
+  refs.lobbyGamePicker.hidden = tournament && !customTournament;
+  refs.setupTournamentNote.hidden = !tournament;
+  refs.lobbyTournamentNote.hidden = !tournament;
+  refs.practiceButton.textContent = tournament ? "🏆 Spustit turnaj s botem" : "🕶️ Spustit trénink";
+  refs.practiceButton.disabled = !tournamentSelectionComplete();
+
+  document.querySelectorAll("[data-tournament-mode-choice]").forEach(function (button) {
+    const selected = button.dataset.tournamentModeChoice === state.selectedTournamentMode;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+
+  const title = customTournament ? "Zaklikejte společnou trojici" : "Tři hry určí náhoda";
+  const copy = customTournament
+    ? "Karty můžete odškrtávat oba. Číslo na kartě určuje pořadí v turnaji."
+    : "Los proběhne až při startu. Remíza ve hře dává každému půl bodu.";
+  refs.setupTournamentTitle.textContent = title;
+  refs.lobbyTournamentTitle.textContent = title;
+  refs.setupTournamentCopy.textContent = copy;
+  refs.lobbyTournamentCopy.textContent = copy;
+
+  const selectedCount = state.customTournamentGames.length;
+  const missingGames = TOURNAMENT_GAME_COUNT - selectedCount;
+  const status = customTournament
+    ? selectedCount === TOURNAMENT_GAME_COUNT
+      ? "✓ Trojice je hotová. Pořadí: " + state.customTournamentGames.map(function (gameId) {
+        return getGameDefinition(gameId).title;
+      }).join(" → ")
+      : "Vybráno " + selectedCount + "/" + TOURNAMENT_GAME_COUNT + ". Zbývá vybrat "
+        + missingGames + (missingGames === 1 ? " hru." : " hry.")
+    : "";
+  [refs.setupTournamentStatus, refs.lobbyTournamentStatus].forEach(function (element) {
+    element.textContent = status;
+    element.classList.toggle("is-complete", customTournament && selectedCount === TOURNAMENT_GAME_COUNT);
+  });
+  syncGamePickerSelection();
+}
+
+function selectionEnvelope() {
+  return {
+    game: state.selectedGame,
+    format: state.selectedFormat,
+    tournamentMode: state.selectedTournamentMode,
+    customGames: state.customTournamentGames.slice(),
+    chooserRole: state.gameChooserRole
+  };
+}
+
+function broadcastSelection() {
+  resetLobbyReadiness();
+  sendMessage({ type: "selection", ...selectionEnvelope() });
   sendLobbySnapshot();
   renderLobby();
 }
@@ -522,16 +667,44 @@ function receiveMessage(message) {
     return;
   }
 
-  if (message.type === "selection" && state.role === 1 && GAME_IDS.includes(message.game)
-    && MATCH_FORMATS.includes(message.format)) {
-    state.selectedGame = message.game;
-    state.selectedFormat = message.format;
-    state.local.ready = false;
-    if (state.remote) state.remote.ready = false;
-    chooseGame(message.game, false);
-    chooseFormat(message.format, false);
+  if (message.type === "selection" && state.role === 1) {
+    const selection = normalizeSelectionEnvelope(message);
+    if (!selection) return;
+    applySelectionEnvelope(selection);
+    resetLobbyReadiness();
     sendMessage({ type: "ready", ready: false });
     renderLobby();
+    return;
+  }
+
+  if (message.type === "game-choice" && state.role === 0 && state.selectedFormat === "single"
+    && state.gameChooserRole === 1 && message.chooserRole === 1 && GAME_IDS.includes(message.game)) {
+    chooseGame(message.game, false);
+    broadcastSelection();
+    return;
+  }
+
+  if (message.type === "tournament-game-toggle" && state.role === 0
+    && state.selectedFormat === "tournament" && state.selectedTournamentMode === "custom"
+    && GAME_IDS.includes(message.game) && typeof message.selected === "boolean") {
+    const currentlySelected = state.customTournamentGames.includes(message.game);
+    if (currentlySelected === message.selected) {
+      sendLobbySnapshot();
+      return;
+    }
+    const nextGames = toggleTournamentGameId(
+      state.customTournamentGames,
+      message.game,
+      GAME_IDS,
+      TOURNAMENT_GAME_COUNT
+    );
+    if (!nextGames) {
+      sendLobbySnapshot();
+      return;
+    }
+    state.customTournamentGames = nextGames;
+    renderSelectionInterface();
+    broadcastSelection();
     return;
   }
 
@@ -588,8 +761,7 @@ function sendLobbySnapshot() {
   if (state.role !== 0) return;
   sendMessage({
     type: "lobby",
-    game: state.selectedGame,
-    format: state.selectedFormat,
+    ...selectionEnvelope(),
     players: [
       { name: state.local.name, ready: state.local.ready },
       state.remote ? { name: state.remote.name, ready: state.remote.ready } : null
@@ -598,14 +770,8 @@ function sendLobbySnapshot() {
 }
 
 function receiveLobbySnapshot(message) {
-  if (MATCH_FORMATS.includes(message.format)) {
-    state.selectedFormat = message.format;
-    chooseFormat(message.format, false);
-  }
-  if (GAME_IDS.includes(message.game)) {
-    state.selectedGame = message.game;
-    chooseGame(message.game, false);
-  }
+  const selection = normalizeSelectionEnvelope(message);
+  if (selection) applySelectionEnvelope(selection);
   if (!Array.isArray(message.players) || message.players.length !== 2) return;
 
   const host = message.players[0];
@@ -615,6 +781,32 @@ function receiveLobbySnapshot(message) {
   }
   if (guest && typeof guest === "object") state.local.ready = Boolean(guest.ready);
   renderLobby();
+}
+
+function normalizeSelectionEnvelope(value) {
+  if (!value || typeof value !== "object" || !GAME_IDS.includes(value.game)
+    || !MATCH_FORMATS.includes(value.format) || !TOURNAMENT_MODES.includes(value.tournamentMode)
+    || (value.chooserRole !== 0 && value.chooserRole !== 1)) return null;
+  const customGames = normalizeTournamentGameIds(value.customGames, GAME_IDS, TOURNAMENT_GAME_COUNT);
+  if (!customGames) return null;
+  return {
+    game: value.game,
+    format: value.format,
+    tournamentMode: value.tournamentMode,
+    customGames,
+    chooserRole: value.chooserRole
+  };
+}
+
+function applySelectionEnvelope(selection) {
+  state.selectedGame = selection.game;
+  state.selectedFormat = selection.format;
+  state.selectedTournamentMode = selection.tournamentMode;
+  state.customTournamentGames = selection.customGames.slice();
+  state.gameChooserRole = selection.chooserRole;
+  chooseGame(selection.game, false);
+  chooseFormat(selection.format, false);
+  chooseTournamentMode(selection.tournamentMode, false);
 }
 
 function enterLobby() {
@@ -637,22 +829,39 @@ function renderLobby() {
   refs.lobbyRoomCode.textContent = state.roomCode || "—";
 
   const connected = Boolean(state.connection && state.connection.open && state.remote);
+  const validSelection = tournamentSelectionComplete();
   refs.lobbyCopy.textContent = connected ? "Oba jste uvnitř. Teď už není cesty zpět." : "Čekáme na druhého soutěžícího.";
-  refs.readyButton.disabled = !connected;
+  refs.readyButton.disabled = !connected || !validSelection;
   refs.readyButton.classList.toggle("is-ready", state.local.ready);
   refs.readyButton.textContent = state.local.ready ? "✓ Jsem připraven" : "Jsem připraven";
   refs.startButton.hidden = state.role !== 0;
-  refs.startButton.disabled = !(connected && state.local.ready && state.remote && state.remote.ready) || Boolean(state.pendingMatch);
-  refs.startButton.textContent = state.selectedFormat === "tournament" ? "🏆 Rozlosovat turnaj" : "🚀 Spustit duel";
-  refs.selectionHelp.textContent = state.role === 0
-    ? "Hostitel vybírá formát, demokracie začne až po pracovní době."
-    : "Formát vybírá hostitel. Protest lze podat po skončení.";
+  refs.startButton.disabled = !(connected && validSelection && state.local.ready && state.remote && state.remote.ready)
+    || Boolean(state.pendingMatch);
+  refs.startButton.textContent = state.selectedFormat === "tournament"
+    ? state.selectedTournamentMode === "custom" ? "🏆 Spustit vlastní turnaj" : "🎲 Rozlosovat turnaj"
+    : "🚀 Spustit duel";
+
+  if (state.selectedFormat === "tournament" && state.selectedTournamentMode === "custom") {
+    refs.selectionHelp.textContent = "Trojici her skládáte oba. Hostitel volí formát a způsob výběru.";
+  } else if (state.selectedFormat === "tournament") {
+    refs.selectionHelp.textContent = "Hostitel nastavil náhodný los tří her.";
+  } else {
+    const rolePlayers = playersByRole();
+    const chooser = rolePlayers[state.gameChooserRole];
+    refs.selectionHelp.textContent = state.role === state.gameChooserRole
+      ? "Tentokrát vybíráš hru ty. Po zápase dostane volbu soupeř."
+      : (chooser ? chooser.name : "Soupeř") + " tentokrát vybírá hru. Příště se vystřídáte.";
+  }
 
   document.querySelectorAll("#lobby-game-picker [data-game-choice]").forEach(function (button) {
-    button.disabled = state.role === 1;
+    button.disabled = Boolean(state.pendingMatch)
+      || (state.selectedFormat === "single" && state.role !== state.gameChooserRole);
   });
   document.querySelectorAll("#lobby-format-picker [data-format-choice]").forEach(function (button) {
-    button.disabled = state.role === 1;
+    button.disabled = state.role === 1 || Boolean(state.pendingMatch);
+  });
+  document.querySelectorAll("#lobby-tournament-note [data-tournament-mode-choice]").forEach(function (button) {
+    button.disabled = state.role === 1 || Boolean(state.pendingMatch);
   });
 }
 
@@ -669,16 +878,17 @@ function renderReadyState(element, player, role) {
 }
 
 function toggleReady() {
-  if (!state.connection || !state.connection.open || state.pendingMatch) return;
+  if (!state.connection || !state.connection.open || state.pendingMatch || !tournamentSelectionComplete()) return;
   state.local.ready = !state.local.ready;
   sendMessage({ type: "ready", ready: state.local.ready });
   if (state.role === 0) sendLobbySnapshot();
   renderLobby();
 }
 
-function createTournament(id, games, index) {
+function createTournament(id, games, index, mode) {
   return {
     id,
+    mode,
     games: games.slice(),
     currentIndex: index,
     rounds: [],
@@ -693,6 +903,7 @@ function tournamentEnvelope(tournament) {
   if (!tournament) return null;
   return {
     id: tournament.id,
+    mode: tournament.mode,
     games: tournament.games.slice(),
     index: tournament.currentIndex
   };
@@ -701,18 +912,20 @@ function tournamentEnvelope(tournament) {
 function normalizeTournamentEnvelope(value) {
   if (!value || typeof value !== "object" || typeof value.id !== "string"
     || value.id.length < 1 || value.id.length > 40) return null;
-  if (!Array.isArray(value.games) || value.games.length !== 3 || new Set(value.games).size !== 3) return null;
-  if (!value.games.every(function (game) { return GAME_IDS.includes(game); })) return null;
+  if (!TOURNAMENT_MODES.includes(value.mode)) return null;
+  const games = normalizeTournamentGameIds(value.games, GAME_IDS, TOURNAMENT_GAME_COUNT);
+  if (!games || games.length !== TOURNAMENT_GAME_COUNT) return null;
   if (!Number.isInteger(value.index) || value.index < 0 || value.index >= value.games.length) return null;
-  return { id: value.id, games: value.games.slice(), index: value.index };
+  return { id: value.id, mode: value.mode, games, index: value.index };
 }
 
 function applyTournamentEnvelope(envelope) {
   if (!envelope) return false;
   const sameTournament = state.tournament
     && state.tournament.id === envelope.id
+    && state.tournament.mode === envelope.mode
     && state.tournament.games.join(":") === envelope.games.join(":");
-  if (!sameTournament) state.tournament = createTournament(envelope.id, envelope.games, envelope.index);
+  if (!sameTournament) state.tournament = createTournament(envelope.id, envelope.games, envelope.index, envelope.mode);
   state.tournament.currentIndex = envelope.index;
   state.tournament.localReady = false;
   state.tournament.remoteReady = false;
@@ -720,13 +933,16 @@ function applyTournamentEnvelope(envelope) {
 }
 
 function prepareOnlineMatch() {
-  if (state.role !== 0 || !state.connection || !state.connection.open || !state.local.ready || !state.remote || !state.remote.ready) return;
+  if (state.role !== 0 || !state.connection || !state.connection.open || !state.local.ready
+    || !state.remote || !state.remote.ready || !tournamentSelectionComplete()) return;
   let game = state.selectedGame;
   let tournament = null;
   if (state.selectedFormat === "tournament") {
     const tournamentId = makeSeed();
-    const games = pickTournamentGames(tournamentId);
-    state.tournament = createTournament(tournamentId, games, 0);
+    const games = state.selectedTournamentMode === "custom"
+      ? state.customTournamentGames.slice()
+      : pickTournamentGames(tournamentId, TOURNAMENT_GAME_COUNT);
+    state.tournament = createTournament(tournamentId, games, 0, state.selectedTournamentMode);
     game = games[0];
     tournament = tournamentEnvelope(state.tournament);
   } else {
@@ -737,11 +953,14 @@ function prepareOnlineMatch() {
     game,
     seed: makeSeed(),
     format: state.selectedFormat,
-    tournament
+    tournament,
+    chooserRole: state.gameChooserRole
   };
   state.pendingMatch = pending;
   refs.lobbyStatus.textContent = state.selectedFormat === "tournament"
-    ? "Losuji tři disciplíny a kontroluji, zda HR opravdu nekouká…"
+    ? state.selectedTournamentMode === "custom"
+      ? "Připravuji vaši trojici a kontroluji, zda HR opravdu nekouká…"
+      : "Losuji tři disciplíny a kontroluji, zda HR opravdu nekouká…"
     : "Oba připraveni. Kontroluji, zda HR opravdu nekouká…";
   renderLobby();
   sendMessage({
@@ -750,7 +969,8 @@ function prepareOnlineMatch() {
     game: pending.game,
     seed: pending.seed,
     format: pending.format,
-    tournament: pending.tournament
+    tournament: pending.tournament,
+    chooserRole: pending.chooserRole
   });
   window.clearTimeout(state.prepareTimer);
   state.prepareTimer = window.setTimeout(function () {
@@ -767,13 +987,19 @@ function receivePrepare(message) {
   if (message.format === "tournament") applyTournamentEnvelope(tournament);
   else state.tournament = null;
   state.selectedFormat = message.format;
+  state.gameChooserRole = message.chooserRole;
+  if (tournament) {
+    state.selectedTournamentMode = tournament.mode;
+    if (tournament.mode === "custom") state.customTournamentGames = tournament.games.slice();
+  }
   chooseFormat(message.format, false);
   state.pendingMatch = {
     id: message.matchId,
     game: message.game,
     seed: message.seed,
     format: message.format,
-    tournament
+    tournament,
+    chooserRole: message.chooserRole
   };
   refs.lobbyStatus.textContent = "Hostitel spouští " + getGameDefinition(message.game).title + "…";
   sendMessage({ type: "prepared", matchId: message.matchId });
@@ -791,6 +1017,7 @@ function dispatchOnlineStart() {
     seed: pending.seed,
     format: pending.format,
     tournament: pending.tournament,
+    chooserRole: pending.chooserRole,
     delay
   });
   queueMatch(pending, delay);
@@ -806,7 +1033,8 @@ function receiveStart(message) {
     game: message.game,
     seed: message.seed,
     format: message.format,
-    tournament
+    tournament,
+    chooserRole: message.chooserRole
   };
   queueMatch(pending, delay);
 }
@@ -815,16 +1043,20 @@ function validMatchEnvelope(message) {
   const baseValid = typeof message.matchId === "string" && message.matchId.length >= 1 && message.matchId.length <= 40
     && GAME_IDS.includes(message.game)
     && typeof message.seed === "string" && message.seed.length >= 1 && message.seed.length <= 40
-    && MATCH_FORMATS.includes(message.format);
+    && MATCH_FORMATS.includes(message.format)
+    && (message.chooserRole === 0 || message.chooserRole === 1);
   if (!baseValid) return false;
-  if (message.format === "single") return message.tournament === null || message.tournament === undefined;
+  if (message.format === "single") {
+    return message.chooserRole === state.gameChooserRole
+      && (message.tournament === null || message.tournament === undefined);
+  }
   const tournament = normalizeTournamentEnvelope(message.tournament);
   return Boolean(tournament && tournament.games[tournament.index] === message.game);
 }
 
 function startPractice() {
   const name = requirePlayerName();
-  if (!name) return;
+  if (!name || !tournamentSelectionComplete()) return;
   resetSession(false);
   state.mode = "practice";
   state.role = 0;
@@ -833,18 +1065,28 @@ function startPractice() {
   setConnectionStatus("offline", "● Trénink");
   if (state.selectedFormat === "tournament") {
     const tournamentId = makeSeed();
-    const games = pickTournamentGames(tournamentId);
-    state.tournament = createTournament(tournamentId, games, 0);
+    const games = state.selectedTournamentMode === "custom"
+      ? state.customTournamentGames.slice()
+      : pickTournamentGames(tournamentId, TOURNAMENT_GAME_COUNT);
+    state.tournament = createTournament(tournamentId, games, 0, state.selectedTournamentMode);
     queueMatch({
       id: makeSeed(),
       game: games[0],
       seed: makeSeed(),
       format: "tournament",
-      tournament: tournamentEnvelope(state.tournament)
+      tournament: tournamentEnvelope(state.tournament),
+      chooserRole: 0
     }, 2200);
   } else {
     state.tournament = null;
-    queueMatch({ id: makeSeed(), game: state.selectedGame, seed: makeSeed(), format: "single", tournament: null }, 2200);
+    queueMatch({
+      id: makeSeed(),
+      game: state.selectedGame,
+      seed: makeSeed(),
+      format: "single",
+      tournament: null,
+      chooserRole: 0
+    }, 2200);
   }
 }
 
@@ -862,6 +1104,7 @@ function queueMatch(matchData, delay) {
     game: matchData.game,
     seed: matchData.seed,
     format: matchData.format,
+    chooserRole: matchData.chooserRole,
     tournamentIndex: state.tournament ? state.tournament.currentIndex : null,
     localScore: 0,
     remoteScore: 0,
@@ -921,7 +1164,7 @@ function launchCurrentGame() {
     names,
     setRoundLabel: function (label) {
       refs.gameRoundLabel.textContent = state.tournament
-        ? "Turnaj " + (state.tournament.currentIndex + 1) + "/3 · " + label
+        ? "Turnaj " + (state.tournament.currentIndex + 1) + "/" + state.tournament.games.length + " · " + label
         : label;
     },
     publishScore: function (score) {
@@ -954,7 +1197,7 @@ function renderMatchHeader() {
   const remoteName = state.remote ? state.remote.name : "Kolega";
   refs.gameTitle.textContent = meta.title;
   refs.gameRoundLabel.textContent = state.tournament
-    ? "Turnaj · hra " + (state.tournament.currentIndex + 1) + "/3"
+    ? "Turnaj · hra " + (state.tournament.currentIndex + 1) + "/" + state.tournament.games.length
     : "Duel";
   refs.matchLocalName.textContent = localName;
   refs.matchRemoteName.textContent = remoteName;
@@ -1156,7 +1399,8 @@ function showResult() {
 
     if (!tournamentFinished) {
       const nextGame = getGameDefinition(state.tournament.games[state.tournament.currentIndex + 1]);
-      refs.resultKicker.textContent = "Turnaj · hra " + (state.tournament.currentIndex + 1) + "/3";
+      refs.resultKicker.textContent = "Turnaj · hra " + (state.tournament.currentIndex + 1)
+        + "/" + state.tournament.games.length;
       refs.resultTitle.textContent = tied ? "Tahle hra nerozhodla" : localWon ? "Bod pro tebe!" : "Bod pro soupeře";
       refs.resultCopy.textContent = "Další disciplína: " + (nextGame ? nextGame.title : "překvapení") + ". Pokračujete, až oba potvrdíte připravenost.";
       refs.rematchButton.textContent = "Další hra →";
@@ -1174,11 +1418,11 @@ function showResult() {
       if (tournamentTied) {
         refs.resultEmoji.textContent = "🤝";
         refs.resultTitle.textContent = "Turnaj končí remízou";
-        refs.resultCopy.textContent = "Tři hry nestačily. HR doporučuje rozstřel, nebo společný oběd.";
+        refs.resultCopy.textContent = "Ani celý turnaj nerozhodl. HR doporučuje rozstřel, nebo společný oběd.";
       } else if (localTournamentWon) {
         refs.resultEmoji.textContent = "🏆";
         refs.resultTitle.textContent = "Vyhráváš turnaj!";
-        refs.resultCopy.textContent = "Tři disciplíny, jedna kancelářská legenda. Produktivita se zotaví později.";
+        refs.resultCopy.textContent = "Celý turnaj, jedna kancelářská legenda. Produktivita se zotaví později.";
       } else {
         refs.resultEmoji.textContent = "🫠";
         refs.resultTitle.textContent = "Turnaj vyhrává " + remoteName;
@@ -1224,10 +1468,17 @@ function requestRematch() {
   }
   const game = state.match.game;
   if (state.mode === "practice") {
-    queueMatch({ id: makeSeed(), game, seed: makeSeed(), format: "single", tournament: null }, 2200);
+    queueMatch({
+      id: makeSeed(),
+      game,
+      seed: makeSeed(),
+      format: "single",
+      tournament: null,
+      chooserRole: 0
+    }, 2200);
     return;
   }
-  backToOnlineLobby(true, true);
+  backToOnlineLobby(true, true, true);
 }
 
 function requestTournamentNext() {
@@ -1276,7 +1527,8 @@ function prepareNextTournamentRound() {
     game: state.tournament.games[state.tournament.currentIndex],
     seed: makeSeed(),
     format: "tournament",
-    tournament: tournamentEnvelope(state.tournament)
+    tournament: tournamentEnvelope(state.tournament),
+    chooserRole: state.gameChooserRole
   };
 
   if (state.mode === "practice") {
@@ -1292,7 +1544,8 @@ function prepareNextTournamentRound() {
     game: pending.game,
     seed: pending.seed,
     format: pending.format,
-    tournament: pending.tournament
+    tournament: pending.tournament,
+    chooserRole: pending.chooserRole
   });
   window.clearTimeout(state.prepareTimer);
   state.prepareTimer = window.setTimeout(function () {
@@ -1310,20 +1563,23 @@ function prepareNextTournamentRound() {
 function startNewTournament() {
   if (state.mode === "practice") {
     const tournamentId = makeSeed();
-    const games = pickTournamentGames(tournamentId);
-    state.tournament = createTournament(tournamentId, games, 0);
+    const games = state.selectedTournamentMode === "custom"
+      ? state.customTournamentGames.slice()
+      : pickTournamentGames(tournamentId, TOURNAMENT_GAME_COUNT);
+    state.tournament = createTournament(tournamentId, games, 0, state.selectedTournamentMode);
     queueMatch({
       id: makeSeed(),
       game: games[0],
       seed: makeSeed(),
       format: "tournament",
-      tournament: tournamentEnvelope(state.tournament)
+      tournament: tournamentEnvelope(state.tournament),
+      chooserRole: 0
     }, 2200);
     return;
   }
   state.tournament = null;
   state.selectedFormat = "tournament";
-  backToOnlineLobby(true, true);
+  backToOnlineLobby(true, true, false);
 }
 
 function returnToGamePicker() {
@@ -1339,7 +1595,8 @@ function returnToGamePicker() {
     showScreen("setup");
     return;
   }
-  backToOnlineLobby(false, true);
+  const rotateChooser = Boolean(state.match && state.match.format === "single" && state.match.shown);
+  backToOnlineLobby(false, true, rotateChooser);
 }
 
 function returnToLobbyFromGame() {
@@ -1347,12 +1604,18 @@ function returnToLobbyFromGame() {
     returnToGamePicker();
     return;
   }
-  backToOnlineLobby(false, true);
+  backToOnlineLobby(false, true, false);
 }
 
-function backToOnlineLobby(ready, notify) {
+function backToOnlineLobby(ready, notify, rotateChooser) {
   const game = state.match ? state.match.game : state.selectedGame;
   const format = state.selectedFormat;
+  if (rotateChooser) {
+    const previousChooser = state.match && (state.match.chooserRole === 0 || state.match.chooserRole === 1)
+      ? state.match.chooserRole
+      : state.gameChooserRole;
+    state.gameChooserRole = nextGameChooserRole(previousChooser);
+  }
   cleanupController();
   clearMatchTimers();
   state.match = null;
@@ -1364,31 +1627,38 @@ function backToOnlineLobby(ready, notify) {
   chooseFormat(format, false);
   showScreen("lobby");
   renderLobby();
-  if (notify) sendMessage({ type: "return-lobby", game, format, ready: Boolean(ready) });
+  if (notify) sendMessage({ type: "return-lobby", ...selectionEnvelope(), ready: Boolean(ready) });
   sendMessage({ type: "ready", ready: state.local.ready });
   if (state.role === 0) sendLobbySnapshot();
-  refs.lobbyStatus.textContent = ready ? "Odveta vyžádána. Čekám, až soupeř najde odvahu." : "Vyberte disciplínu a připravte se znovu.";
+  refs.lobbyStatus.textContent = ready
+    ? state.selectedFormat === "single" && state.role === state.gameChooserRole
+      ? "Odveta vyžádána. Tentokrát vybíráš hru ty."
+      : "Odveta vyžádána. Tentokrát vybírá hru soupeř."
+    : "Vyberte disciplínu a připravte se znovu.";
 }
 
 function receiveReturnToLobby(message) {
-  const game = GAME_IDS.includes(message.game) ? message.game : state.selectedGame;
-  const format = MATCH_FORMATS.includes(message.format) ? message.format : state.selectedFormat;
+  const selection = normalizeSelectionEnvelope(message);
+  if (!selection) return;
+  const expectedChooser = state.match && state.match.format === "single" && state.match.shown
+    ? nextGameChooserRole(state.match.chooserRole)
+    : state.gameChooserRole;
+  if (selection.format === "single" && selection.chooserRole !== expectedChooser) return;
   cleanupController();
   clearMatchTimers();
   state.match = null;
   state.pendingMatch = null;
   state.tournament = null;
-  state.selectedGame = game;
-  state.selectedFormat = format;
+  applySelectionEnvelope(selection);
   state.local.ready = false;
   if (!state.remote) state.remote = { name: "Kolega", ready: false };
   state.remote.ready = Boolean(message.ready);
-  chooseGame(game, false);
-  chooseFormat(format, false);
   showScreen("lobby");
   renderLobby();
   refs.lobbyStatus.textContent = message.ready
-    ? "Soupeř požaduje odvetu. Můžeš se připravit."
+    ? state.selectedFormat === "single" && state.role === state.gameChooserRole
+      ? "Soupeř požaduje odvetu. Tentokrát vybíráš hru ty."
+      : "Soupeř požaduje odvetu. Hru tentokrát vybírá on."
     : "Soupeř se vrátil do čekárny.";
   if (state.role === 0) sendLobbySnapshot();
 }
@@ -1475,6 +1745,7 @@ function resetSession(destroyConnection) {
   state.pendingMatch = null;
   state.match = null;
   state.tournament = null;
+  state.gameChooserRole = 0;
 }
 
 function destroyPeer() {

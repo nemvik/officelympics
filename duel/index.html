@@ -44,7 +44,7 @@
       <div class="section-heading">
         <span class="eyebrow">Krok 1</span>
         <h2 id="setup-title">Vyber formát</h2>
-        <p>Jeden rychlý duel, nebo turnaj ze tří náhodně vylosovaných her.</p>
+        <p>Jeden rychlý duel, nebo turnaj ze tří náhodných či společně vybraných her.</p>
       </div>
 
       <div class="match-format-picker" id="setup-format-picker" role="group" aria-label="Výběr formátu">
@@ -54,13 +54,21 @@
         </button>
         <button class="format-card" type="button" data-format-choice="tournament" aria-pressed="false">
           <span aria-hidden="true">🏆</span>
-          <span><strong>Turnaj</strong><small>3 náhodné hry, každá za jeden bod.</small></span>
+          <span><strong>Turnaj</strong><small>3 náhodné nebo vlastní hry, každá za bod.</small></span>
         </button>
       </div>
 
       <div class="tournament-note" id="setup-tournament-note" hidden>
         <span aria-hidden="true">🎲</span>
-        <div><strong>Los proběhne až při startu</strong><p>Tři různé hry uvidí oba kolegové ve stejném pořadí. Remíza ve hře dává každému půl bodu.</p></div>
+        <div class="tournament-note-copy">
+          <strong id="setup-tournament-title">Jak vznikne trojice her?</strong>
+          <p id="setup-tournament-copy">Nechte ji náhodě, nebo si společně zaklikejte přesně tři disciplíny.</p>
+          <div class="tournament-mode-picker" role="group" aria-label="Způsob výběru turnajových her">
+            <button class="is-selected" type="button" data-tournament-mode-choice="random" aria-pressed="true">🎲 Náhodně</button>
+            <button type="button" data-tournament-mode-choice="custom" aria-pressed="false">☑️ Vlastní trojice</button>
+          </div>
+          <p class="tournament-selection-status" id="setup-tournament-status" role="status" aria-live="polite"></p>
+        </div>
       </div>
 
       <div class="game-picker" id="setup-game-picker" role="group" aria-label="Výběr hry"></div>
@@ -144,16 +152,24 @@
             <span aria-hidden="true">⚡</span><span><strong>Jedna hra</strong><small>Rychlý duel</small></span>
           </button>
           <button class="format-card" type="button" data-format-choice="tournament" aria-pressed="false">
-            <span aria-hidden="true">🏆</span><span><strong>Turnaj</strong><small>3 náhodné hry</small></span>
+            <span aria-hidden="true">🏆</span><span><strong>Turnaj</strong><small>Náhodná nebo vlastní trojice</small></span>
           </button>
         </div>
 
-        <div class="game-picker compact-picker" id="lobby-game-picker" role="group" aria-label="Výběr hry v čekárně"></div>
-
         <div class="tournament-note lobby-tournament-note" id="lobby-tournament-note" hidden>
           <span aria-hidden="true">🎲</span>
-          <div><strong>Tři hry určí náhoda</strong><p>Po každém kole oba potvrdíte pokračování. Vyhrává více turnajových bodů.</p></div>
+          <div class="tournament-note-copy">
+            <strong id="lobby-tournament-title">Jak vznikne trojice her?</strong>
+            <p id="lobby-tournament-copy">Nechte ji náhodě, nebo si oba zaklikejte přesně tři disciplíny.</p>
+            <div class="tournament-mode-picker compact-tournament-modes" role="group" aria-label="Způsob výběru turnajových her v čekárně">
+              <button class="is-selected" type="button" data-tournament-mode-choice="random" aria-pressed="true">🎲 Náhodně</button>
+              <button type="button" data-tournament-mode-choice="custom" aria-pressed="false">☑️ Vlastní trojice</button>
+            </div>
+            <p class="tournament-selection-status" id="lobby-tournament-status" role="status" aria-live="polite"></p>
+          </div>
         </div>
+
+        <div class="game-picker compact-picker" id="lobby-game-picker" role="group" aria-label="Výběr hry v čekárně"></div>
       </div>
 
       <div class="lobby-actions">

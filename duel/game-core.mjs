@@ -43,6 +43,32 @@ export function tournamentRoundPoints(firstScore, secondScore) {
   return first > second ? [1, 0] : [0, 1];
 }
 
+export function normalizeTournamentGameIds(value, availableGameIds, count = 3) {
+  if (!Array.isArray(value) || !Array.isArray(availableGameIds)) return null;
+  const maximum = Math.max(1, Math.floor(Number(count) || 3));
+  if (value.length > maximum || new Set(value).size !== value.length) return null;
+  if (!value.every(function (gameId) { return availableGameIds.includes(gameId); })) return null;
+  return value.slice();
+}
+
+export function toggleTournamentGameId(value, gameId, availableGameIds, count = 3) {
+  const selected = normalizeTournamentGameIds(value, availableGameIds, count);
+  if (!selected || !availableGameIds.includes(gameId)) return null;
+  const existingIndex = selected.indexOf(gameId);
+  if (existingIndex >= 0) {
+    selected.splice(existingIndex, 1);
+    return selected;
+  }
+  const maximum = Math.max(1, Math.floor(Number(count) || 3));
+  if (selected.length >= maximum) return null;
+  selected.push(gameId);
+  return selected;
+}
+
+export function nextGameChooserRole(role) {
+  return role === 0 ? 1 : 0;
+}
+
 export function makeSeed() {
   if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === "function") {
     const values = new Uint32Array(2);

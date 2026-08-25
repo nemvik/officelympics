@@ -392,11 +392,16 @@ body:not([data-screen="setup"]) .duel-hero {
   margin-top: 22px;
   padding: 22px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   border: 3px dashed var(--ink);
   border-radius: 17px;
   background: linear-gradient(135deg, rgba(255, 213, 31, .22), rgba(255, 15, 123, .09));
+}
+
+.tournament-note-copy {
+  flex: 1;
+  min-width: 0;
 }
 
 .tournament-note[hidden],
@@ -423,6 +428,49 @@ body:not([data-screen="setup"]) .duel-hero {
   line-height: 1.4;
 }
 
+.tournament-mode-picker {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tournament-mode-picker button {
+  padding: 8px 11px;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 2px 3px 0 var(--line);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tournament-mode-picker button:hover:not(:disabled) {
+  box-shadow: 3px 4px 0 var(--yellow);
+}
+
+.tournament-mode-picker button.is-selected {
+  color: #fff;
+  background: var(--navy);
+  box-shadow: 3px 4px 0 var(--pink);
+}
+
+.tournament-mode-picker button:disabled {
+  opacity: .62;
+}
+
+.tournament-note .tournament-selection-status {
+  min-height: 18px;
+  margin-top: 10px;
+  color: var(--navy);
+  font-size: 12px;
+}
+
+.tournament-selection-status.is-complete {
+  color: #087544;
+}
+
 .game-picker {
   margin-top: 22px;
   display: grid;
@@ -431,12 +479,12 @@ body:not([data-screen="setup"]) .duel-hero {
 }
 
 .game-card {
-  min-height: 150px;
+  min-height: 205px;
   padding: 18px;
   position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
-  align-items: center;
+  align-items: start;
   gap: 12px;
   color: var(--ink);
   border: 3px solid var(--ink);
@@ -445,6 +493,10 @@ body:not([data-screen="setup"]) .duel-hero {
   box-shadow: 5px 6px 0 var(--line);
   text-align: left;
   white-space: normal;
+}
+
+.game-card-copy {
+  min-width: 0;
 }
 
 .game-card:hover:not(:disabled) {
@@ -471,11 +523,16 @@ body:not([data-screen="setup"]) .duel-hero {
   font-size: 14px;
 }
 
+.game-picker.is-custom-tournament .game-card.is-selected::after {
+  content: attr(data-selection-order);
+}
+
 .game-card:disabled {
   opacity: .68;
 }
 
 .game-icon {
+  align-self: center;
   font-size: 42px;
   filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, .12));
 }
@@ -483,6 +540,21 @@ body:not([data-screen="setup"]) .duel-hero {
 .game-card strong,
 .game-card small {
   display: block;
+}
+
+.game-card .game-instruction {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed rgba(7, 26, 61, .28);
+  color: var(--navy);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.game-card .game-instruction::before {
+  content: "Jak hrát: ";
+  color: var(--pink-dark);
+  font-weight: 950;
 }
 
 .game-card strong {
@@ -796,14 +868,14 @@ body:not([data-screen="setup"]) .duel-hero {
 }
 
 .lobby-tournament-note {
-  min-height: 96px;
+  min-height: 174px;
   grid-column: 2;
   margin: 0;
   padding: 16px;
 }
 
 .compact-picker .game-card {
-  min-height: 88px;
+  min-height: 150px;
   padding: 12px;
   grid-template-columns: auto minmax(0, 1fr);
   box-shadow: 3px 4px 0 var(--line);
@@ -818,6 +890,10 @@ body:not([data-screen="setup"]) .duel-hero {
 }
 
 .compact-picker .game-card small {
+  font-size: 11px;
+}
+
+.compact-picker .game-card .game-instruction {
   font-size: 11px;
 }
 
@@ -5174,13 +5250,7 @@ noscript {
   }
 
   .game-card {
-    min-height: 98px;
-  }
-
-  .game-card .difficulty {
-    position: absolute;
-    right: 12px;
-    bottom: 10px;
+    min-height: 175px;
   }
 
   .setup-grid,
@@ -5199,7 +5269,7 @@ noscript {
   }
 
   .compact-picker {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .curling-sidebar {
@@ -5333,7 +5403,7 @@ noscript {
   }
 
   #setup-game-picker .game-card {
-    min-height: 118px;
+    min-height: 164px;
     padding-right: 18px;
     grid-template-rows: auto auto;
     row-gap: 5px;
@@ -5372,7 +5442,7 @@ noscript {
   }
 
   .compact-picker .game-card {
-    min-height: 72px;
+    min-height: 128px;
   }
 
   .lobby-actions {

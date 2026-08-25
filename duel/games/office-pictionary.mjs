@@ -1,5 +1,8 @@
 import { createRng } from "../game-core.mjs";
 import { defineGame, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
+import { buildBotPictionaryPaths, PICTIONARY_PROMPTS } from "./office-pictionary/prompts.mjs";
+
+export { buildBotPictionaryPaths, PICTIONARY_PROMPTS };
 
 export const officePictionaryGame = defineGame({
   id: "pictionary",
@@ -497,35 +500,6 @@ export function startOfficePictionary(context) {
   };
 }
 
-function buildBotPictionaryPaths(promptId) {
-  function path() { return Array.from(arguments); }
-  function rectangle(x, y, width, height) {
-    return path([x, y], [x + width, y], [x + width, y + height], [x, y + height], [x, y]);
-  }
-  function ellipse(cx, cy, rx, ry, steps = 18) {
-    return Array.from({ length: steps + 1 }, function (_, index) {
-      const angle = index / steps * Math.PI * 2;
-      return [cx + Math.cos(angle) * rx, cy + Math.sin(angle) * ry];
-    });
-  }
-
-  const drawings = {
-    coffee: [rectangle(.28, .34, .34, .34), ellipse(.63, .49, .11, .13), path([.36, .28], [.33, .21], [.37, .13]), path([.47, .28], [.44, .2], [.48, .11])],
-    printer: [rectangle(.25, .3, .5, .36), rectangle(.32, .12, .36, .24), rectangle(.33, .53, .34, .28), path([.32, .4], [.68, .4])],
-    chair: [rectangle(.35, .2, .3, .27), path([.33, .52], [.67, .52]), path([.5, .52], [.5, .75]), path([.5, .75], [.32, .84]), path([.5, .75], [.68, .84]), path([.37, .52], [.34, .68]), path([.63, .52], [.66, .68])],
-    plane: [path([.16, .53], [.83, .22], [.61, .76], [.48, .55], [.16, .53]), path([.48, .55], [.83, .22]), path([.48, .55], [.52, .72])],
-    calendar: [rectangle(.25, .16, .5, .66), path([.25, .31], [.75, .31]), path([.35, .13], [.35, .24]), path([.65, .13], [.65, .24]), path([.42, .31], [.42, .82]), path([.58, .31], [.58, .82]), path([.25, .48], [.75, .48]), path([.25, .65], [.75, .65])],
-    laptop: [rectangle(.25, .16, .5, .46), path([.25, .68], [.17, .79], [.83, .79], [.75, .68], [.25, .68]), path([.43, .73], [.57, .73])],
-    headphones: [path([.27, .53], [.27, .39], [.31, .25], [.4, .17], [.5, .14], [.6, .17], [.69, .25], [.73, .39], [.73, .53]), rectangle(.2, .49, .15, .27), rectangle(.65, .49, .15, .27)],
-    plant: [path([.34, .59], [.66, .59], [.61, .82], [.39, .82], [.34, .59]), path([.5, .59], [.5, .27]), ellipse(.42, .34, .13, .08), ellipse(.59, .28, .13, .08), ellipse(.55, .47, .14, .08)],
-    keyboard: [rectangle(.16, .25, .68, .5), path([.16, .42], [.84, .42]), path([.16, .59], [.84, .59]), path([.32, .25], [.32, .59]), path([.48, .25], [.48, .59]), path([.64, .25], [.64, .59]), path([.33, .68], [.67, .68])],
-    meeting: [ellipse(.5, .55, .27, .13), ellipse(.24, .28, .07, .09), ellipse(.5, .22, .07, .09), ellipse(.76, .28, .07, .09), path([.24, .37], [.3, .51]), path([.5, .31], [.5, .42]), path([.76, .37], [.7, .51])],
-    email: [rectangle(.18, .23, .64, .54), path([.18, .23], [.5, .52], [.82, .23]), path([.18, .77], [.4, .48]), path([.82, .77], [.6, .48])],
-    deadline: [ellipse(.5, .47, .27, .31), path([.5, .47], [.5, .25]), path([.5, .47], [.67, .56]), path([.34, .13], [.27, .22]), path([.66, .13], [.73, .22]), path([.36, .82], [.3, .89]), path([.64, .82], [.7, .89])]
-  };
-  return drawings[promptId] || [ellipse(.5, .5, .25, .25), path([.38, .44], [.43, .4]), path([.62, .44], [.57, .4]), path([.38, .62], [.5, .69], [.62, .62])];
-}
-
 export const PICTIONARY_ROUNDS = 3;
 
 export const PICTIONARY = Object.freeze({
@@ -536,21 +510,6 @@ export const PICTIONARY = Object.freeze({
   drawingPoints: 700,
   guessingPoints: 300
 });
-
-export const PICTIONARY_PROMPTS = Object.freeze([
-  Object.freeze({ id: "coffee", label: "Hrnek kávy" }),
-  Object.freeze({ id: "printer", label: "Tiskárna" }),
-  Object.freeze({ id: "chair", label: "Kancelářská židle" }),
-  Object.freeze({ id: "plane", label: "Papírová vlaštovka" }),
-  Object.freeze({ id: "calendar", label: "Kalendář" }),
-  Object.freeze({ id: "laptop", label: "Notebook" }),
-  Object.freeze({ id: "headphones", label: "Sluchátka" }),
-  Object.freeze({ id: "plant", label: "Květina v kanceláři" }),
-  Object.freeze({ id: "keyboard", label: "Klávesnice" }),
-  Object.freeze({ id: "meeting", label: "Meeting" }),
-  Object.freeze({ id: "email", label: "E-mail" }),
-  Object.freeze({ id: "deadline", label: "Deadline" })
-]);
 
 export function buildPictionaryRounds(seed, count = PICTIONARY_ROUNDS) {
   const random = createRng("pictionary:" + seed);

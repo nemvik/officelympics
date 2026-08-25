@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { tournamentRoundPoints } from "../duel/game-core.mjs";
+import {
+  nextGameChooserRole,
+  normalizeTournamentGameIds,
+  toggleTournamentGameId,
+  tournamentRoundPoints
+} from "../duel/game-core.mjs";
 import { altTabReactionScore, buildAltTabRounds } from "../duel/games/alt-tab-duel.mjs";
 import { buildCalendarRounds, calendarSlotScore, CALENDAR_ROUNDS, findCalendarSlots } from "../duel/games/calendar-squeeze.mjs";
 import { buildCoffeeRounds, coffeeOrderScore, COFFEE_CATEGORIES, COFFEE_ROUNDS } from "../duel/games/coffee-relay.mjs";
@@ -11,6 +16,7 @@ import { buildJargonRounds, JARGON_ROUNDS } from "../duel/games/jargon-decoder.m
 import { buildEscapeCourse, ESCAPE, rectanglesOverlap } from "../duel/games/meeting-escape.mjs";
 import { buildPanicSchedule } from "../duel/games/office-panic.mjs";
 import {
+  buildBotPictionaryPaths,
   buildPictionaryRounds,
   calculatePictionaryRoundScores,
   PICTIONARY,
@@ -43,6 +49,25 @@ test("Turnaj deterministicky losuje tři různé hry a férově boduje remízu",
   assert.deepEqual(tournamentRoundPoints(80, 80), [0.5, 0.5]);
 });
 
+test("Vlastní turnaj drží unikátní trojici a volba hry se po duelu střídá", function () {
+  const first = GAME_IDS[0];
+  const second = GAME_IDS[1];
+  const third = GAME_IDS[2];
+  const fourth = GAME_IDS[3];
+  let selected = [];
+  selected = toggleTournamentGameId(selected, first, GAME_IDS);
+  selected = toggleTournamentGameId(selected, second, GAME_IDS);
+  selected = toggleTournamentGameId(selected, third, GAME_IDS);
+  assert.deepEqual(selected, [first, second, third]);
+  assert.equal(toggleTournamentGameId(selected, fourth, GAME_IDS), null);
+  assert.deepEqual(toggleTournamentGameId(selected, second, GAME_IDS), [first, third]);
+  assert.deepEqual(normalizeTournamentGameIds(selected, GAME_IDS), selected);
+  assert.equal(normalizeTournamentGameIds([first, first], GAME_IDS), null);
+  assert.equal(normalizeTournamentGameIds(["neznama-hra"], GAME_IDS), null);
+  assert.equal(nextGameChooserRole(0), 1);
+  assert.equal(nextGameChooserRole(1), 0);
+});
+
 test("Pictionary připraví tři férová kola a správně rozdělí body", function () {
   const first = buildPictionaryRounds("picture-seed");
   const second = buildPictionaryRounds("picture-seed");
@@ -69,6 +94,31 @@ test("Pictionary připraví tři férová kola a správně rozdělí body", func
 test("Pictionary nechává minutu na kreslení a půl minuty na hádání", function () {
   assert.equal(PICTIONARY.drawDurationMs, 60_000);
   assert.equal(PICTIONARY.guessDurationMs, 30_000);
+});
+
+test("Pictionary má velký unikátní balík a bot umí nakreslit každý pojem", function () {
+  assert.ok(PICTIONARY_PROMPTS.length >= 80);
+  assert.equal(new Set(PICTIONARY_PROMPTS.map(function (prompt) { return prompt.id; })).size, PICTIONARY_PROMPTS.length);
+  assert.equal(new Set(PICTIONARY_PROMPTS.map(function (prompt) { return prompt.label; })).size, PICTIONARY_PROMPTS.length);
+
+  const longGame = buildPictionaryRounds("dlouhy-picture-seed", 42);
+  assert.equal(longGame.length, 42);
+  assert.equal(new Set(longGame.flatMap(function (round) { return round.prompts; })).size, 84);
+
+  const fallbackDrawing = JSON.stringify(buildBotPictionaryPaths("neznamy-pojem"));
+  PICTIONARY_PROMPTS.forEach(function (prompt) {
+    const paths = buildBotPictionaryPaths(prompt.id);
+    assert.notEqual(JSON.stringify(paths), fallbackDrawing, prompt.id + " nesmí používat nouzový obrázek");
+    assert.ok(paths.length >= 2, prompt.id + " musí mít vlastní kresbu");
+    paths.forEach(function (points) {
+      assert.ok(points.length >= 2, prompt.id + " nesmí obsahovat prázdnou čáru");
+      points.forEach(function (point) {
+        assert.equal(point.length, 2);
+        assert.ok(point.every(Number.isFinite));
+        assert.ok(point.every(function (coordinate) { return coordinate >= 0 && coordinate <= 1; }));
+      });
+    });
+  });
 });
 
 test("Coffee Relay tvoří pět unikátních objednávek a odměňuje přesnost", function () {

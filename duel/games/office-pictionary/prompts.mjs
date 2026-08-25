@@ -170,6 +170,55 @@ export const PICTIONARY_PROMPTS = Object.freeze([
   return Object.freeze({ id, label });
 }));
 
+export const PICTIONARY_CONFUSABLE_GROUPS = Object.freeze([
+  ["paper", ["printer", "copy-machine", "stapler", "paperclip", "sticky-note", "folder", "whiteboard", "plane"]],
+  ["stationery", ["pencil", "marker", "ruler", "scissors", "stapler", "paperclip", "calculator"]],
+  ["computer", ["laptop", "monitor", "keyboard", "mouse", "webcam", "charger", "usb", "server"]],
+  ["communication", ["phone", "headphones", "microphone", "video-call", "email", "wifi", "webcam", "laptop"]],
+  ["time", ["calendar", "clock", "alarm", "deadline", "overtime", "vacation", "meeting"]],
+  ["furniture", ["chair", "couch", "desk-lamp", "fan", "plant", "bookshelf", "trash-bin"]],
+  ["spaces", ["door", "window", "elevator", "stairs", "meeting-room", "open-space", "home-office"]],
+  ["food", ["coffee", "coffee-machine", "bottle", "donut", "sandwich", "lunch-break", "cake"]],
+  ["people", ["boss", "intern", "team", "handshake", "meeting", "presentation", "brainstorm", "office-dog"]],
+  ["identity", ["briefcase", "badge", "nameplate", "key", "glasses", "folder", "mailbox"]],
+  ["digital", ["cloud", "password", "bug", "server", "wifi", "email", "chart", "target"]],
+  ["ideas", ["rocket", "trophy", "target", "puzzle", "lightbulb", "chart", "money", "balloon"]],
+  ["travel", ["plane", "umbrella", "vacation", "mailbox", "balloon", "bicycle", "taxi"]],
+  ["safety", ["fire-drill", "alarm", "door", "key", "umbrella", "trash-bin", "phone"]],
+  ["workplace", ["home-office", "open-space", "meeting-room", "video-call", "meeting", "team", "office-dog"]],
+  ["machines", ["printer", "copy-machine", "coffee-machine", "projector", "server", "monitor", "calculator", "phone"]]
+].map(function ([id, prompts]) {
+  return Object.freeze({ id, prompts: Object.freeze(prompts) });
+}));
+
+const PROMPT_IDS = new Set(PICTIONARY_PROMPTS.map(function (prompt) { return prompt.id; }));
+const RELATED_PROMPTS = new Map(PICTIONARY_PROMPTS.map(function (prompt) {
+  return [prompt.id, new Set()];
+}));
+
+PICTIONARY_CONFUSABLE_GROUPS.forEach(function (group) {
+  if (group.prompts.length < 7 || new Set(group.prompts).size !== group.prompts.length
+    || !group.prompts.every(function (promptId) { return PROMPT_IDS.has(promptId); })) {
+    throw new TypeError("Neplatná skupina podobných Pictionary pojmů: " + group.id);
+  }
+  group.prompts.forEach(function (promptId) {
+    group.prompts.forEach(function (relatedId) {
+      if (relatedId !== promptId) RELATED_PROMPTS.get(promptId).add(relatedId);
+    });
+  });
+});
+
+PICTIONARY_PROMPTS.forEach(function (prompt) {
+  if (RELATED_PROMPTS.get(prompt.id).size < 5) {
+    throw new TypeError("Pictionary pojem nemá dost podobných chytáků: " + prompt.id);
+  }
+});
+
+export function getPictionarySimilarPromptIds(promptId) {
+  const related = RELATED_PROMPTS.get(promptId);
+  return related ? Array.from(related) : [];
+}
+
 export function buildBotPictionaryPaths(promptId) {
   const drawing = BOT_DRAWINGS[promptId];
   if (!drawing) {

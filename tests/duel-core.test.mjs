@@ -19,7 +19,10 @@ import {
   buildBotPictionaryPaths,
   buildPictionaryRounds,
   calculatePictionaryRoundScores,
+  getPictionarySimilarPromptIds,
   PICTIONARY,
+  PICTIONARY_CHOICE_COUNT,
+  PICTIONARY_CONFUSABLE_GROUPS,
   PICTIONARY_PROMPTS
 } from "../duel/games/office-pictionary.mjs";
 import {
@@ -78,10 +81,15 @@ test("Pictionary připraví tři férová kola a správně rozdělí body", func
     assert.equal(round.prompts.length, 2);
     assert.equal(round.choices.length, 2);
     round.choices.forEach(function (choices, role) {
-      assert.equal(choices.length, 4);
-      assert.equal(new Set(choices).size, 4);
-      assert.ok(choices.includes(round.prompts[1 - role]));
+      const answer = round.prompts[1 - role];
+      const similar = new Set(getPictionarySimilarPromptIds(answer));
+      assert.equal(choices.length, PICTIONARY_CHOICE_COUNT);
+      assert.equal(new Set(choices).size, PICTIONARY_CHOICE_COUNT);
+      assert.ok(choices.includes(answer));
       assert.ok(!choices.includes(round.prompts[role]));
+      assert.ok(choices.filter(function (promptId) { return promptId !== answer; }).every(function (promptId) {
+        return similar.has(promptId);
+      }));
       assert.ok(choices.every(function (promptId) {
         return PICTIONARY_PROMPTS.some(function (prompt) { return prompt.id === promptId; });
       }));
@@ -98,15 +106,28 @@ test("Pictionary nechává minutu na kreslení a půl minuty na hádání", func
 
 test("Pictionary má velký unikátní balík a bot umí nakreslit každý pojem", function () {
   assert.ok(PICTIONARY_PROMPTS.length >= 80);
+  assert.equal(PICTIONARY.choiceCount, PICTIONARY_CHOICE_COUNT);
+  assert.ok(PICTIONARY_CONFUSABLE_GROUPS.length >= 12);
   assert.equal(new Set(PICTIONARY_PROMPTS.map(function (prompt) { return prompt.id; })).size, PICTIONARY_PROMPTS.length);
   assert.equal(new Set(PICTIONARY_PROMPTS.map(function (prompt) { return prompt.label; })).size, PICTIONARY_PROMPTS.length);
 
   const longGame = buildPictionaryRounds("dlouhy-picture-seed", 42);
   assert.equal(longGame.length, 42);
   assert.equal(new Set(longGame.flatMap(function (round) { return round.prompts; })).size, 84);
+  longGame.forEach(function (round) {
+    round.choices.forEach(function (choices, role) {
+      const answer = round.prompts[1 - role];
+      const similar = new Set(getPictionarySimilarPromptIds(answer));
+      assert.equal(choices.length, PICTIONARY_CHOICE_COUNT);
+      assert.ok(choices.filter(function (promptId) { return promptId !== answer; }).every(function (promptId) {
+        return similar.has(promptId);
+      }), answer + " musí mít jen tematicky podobné chytáky");
+    });
+  });
 
   const fallbackDrawing = JSON.stringify(buildBotPictionaryPaths("neznamy-pojem"));
   PICTIONARY_PROMPTS.forEach(function (prompt) {
+    assert.ok(getPictionarySimilarPromptIds(prompt.id).length >= PICTIONARY_CHOICE_COUNT);
     const paths = buildBotPictionaryPaths(prompt.id);
     assert.notEqual(JSON.stringify(paths), fallbackDrawing, prompt.id + " nesmí používat nouzový obrázek");
     assert.ok(paths.length >= 2, prompt.id + " musí mít vlastní kresbu");

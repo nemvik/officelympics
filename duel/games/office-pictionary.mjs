@@ -1,8 +1,18 @@
 import { createRng } from "../game-core.mjs";
 import { defineGame, normalizeScoreResult, safeSmallInteger } from "./shared.mjs";
-import { buildBotPictionaryPaths, PICTIONARY_PROMPTS } from "./office-pictionary/prompts.mjs";
+import {
+  buildBotPictionaryPaths,
+  getPictionarySimilarPromptIds,
+  PICTIONARY_CONFUSABLE_GROUPS,
+  PICTIONARY_PROMPTS
+} from "./office-pictionary/prompts.mjs";
 
-export { buildBotPictionaryPaths, PICTIONARY_PROMPTS };
+export {
+  buildBotPictionaryPaths,
+  getPictionarySimilarPromptIds,
+  PICTIONARY_CONFUSABLE_GROUPS,
+  PICTIONARY_PROMPTS
+};
 
 export const officePictionaryGame = defineGame({
   id: "pictionary",
@@ -11,7 +21,7 @@ export const officePictionaryGame = defineGame({
     title: "Kancelářský Pictionary",
     teaser: "Nakresli zadání a poznej soupeřovo dílo",
     difficulty: "kreslení",
-    instruction: "Nakresli vlastní pojem a potom poznej soupeřův obrázek. Písmena a číslice jsou zakázaná.",
+    instruction: "Nakresli vlastní pojem a potom ho poznej mezi šesti podobnými možnostmi. Písmena a číslice jsou zakázaná.",
     scoreLabel: "bodů za umění"
   },
   start: startOfficePictionary,
@@ -255,8 +265,8 @@ export function startOfficePictionary(context) {
     canvas.classList.add("is-readonly");
     briefLabel.textContent = "Soupeřův obrázek";
     prompt.textContent = "Co je na obrázku?";
-    instruction.textContent = "Vyber jednu možnost. Za správný tip získáš 300 bodů.";
-    feedback.textContent = "Za srozumitelný vlastní obrázek můžeš získat dalších 700 bodů.";
+    instruction.textContent = "Vyber jednu ze šesti podobných možností. Za správný tip získáš 300 bodů.";
+    feedback.textContent = "Chytáky jsou schválně podobné. Za srozumitelný vlastní obrázek můžeš získat dalších 700 bodů.";
 
     round.choices[localRole].forEach(function (promptId) {
       const button = document.createElement("button");
@@ -501,12 +511,14 @@ export function startOfficePictionary(context) {
 }
 
 export const PICTIONARY_ROUNDS = 3;
+export const PICTIONARY_CHOICE_COUNT = 6;
 
 export const PICTIONARY = Object.freeze({
   width: 900,
   height: 480,
   drawDurationMs: 60_000,
   guessDurationMs: 30_000,
+  choiceCount: PICTIONARY_CHOICE_COUNT,
   drawingPoints: 700,
   guessingPoints: 300
 });
@@ -533,9 +545,16 @@ export function buildPictionaryRounds(seed, count = PICTIONARY_ROUNDS) {
     const prompts = [deck[roundIndex * 2], deck[roundIndex * 2 + 1]];
     const choices = [0, 1].map(function (guesserRole) {
       const answer = prompts[1 - guesserRole];
-      const distractors = shuffle(promptIds.filter(function (promptId) {
-        return promptId !== answer && promptId !== prompts[guesserRole];
-      })).slice(0, 3);
+      const ownPrompt = prompts[guesserRole];
+      const distractors = shuffle(getPictionarySimilarPromptIds(answer).filter(function (promptId) {
+        return promptId !== ownPrompt;
+      })).slice(0, PICTIONARY_CHOICE_COUNT - 1);
+      if (distractors.length < PICTIONARY_CHOICE_COUNT - 1) {
+        const fallback = shuffle(promptIds.filter(function (promptId) {
+          return promptId !== answer && promptId !== ownPrompt && !distractors.includes(promptId);
+        }));
+        distractors.push(...fallback.slice(0, PICTIONARY_CHOICE_COUNT - 1 - distractors.length));
+      }
       return shuffle([answer].concat(distractors));
     });
 

@@ -1,10 +1,12 @@
 import { pickTournamentGameIds } from "../game-core.mjs";
+import { accessDeniedGame } from "./access-denied.mjs";
 import { altTabDuelGame } from "./alt-tab-duel.mjs";
 import { calendarSqueezeGame } from "./calendar-squeeze.mjs";
 import { coffeeRelayGame } from "./coffee-relay.mjs";
 import { cursorMazeGame } from "./cursor-maze.mjs";
 import { deadlineChickenGame } from "./deadline-chicken.mjs";
 import { evolutionMemoryGame } from "./evolution-memory.mjs";
+import { harcovPriceGame } from "./harcov-price.mjs";
 import { inboxZeroGame } from "./inbox-zero.mjs";
 import { inboxPongGame } from "./inbox-pong.mjs";
 import { jargonDecoderGame } from "./jargon-decoder.mjs";
@@ -48,7 +50,9 @@ export const GAMES = Object.freeze([
   oakBingoGame,
   kantoTrumfGame,
   safariDraftGame,
-  officePictionaryGame
+  officePictionaryGame,
+  accessDeniedGame,
+  harcovPriceGame
 ]);
 
 export const GAME_IDS = Object.freeze(GAMES.map(function (game) { return game.id; }));

@@ -9,6 +9,7 @@ import {
 import {
   createPracticeResult,
   formatGameResult,
+  GAME_CATEGORIES,
   GAME_DEFINITIONS,
   GAME_IDS,
   getGame,
@@ -17,7 +18,7 @@ import {
   pickTournamentGames,
   startGame
 } from "./games/registry.mjs";
-import { safeScore } from "./games/shared.mjs";
+import { czechCount, safeScore } from "./games/shared.mjs";
 
 const APP_VERSION = 3;
 const NAME_STORAGE_KEY = "officelympicsDuelName";
@@ -27,6 +28,8 @@ const PEER_PREFIX = "officelympics-2026-";
 const MATCH_FORMATS = Object.freeze(["single", "tournament"]);
 const TOURNAMENT_MODES = Object.freeze(["random", "custom"]);
 const TOURNAMENT_GAME_COUNT = 3;
+const ALL_GAME_CATEGORY = "all";
+const DEFAULT_GAME_CATEGORY = "perception";
 
 const refs = {};
 const state = {
@@ -38,6 +41,7 @@ const state = {
   roomCode: "",
   selectedFormat: "single",
   selectedGame: "panic",
+  selectedGameCategory: DEFAULT_GAME_CATEGORY,
   selectedTournamentMode: "random",
   customTournamentGames: [],
   gameChooserRole: 0,
@@ -99,6 +103,12 @@ function init() {
     });
   });
 
+  document.querySelectorAll("[data-game-category-filter]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      chooseGameCategory(button.dataset.gameCategoryFilter);
+    });
+  });
+
   document.querySelectorAll("[data-format-choice]").forEach(function (button) {
     button.addEventListener("click", function () {
       chooseFormat(button.dataset.formatChoice, true);
@@ -137,11 +147,53 @@ function renderGamePickers() {
     { container: refs.lobbyGamePicker, compact: true }
   ].forEach(function ({ container, compact }) {
     const fragment = document.createDocumentFragment();
+    const categoryTabs = document.createElement("div");
+    categoryTabs.className = "game-category-tabs";
+    categoryTabs.setAttribute("role", "group");
+    categoryTabs.setAttribute("aria-label", "Kategorie her");
+
+    [{
+      id: ALL_GAME_CATEGORY,
+      icon: "✦",
+      label: "Všechny hry",
+      description: "Celý katalog bez filtrování.",
+      count: GAME_DEFINITIONS.length
+    }].concat(GAME_CATEGORIES.map(function (category) {
+      return { ...category, count: category.gameIds.length };
+    })).forEach(function (category) {
+      const tab = document.createElement("button");
+      tab.className = "game-category-tab";
+      tab.type = "button";
+      tab.dataset.gameCategoryFilter = category.id;
+      tab.setAttribute("aria-pressed", String(category.id === state.selectedGameCategory));
+      tab.setAttribute(
+        "aria-label",
+        category.label +
+          ", " +
+          category.count +
+          " " +
+          czechCount(category.count, "hra", "hry", "her"),
+      );
+      tab.title = category.description;
+
+      const icon = document.createElement("span");
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = category.icon;
+      const label = document.createElement("b");
+      label.textContent = category.label;
+      const count = document.createElement("small");
+      count.textContent = String(category.count);
+      tab.append(icon, label, count);
+      categoryTabs.append(tab);
+    });
+    fragment.append(categoryTabs);
+
     GAME_DEFINITIONS.forEach(function (game) {
       const button = document.createElement("button");
       button.className = "game-card" + (game.id === state.selectedGame ? " is-selected" : "");
       button.type = "button";
       button.dataset.gameChoice = game.id;
+      button.dataset.gameCategory = game.category;
       button.setAttribute("aria-pressed", String(game.id === state.selectedGame));
 
       const icon = document.createElement("span");
@@ -172,6 +224,7 @@ function renderGamePickers() {
     });
     container.replaceChildren(fragment);
   });
+  syncGameCategoryFilters();
 }
 
 function toCamel(value) {
@@ -184,6 +237,7 @@ function renderGameToText() {
     mode: state.mode,
     format: state.selectedFormat,
     selectedGame: state.selectedGame,
+    selectedGameCategory: state.selectedGameCategory,
     tournamentMode: state.selectedTournamentMode,
     customTournamentGames: state.customTournamentGames.slice(),
     gameChooserRole: state.gameChooserRole,
@@ -285,12 +339,38 @@ function handleGameCardChoice(gameId) {
   chooseGame(gameId, true);
 }
 
+function chooseGameCategory(categoryId) {
+  if (categoryId !== ALL_GAME_CATEGORY && !GAME_CATEGORIES.some(function (category) {
+    return category.id === categoryId;
+  })) return;
+  state.selectedGameCategory = categoryId;
+  syncGameCategoryFilters();
+}
+
+function syncGameCategoryFilters() {
+  document.querySelectorAll("[data-game-category-filter]").forEach(function (button) {
+    const selected = button.dataset.gameCategoryFilter === state.selectedGameCategory;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  document.querySelectorAll("[data-game-choice]").forEach(function (button) {
+    button.hidden = state.selectedGameCategory !== ALL_GAME_CATEGORY
+      && button.dataset.gameCategory !== state.selectedGameCategory;
+  });
+}
+
 function chooseGame(gameId, broadcast) {
   if (!GAME_IDS.includes(gameId)) return;
   if (broadcast && state.mode === "online" && !refs.lobbyScreen.hidden
     && state.role !== state.gameChooserRole) return;
 
   state.selectedGame = gameId;
+  const selectedDefinition = getGameDefinition(gameId);
+  if (state.selectedGameCategory !== ALL_GAME_CATEGORY
+    && selectedDefinition.category !== state.selectedGameCategory) {
+    state.selectedGameCategory = selectedDefinition.category;
+    syncGameCategoryFilters();
+  }
   syncGamePickerSelection();
 
   if (!broadcast || state.mode !== "online") return;

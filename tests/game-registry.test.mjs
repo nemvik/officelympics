@@ -5,9 +5,11 @@ import { readdir } from "node:fs/promises";
 import {
   createPracticeResult,
   formatGameResult,
+  GAME_CATEGORIES,
   GAME_DEFINITIONS,
   GAME_IDS,
   getGame,
+  getGameCategoryDefinition,
   getGameDefinition,
   normalizeGameResult
 } from "../duel/games/registry.mjs";
@@ -111,4 +113,31 @@ test("Registr obsahuje úplné a navzájem konzistentní definice her", function
   assert.equal(getGameDefinition("missing"), null);
   assert.equal(normalizeGameResult("missing", { score: 1 }), null);
   assert.throws(function () { formatGameResult("missing", { score: 1 }); }, /Neznámá hra/);
+});
+
+test("Každá hra patří právě do jedné přehledové kategorie", function () {
+  assert.deepEqual(GAME_CATEGORIES.map(function (category) { return category.id; }), [
+    "perception", "strategy", "memory", "action"
+  ]);
+  assert.equal(new Set(GAME_CATEGORIES.map(function (category) { return category.id; })).size, GAME_CATEGORIES.length);
+
+  const categorizedGameIds = GAME_CATEGORIES.flatMap(function (category) {
+    assert.ok(category.icon && category.label && category.description);
+    assert.ok(category.gameIds.length >= 4);
+    return category.gameIds;
+  });
+  assert.equal(categorizedGameIds.length, GAME_IDS.length);
+  assert.equal(new Set(categorizedGameIds).size, GAME_IDS.length);
+  assert.deepEqual(categorizedGameIds.slice().sort(), GAME_IDS.slice().sort());
+
+  GAME_DEFINITIONS.forEach(function (game) {
+    const category = getGameCategoryDefinition(game.category);
+    assert.ok(category, game.id + " nemá platnou kategorii");
+    assert.ok(category.gameIds.includes(game.id));
+  });
+  assert.equal(getGameDefinition("panic").category, "perception");
+  assert.equal(getGameDefinition("access-denied").category, "strategy");
+  assert.equal(getGameDefinition("harcov-price").category, "memory");
+  assert.equal(getGameDefinition("pictionary").category, "action");
+  assert.equal(getGameCategoryDefinition("missing"), null);
 });

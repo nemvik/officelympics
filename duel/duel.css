@@ -478,6 +478,74 @@ body:not([data-screen="setup"]) .duel-hero {
   gap: 14px;
 }
 
+.game-category-tabs {
+  grid-column: 1 / -1;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  border: 2px solid var(--ink);
+  border-radius: 15px;
+  background: #f0eadc;
+  box-shadow: 4px 5px 0 var(--line);
+}
+
+.game-category-tab {
+  min-height: 40px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  color: var(--navy);
+  background: #fff;
+  box-shadow: none;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.game-category-tab:hover:not(:disabled) {
+  color: var(--pink-dark);
+  background: #fff7ca;
+  box-shadow: 2px 3px 0 var(--yellow);
+}
+
+.game-category-tab > span {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.game-category-tab > b {
+  font-size: 11px;
+}
+
+.game-category-tab > small {
+  min-width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--navy);
+  background: #e7eef8;
+  font-size: 9px;
+  font-weight: 1000;
+}
+
+.game-category-tab.is-selected {
+  color: #fff;
+  background: var(--navy);
+  box-shadow: 3px 4px 0 var(--pink);
+}
+
+.game-category-tab.is-selected > small {
+  color: var(--navy);
+  background: var(--yellow);
+}
+
 .game-card {
   min-height: 205px;
   padding: 18px;
@@ -857,6 +925,22 @@ body:not([data-screen="setup"]) .duel-hero {
   margin: 0;
   gap: 9px;
 }
+
+.compact-picker .game-category-tabs {
+  padding: 6px;
+  gap: 5px;
+  box-shadow: 3px 4px 0 var(--line);
+}
+
+.compact-picker .game-category-tab {
+  min-height: 34px;
+  padding: 5px 7px;
+  gap: 4px;
+}
+
+.compact-picker .game-category-tab > span { font-size: 12px; }
+.compact-picker .game-category-tab > b { font-size: 9px; }
+.compact-picker .game-category-tab > small { min-width: 19px; height: 19px; font-size: 8px; }
 
 .compact-formats {
   margin: 0;
@@ -5392,6 +5476,20 @@ noscript {
 
   .game-picker {
     grid-template-columns: 1fr;
+  }
+
+  .game-category-tabs {
+    padding: 7px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline proximity;
+    scrollbar-width: thin;
+  }
+
+  .game-category-tab {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
   }
 
   .match-format-picker {

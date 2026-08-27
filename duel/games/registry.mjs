@@ -61,10 +61,65 @@ if (new Set(GAME_IDS).size !== GAME_IDS.length) {
   throw new Error("Každá hra musí mít unikátní id.");
 }
 
+export const GAME_CATEGORIES = Object.freeze([
+  Object.freeze({
+    id: "perception",
+    icon: "⚡",
+    label: "Postřeh & rychlost",
+    description: "Rychlé reakce, přesné kliknutí a rozhodování pod tlakem.",
+    gameIds: Object.freeze([
+      "panic", "postit-sprint", "inbox-zero", "paper-shredder", "deadline",
+      "alttab", "calendar", "printer", "poke-shadow"
+    ])
+  }),
+  Object.freeze({
+    id: "strategy",
+    icon: "♟️",
+    label: "Strategie & logika",
+    description: "Plánování, dedukce, taktika a pár rozhodnutí s následky.",
+    gameIds: Object.freeze([
+      "meeting-tetris", "curling", "battleship", "oak-bingo",
+      "kanto-trumf", "safari-draft", "access-denied"
+    ])
+  }),
+  Object.freeze({
+    id: "memory",
+    icon: "🧠",
+    label: "Paměť & odhad",
+    description: "Zapamatování, znalosti a kvalifikované tipování od oka.",
+    gameIds: Object.freeze(["evolution-memory", "jargon", "coffee", "harcov-price"])
+  }),
+  Object.freeze({
+    id: "action",
+    icon: "🎮",
+    label: "Akce & kreativita",
+    description: "Pohyb, arkádové souboje a prostor pro vlastní tvorbu.",
+    gameIds: Object.freeze(["cursor-maze", "taskstack", "pong", "escape", "pictionary"])
+  })
+]);
+
+const GAME_CATEGORY_BY_ID = new Map(GAME_CATEGORIES.map(function (category) {
+  return [category.id, category];
+}));
+const GAME_CATEGORY_ID_BY_GAME_ID = new Map();
+
+GAME_CATEGORIES.forEach(function (category) {
+  category.gameIds.forEach(function (gameId) {
+    if (!GAME_IDS.includes(gameId)) throw new Error("Kategorie " + category.id + " obsahuje neznámou hru: " + gameId);
+    if (GAME_CATEGORY_ID_BY_GAME_ID.has(gameId)) throw new Error("Hra " + gameId + " je ve více kategoriích.");
+    GAME_CATEGORY_ID_BY_GAME_ID.set(gameId, category.id);
+  });
+});
+
+if (GAME_CATEGORY_ID_BY_GAME_ID.size !== GAME_IDS.length) {
+  const missingGames = GAME_IDS.filter(function (gameId) { return !GAME_CATEGORY_ID_BY_GAME_ID.has(gameId); });
+  throw new Error("Hry bez kategorie: " + missingGames.join(", "));
+}
+
 const GAME_BY_ID = new Map(GAMES.map(function (game) { return [game.id, game]; }));
 
 export const GAME_DEFINITIONS = Object.freeze(GAMES.map(function (game) {
-  return Object.freeze({ ...game.meta, id: game.id });
+  return Object.freeze({ ...game.meta, id: game.id, category: GAME_CATEGORY_ID_BY_GAME_ID.get(game.id) });
 }));
 
 const GAME_DEFINITION_BY_ID = new Map(GAME_DEFINITIONS.map(function (game) {
@@ -77,6 +132,10 @@ export function getGame(gameId) {
 
 export function getGameDefinition(gameId) {
   return GAME_DEFINITION_BY_ID.get(gameId) || null;
+}
+
+export function getGameCategoryDefinition(categoryId) {
+  return GAME_CATEGORY_BY_ID.get(categoryId) || null;
 }
 
 function requireGame(gameId) {

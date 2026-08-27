@@ -2,7 +2,7 @@
 
 1. Zkopíruj nejpodobnější modul v této složce a ponech v něm metadata, UI, pravidla i výsledkové adaptéry.
 2. Exportuj descriptor vytvořený přes `defineGame()`.
-3. Přidej jeho import a položku do `GAMES` v `registry.mjs`; pořadí pole určuje pořadí v nabídce.
+3. Přidej jeho import a položku do `GAMES` v `registry.mjs`; pořadí pole určuje pořadí v nabídce. ID hry zároveň zařaď právě do jedné položky `GAME_CATEGORIES`.
 4. Přidej herní styly do označeného bloku v `duel.css` a samostatný test do `tests/`.
 
 Každý `.mjs` soubor přímo v této složce kromě `registry.mjs` a `shared.mjs` představuje právě jednu hru. Pomocná data a dílčí moduly dávej do podsložky dané hry, například `office-pictionary/words.mjs`; kontraktový test tak pozná zapomenutou registraci nové hry.

@@ -11,7 +11,8 @@ import {
   HARCOV_MEALS,
   HARCOV_PRICE,
   HARCOV_PRICE_SOURCE,
-  normalizeHarcovPriceResult
+  normalizeHarcovPriceResult,
+  roundHarcovPrice
 } from "../duel/games/harcov-price.mjs";
 import {
   createPracticeResult,
@@ -59,14 +60,19 @@ test("Harcov na korunu generuje deterministická kola se čtyřmi cenami", funct
   first.forEach(function (round) {
     assert.equal(round.options.length, HARCOV_PRICE.optionCount);
     assert.equal(new Set(round.options).size, HARCOV_PRICE.optionCount);
+    assert.equal(new Set(round.options.map(roundHarcovPrice)).size, HARCOV_PRICE.optionCount);
     assert.equal(round.options[round.answerIndex], round.price);
     assert.ok(round.options.every(function (price) { return sourcePrices.has(price); }));
   });
 });
 
 test("Harcovský kvíz formátuje ceny a plynule boduje rychlost", function () {
-  assert.equal(formatHarcovPrice(19723), "197,23 Kč");
-  assert.equal(formatHarcovPrice(16300), "163,00 Kč");
+  assert.equal(HARCOV_PRICE.roundingCzk, 10);
+  assert.equal(roundHarcovPrice(19723), 200);
+  assert.equal(roundHarcovPrice(16300), 160);
+  assert.equal(roundHarcovPrice(14510), 150);
+  assert.equal(formatHarcovPrice(19723), "200 Kč");
+  assert.equal(formatHarcovPrice(16300), "160 Kč");
   assert.equal(formatHarcovPrice(-1), "—");
   assert.equal(formatHarcovDate("2026-08-27"), "čtvrtek 27. srpna 2026");
   assert.equal(formatHarcovDate("2026-02-31"), "Neznámý den");

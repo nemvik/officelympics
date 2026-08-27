@@ -4,6 +4,7 @@ import { defineGame, NOOP, normalizeScoreResult, pointsWord, safeSmallInteger } 
 export const HARCOV_PRICE = Object.freeze({
   rounds: 8,
   optionCount: 4,
+  roundingCzk: 10,
   roundDurationMs: 12_000,
   maximumScore: 8_000
 });
@@ -15,7 +16,7 @@ export const HARCOV_PRICE_SOURCE = Object.freeze({
   lastDate: "2026-09-11",
   menuDays: 20,
   retrievedDate: "2026-08-27",
-  priceType: "Veřejná cena bez přihlášení · oběd bez polévky"
+  priceType: "Veřejná cena bez přihlášení · zaokrouhlená na desetikoruny · oběd bez polévky"
 });
 
 function meal(date, name, portion, price) {
@@ -113,7 +114,7 @@ export const harcovPriceGame = defineGame({
     title: "Harcov na korunu",
     teaser: "Tref cenu oběda bez polévky",
     difficulty: "odhad",
-    instruction: "Podle jídla vyber jednu ze čtyř veřejných cen menzy Harcov. Polévka v tom není.",
+    instruction: "Podle jídla vyber jednu ze čtyř cen menzy Harcov zaokrouhlených na desetikoruny. Polévka v tom není.",
     scoreLabel: "bodů za cenotvorbu"
   },
   start: startHarcovPrice,
@@ -145,7 +146,12 @@ export function buildHarcovPriceRounds(seed, count = HARCOV_PRICE.rounds, meals 
   const records = meals.filter(validMeal).map(function (record, index) {
     return { ...record, id: record.date + ":" + index };
   });
-  const uniquePrices = Array.from(new Set(records.map(function (record) { return record.price; })));
+  const priceByRoundedValue = new Map();
+  records.forEach(function (record) {
+    const roundedPrice = roundHarcovPrice(record.price);
+    if (!priceByRoundedValue.has(roundedPrice)) priceByRoundedValue.set(roundedPrice, record.price);
+  });
+  const uniquePrices = Array.from(priceByRoundedValue.values());
   if (records.length === 0 || uniquePrices.length < HARCOV_PRICE.optionCount) return [];
 
   const random = createRng("harcov-price:" + seed);
@@ -156,12 +162,14 @@ export function buildHarcovPriceRounds(seed, count = HARCOV_PRICE.rounds, meals 
   }), random);
 
   return selected.map(function (record, roundIndex) {
+    const roundedAnswer = roundHarcovPrice(record.price);
     const nearby = uniquePrices
-      .filter(function (price) { return price !== record.price; })
+      .filter(function (price) { return roundHarcovPrice(price) !== roundedAnswer; })
       .sort(function (first, second) {
-        return Math.abs(first - record.price) - Math.abs(second - record.price) || first - second;
+        return Math.abs(roundHarcovPrice(first) - roundedAnswer)
+          - Math.abs(roundHarcovPrice(second) - roundedAnswer) || first - second;
       })
-      .slice(0, 12);
+      .slice(0, 6);
     const options = shuffle(nearby, random).slice(0, HARCOV_PRICE.optionCount - 1);
     const answerIndex = answerPositions[roundIndex];
     options.splice(answerIndex, 0, record.price);
@@ -177,9 +185,14 @@ export function buildHarcovPriceRounds(seed, count = HARCOV_PRICE.rounds, meals 
   });
 }
 
+export function roundHarcovPrice(price) {
+  if (!Number.isSafeInteger(price) || price < 0) return null;
+  return Math.round(price / 100 / HARCOV_PRICE.roundingCzk) * HARCOV_PRICE.roundingCzk;
+}
+
 export function formatHarcovPrice(price) {
-  if (!Number.isSafeInteger(price) || price < 0) return "—";
-  return (price / 100).toFixed(2).replace(".", ",") + " Kč";
+  const roundedPrice = roundHarcovPrice(price);
+  return roundedPrice === null ? "—" : roundedPrice + " Kč";
 }
 
 export function formatHarcovDate(value) {
@@ -276,20 +289,20 @@ export function startHarcovPrice(context) {
             <h3 id="harcov-price-meal">Načítám denní nabídku…</h3>
           </div>
           <div class="harcov-price-receipt-bottom">
-            <span>CENA CELKEM</span><strong>??? Kč</strong>
+            <span>CENA CCA</span><strong>??? Kč</strong>
           </div>
           <div class="harcov-price-stamp" aria-label="Varianta bez polévky">BEZ<br>POLÉVKY</div>
         </section>
         <section class="harcov-price-panel" aria-labelledby="harcov-price-question">
           <div class="harcov-price-question-row">
-            <div><span class="eyebrow">Cenový audit</span><h3 id="harcov-price-question">Kolik stojí tenhle oběd?</h3></div>
+            <div><span class="eyebrow">Cenový odhad</span><h3 id="harcov-price-question">Kolik zhruba stojí tenhle oběd?</h3></div>
             <div class="harcov-price-clock" aria-label="Zbývající čas"><b>12,0</b><small>s</small></div>
           </div>
           <div class="harcov-price-timer" aria-hidden="true"><span></span></div>
           <div class="harcov-price-options" role="group" aria-label="Vyber cenu"></div>
-          <p class="harcov-price-feedback" role="status" aria-live="polite">Vyber jednu ze čtyř cen. Účetní kalkulačka je zakázaná.</p>
+          <p class="harcov-price-feedback" role="status" aria-live="polite">Vyber jednu ze čtyř cen zaokrouhlených na desetikoruny.</p>
           <div class="harcov-price-source">
-            <span>Veřejná cena bez přihlášení · bez polévky</span>
+            <span>Veřejná cena bez přihlášení · zaokrouhleno na 10 Kč · bez polévky</span>
             <a target="_blank" rel="noreferrer">Ověřit v jídelníčku ↗</a>
           </div>
         </section>
@@ -392,7 +405,7 @@ export function startHarcovPrice(context) {
     mealLabel.textContent = round.name;
     portionLabel.textContent = "· " + round.portion;
     sourceLink.href = HARCOV_PRICE_SOURCE.url + round.date + "/";
-    feedback.textContent = "Kolo " + (index + 1) + " z " + rounds.length + " · vyber cenu bez polévky.";
+    feedback.textContent = "Kolo " + (index + 1) + " z " + rounds.length + " · vyber zaokrouhlenou cenu bez polévky.";
     options.replaceChildren(...round.options.map(createOption));
     Array.from(roundDots.children).forEach(function (dot, dotIndex) {
       dot.classList.toggle("is-current", dotIndex === index);
@@ -430,15 +443,15 @@ export function startHarcovPrice(context) {
       score += points;
       reactionTimes.push(Math.round(elapsed));
       shell.classList.add("is-correct");
-      feedback.textContent = "Trefa! +" + points + " bodů. Menza potvrzuje " + formatHarcovPrice(round.price) + ".";
+      feedback.textContent = "Trefa! +" + points + " bodů. Po zaokrouhlení " + formatHarcovPrice(round.price) + ".";
     } else if (choiceIndex === null) {
       timeouts += 1;
       shell.classList.add("is-wrong");
-      feedback.textContent = "Čas vypršel. Správná cena je " + formatHarcovPrice(round.price) + ".";
+      feedback.textContent = "Čas vypršel. Po zaokrouhlení je to " + formatHarcovPrice(round.price) + ".";
     } else {
       mistakes += 1;
       shell.classList.add("is-wrong");
-      feedback.textContent = "Vedle. V jídelníčku je " + formatHarcovPrice(round.price) + ".";
+      feedback.textContent = "Vedle. Po zaokrouhlení je to " + formatHarcovPrice(round.price) + ".";
     }
     publish();
     schedule(nextRound, 1_250);

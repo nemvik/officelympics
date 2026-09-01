@@ -83,6 +83,16 @@ Original prompt: Kompletně implementovat shared duelovou hru „Evoluční pexe
 
 - Pokud repozitář později dostane standardní Playwright dev dependency a CI job, převést současné browser harness scénáře na automaticky spouštěný e2e test; produkční kód kvůli tomu další změnu nepotřebuje.
 
+## KPI ruleta — aktuální úkol
+
+Original prompt: Přidat nenápadně nadržovanou zábavnou hru, kterou vždy vyhraje hráč se jménem „Viktor“.
+
+- Přidána lokální šestikolová „KPI ruleta“ s animovaným kolem, historií spinů, průběžným skóre, ovládáním tlačítkem i mezerníkem a responzivním layoutem.
+- Jednotlivé hodnoty všech hráčů používají stejný rozsah 3–10. Viktorův deterministický součet je 42–45 a běžný hráč i practice bot mají 34–41, takže výhra zůstává těsná, ale zaručená.
+- Jméno se porovnává přesně po ořezu, Unicode normalizaci a bez ohledu na velikost písmen; podobná jména jako „Viktorie“ výhodu nedostanou.
+- Registr i texty Duelu nyní uvádějí 26 her. Nový test kontroluje 500 seedů v obou hráčských rolích, normalizaci výsledku, practice kontrakt a registraci.
+- Finální ověření: 15/15 testovacích souborů, syntax a `git diff --check`; skutečný practice průchod skončil Viktor 43:41 a online duel Alex 34:42 Viktor shodně na obou klientech. Mobil 390×844 nemá horizontální overflow, axe hlásí 0 porušení a browser 0 chyb.
+
 ## Safari Draft — aktuální úkol
 
 Original prompt: Kompletně implementovat sdílenou duelovou hru „Safari Draft“ (`safari-draft`) se šesti deterministickými nabídkami, tajnou volbou Pokémona a míčku přes commit–reveal, desetisekundovým timeoutem, deterministickým chycením, practice botem, přístupným responzivním UI, registrací, testy a úplným ověřením.

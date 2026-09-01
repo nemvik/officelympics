@@ -11,6 +11,7 @@ import { inboxZeroGame } from "./inbox-zero.mjs";
 import { inboxPongGame } from "./inbox-pong.mjs";
 import { jargonDecoderGame } from "./jargon-decoder.mjs";
 import { kantoTrumfGame } from "./kanto-trumf.mjs";
+import { kpiRouletteGame } from "./kpi-roulette.mjs";
 import { meetingEscapeGame } from "./meeting-escape.mjs";
 import { meetingTetrisGame } from "./meeting-tetris.mjs";
 import { oakBingoGame } from "./oak-bingo.mjs";
@@ -34,6 +35,7 @@ export const GAMES = Object.freeze([
   cursorMazeGame,
   paperShredderGame,
   meetingTetrisGame,
+  kpiRouletteGame,
   deadlineChickenGame,
   evolutionMemoryGame,
   paperCurlingGame,
@@ -69,7 +71,7 @@ export const GAME_CATEGORIES = Object.freeze([
     description: "Rychlé reakce, přesné kliknutí a rozhodování pod tlakem.",
     gameIds: Object.freeze([
       "panic", "postit-sprint", "inbox-zero", "paper-shredder", "deadline",
-      "alttab", "calendar", "printer", "poke-shadow"
+      "alttab", "calendar", "printer", "poke-shadow", "kpi-roulette"
     ])
   }),
   Object.freeze({
